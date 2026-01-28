@@ -29,7 +29,9 @@ def scan_languages(root):
         root / 'engine',
         root / 'client',
         root / 'scripts',
-        root / 'tools'
+        root / 'tools',
+        root / 'src',
+        root / 'packages',
     ]
     
     for d in dirs_to_scan:
@@ -132,6 +134,50 @@ def scan_pubspec(file_path):
         
     return deps
 
+def scan_pyproject(file_path):
+    """Scans pyproject.toml for dependencies."""
+    deps = []
+    if not file_path.exists():
+        return deps
+    
+    try:
+        content = file_path.read_text(encoding='utf-8')
+        # Simple regex for lines inside dependencies = [...]
+        in_deps = False
+        for line in content.splitlines():
+            line = line.strip()
+            if line.startswith('dependencies = ['):
+                in_deps = True
+                continue
+            if in_deps:
+                if line.startswith(']'):
+                    in_deps = False
+                    break
+                # Extract "package>=version"
+                m = re.match(r'"(.*?)"', line)
+                if m:
+                    dep_str = m.group(1)
+                    # Split name and version
+                    if '>=' in dep_str:
+                        name, ver = dep_str.split('>=', 1)
+                        ver = '>=' + ver
+                    elif '==' in dep_str:
+                        name, ver = dep_str.split('==', 1)
+                        ver = '==' + ver
+                    else:
+                        name = dep_str
+                        ver = "latest"
+                    
+                    deps.append({
+                        'name': name,
+                        'version': ver,
+                        'source': 'pyproject.toml'
+                    })
+    except Exception as e:
+        console.warning(f"Failed to parse pyproject.toml: {e}")
+        
+    return deps
+
 def get_project_details(root):
     """Aggregates detailed project info from all sources."""
     details = {
@@ -139,6 +185,7 @@ def get_project_details(root):
         'build_tools': scan_build_tools(root),
         'libs_engine': [],
         'libs_client': [],
+        'libs_python': [],
         'versions': {} # Keep flattened versions for backward compat if needed
     }
     
@@ -159,6 +206,11 @@ def get_project_details(root):
     # 2. Client (Pubspec)
     pubspec_path = root / "client" / "pubspec.yaml"
     details['libs_client'] = scan_pubspec(pubspec_path)
+    
+    # 3. Python (pyproject.toml)
+    pyproject_path = root / "pyproject.toml"
+    if pyproject_path.exists():
+         details['libs_python'] = scan_pyproject(pyproject_path)
     
     return details
 
@@ -224,6 +276,10 @@ def update(root):
         
     # 4. Process Client Libs
     for lib in details['libs_client']:
+        process_item(lib['name'], lib['version'], lib['source'])
+
+    # 5. Process Python Libs
+    for lib in details.get('libs_python', []):
         process_item(lib['name'], lib['version'], lib['source'])
 
     # Sort categories
