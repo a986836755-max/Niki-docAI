@@ -56,14 +56,13 @@ AI_TEMPLATE = """# {module_name} Module AI Context
 
 ## 2. Architecture
 ### Components
-- [ExampleComponent](components/example_component.h): Description.
+- [ExampleComponent](components/example_component.ext): Description.
 
 ### Systems
-- [ExampleSystem](systems/example_system.h): Description.
+- [ExampleSystem](systems/example_system.ext): Description.
 
 ## 3. Constraints (!RULE)
-- !RULE: Logic must be data-driven.
-- !RULE: No direct dependencies on UI.
+- !RULE: (Add constraint here)
 
 ## 4. Map
 - [README.md](README.md)
@@ -79,50 +78,24 @@ README_TEMPLATE = """# {module_name} Module
 (High level vision and human-readable description)
 
 ## Usage
-```cpp
+```
 // Example usage
 ```
 """
 
-COMPONENT_TEMPLATE = """#pragma once
-#include <entt/entt.hpp>
-
-namespace niki::{module_name} {{
-
-struct ExampleComponent {{
-    float value;
-}};
-
-}} // namespace niki::{module_name}
+COMPONENT_TEMPLATE = """// Template for component
+// namespace {module_name}
+// struct ExampleComponent {{ ... }}
 """
 
-SYSTEM_H_TEMPLATE = """#pragma once
-#include <entt/entt.hpp>
-
-namespace niki::{module_name} {{
-
-class ExampleSystem {{
-public:
-    static void update(entt::registry& registry);
-}};
-
-}} // namespace niki::{module_name}
+SYSTEM_H_TEMPLATE = """// Template for system header
+// namespace {module_name}
+// class ExampleSystem {{ ... }}
 """
 
-SYSTEM_CPP_TEMPLATE = """#include "example_system.h"
-#include "../components/example_component.h"
-
-namespace niki::{module_name} {{
-
-void ExampleSystem::update(entt::registry& registry) {{
-    auto view = registry.view<ExampleComponent>();
-    for (auto entity : view) {{
-        auto& comp = view.get<ExampleComponent>(entity);
-        // Logic here
-    }}
-}}
-
-}} // namespace niki::{module_name}
+SYSTEM_CPP_TEMPLATE = """// Template for system implementation
+// namespace {module_name}
+// void ExampleSystem::update() {{ ... }}
 """
 
 # Syntax Template
@@ -156,21 +129,14 @@ RULES_TEMPLATE = """# PROJECT RULES (规范总则)
 <!-- NIKI_VERSION: {version} -->
 
 ## 1. Core Philosophy (核心哲学)
-*   **Data Oriented Design (DOD)**: 数据先行，逻辑跟随。Entity 只是 ID，Component 只是数据 Struct，System 只是函数。
-*   **Single Source of Truth**: 状态唯一。UI 只是数据的投影 (Projection)，不是数据本身。
-*   **Narrow Interface**: 跨语言边界 (FFI) 必须足够窄。只允许传递序列化数据 (Buffer) 或基础类型 (Primitive)。
+*   **Single Source of Truth**: 确保文档与代码的一致性。
+*   (Add your core philosophy here...)
 
 ## 2. Coding Standards (代码规范)
-*   **C++**: C++20 Standard. No Exceptions in Core Loop.
-*   **Dart**: Strict Linting. Null Safety.
-*   **Naming**: 
-    *   Structs/Classes: `PascalCase`
-    *   Variables/Functions: `snake_case` (C++), `camelCase` (Dart)
-    *   Files: `snake_case`
+*   (Add your coding standards here...)
 
 ## 3. Toolchain (工具链)
-*   所有文档变更必须通过 `ndoc` 工具链验证。
-*   新模块创建必须使用 `ndoc create`。
+*   所有文档变更建议通过 `ndoc` 工具链验证。
 """
 
 # Glossary Template
@@ -181,48 +147,49 @@ GLOSSARY_TEMPLATE = """# PROJECT GLOSSARY (术语表)
 <!-- NIKI_VERSION: {version} -->
 
 ## A. Core Concepts (核心概念)
-*   **Entity (实体)**: 在 C++ 侧特指 `entt::entity` (uint32_t Handle)。它只是一个 ID，不是对象。
-*   **Component (组件)**: 纯数据结构 (Struct)，不包含逻辑。例如 `TransformComponent`, `HealthComponent`。
-*   **System (系统)**: 无状态的逻辑处理单元。例如 `PhysicsSystem` 遍历所有 `Position` + `Velocity` 组件进行更新。
+*   (Add your core concepts here...)
 
 ## B. Architecture (架构)
-*   **Snapshot (快照)**: 一帧或多帧的完整/部分状态数据包 (FlatBuffer)。
-*   **Command (指令)**: Client 发送给 Engine 的操作请求 (FlexBuffer/FlatBuffer)。
+*   (Add your architecture terms here...)
 """
 
 # Tech Stack Knowledge Base (for dynamic generation)
 TECH_KNOWLEDGE_BASE = {
     # Languages
-    "c++": {"name": "C++", "category": "1. Core Languages", "desc": "Standard: C++20 (Required features: `std::span`, `std::format`, `std::source_location`)"},
-    "c": {"name": "C", "category": "1. Core Languages", "desc": "Legacy/Interop"},
-    "dart": {"name": "Dart", "category": "1. Core Languages", "desc": "Null Safety enabled"},
-    "python": {"name": "Python", "category": "1. Core Languages", "desc": "Scripts/Tools"},
+    "c++": {"name": "C++", "category": "1. Core Languages", "desc": "System Programming Language"},
+    "c": {"name": "C", "category": "1. Core Languages", "desc": "System Programming Language"},
+    "dart": {"name": "Dart", "category": "1. Core Languages", "desc": "Client/UI Language"},
+    "python": {"name": "Python", "category": "1. Core Languages", "desc": "Scripting Language"},
     "rust": {"name": "Rust", "category": "1. Core Languages", "desc": "Systems Programming"},
     "lua": {"name": "Lua", "category": "1. Core Languages", "desc": "Scripting"},
     "javascript": {"name": "JavaScript", "category": "1. Core Languages", "desc": "Web/Scripting"},
     "typescript": {"name": "TypeScript", "category": "1. Core Languages", "desc": "Web/Scripting"},
+    "go": {"name": "Go", "category": "1. Core Languages", "desc": "Cloud/System Language"},
+    "java": {"name": "Java", "category": "1. Core Languages", "desc": "Enterprise/Android Language"},
+    "kotlin": {"name": "Kotlin", "category": "1. Core Languages", "desc": "Android/JVM Language"},
+    "swift": {"name": "Swift", "category": "1. Core Languages", "desc": "iOS/macOS Language"},
 
-    # Engine Libs (C++)
-    "entt": {"name": "EnTT", "category": "2. Core Libraries (Engine)", "desc": "ECS Framework (Strict)"},
-    "flatbuffers": {"name": "FlatBuffers", "category": "2. Core Libraries (Engine)", "desc": "Serialization"},
-    "spdlog": {"name": "spdlog", "category": "2. Core Libraries (Engine)", "desc": "Logging"},
-    "catch2": {"name": "Catch2", "category": "2. Core Libraries (Engine)", "desc": "Unit Testing"},
-    "glm": {"name": "GLM", "category": "2. Core Libraries (Engine)", "desc": "Mathematics"},
-    "fmt": {"name": "fmt", "category": "2. Core Libraries (Engine)", "desc": "Formatting"},
+    # Common Libs (Examples)
+    "entt": {"name": "EnTT", "category": "2. Core Libraries", "desc": "ECS Framework"},
+    "flatbuffers": {"name": "FlatBuffers", "category": "2. Core Libraries", "desc": "Serialization"},
+    "spdlog": {"name": "spdlog", "category": "2. Core Libraries", "desc": "Logging"},
+    "catch2": {"name": "Catch2", "category": "2. Core Libraries", "desc": "Unit Testing"},
+    "fmt": {"name": "fmt", "category": "2. Core Libraries", "desc": "Formatting"},
     
-    # Client Libs (Dart/Flutter)
-    "flutter": {"name": "Flutter", "category": "3. Frameworks (Client)", "desc": "UI Toolkit"},
-    "ffi": {"name": "FFI", "category": "3. Frameworks (Client)", "desc": "Foreign Function Interface"},
-    "dart_sdk": {"name": "Dart SDK", "category": "3. Frameworks (Client)", "desc": "Language SDK"},
-    "vector_math": {"name": "Vector Math", "category": "3. Frameworks (Client)", "desc": "Mathematics"},
-    "flat_buffers": {"name": "FlatBuffers (Dart)", "category": "3. Frameworks (Client)", "desc": "Serialization"},
-    "cupertino_icons": {"name": "Cupertino Icons", "category": "3. Frameworks (Client)", "desc": "UI Assets"},
+    # Frameworks
+    "flutter": {"name": "Flutter", "category": "3. Frameworks", "desc": "UI Toolkit"},
+    "react": {"name": "React", "category": "3. Frameworks", "desc": "Web UI Library"},
+    "vue": {"name": "Vue", "category": "3. Frameworks", "desc": "Web UI Framework"},
+    "django": {"name": "Django", "category": "3. Frameworks", "desc": "Web Framework"},
+    "flask": {"name": "Flask", "category": "3. Frameworks", "desc": "Micro Web Framework"},
     
     # Tools
     "cmake": {"name": "CMake", "category": "4. Build Tools", "desc": "Build System Generator"},
-    "gradle": {"name": "Gradle", "category": "4. Build Tools", "desc": "Android Build Tool"},
+    "gradle": {"name": "Gradle", "category": "4. Build Tools", "desc": "Build Automation"},
+    "maven": {"name": "Maven", "category": "4. Build Tools", "desc": "Build Automation"},
     "cargo": {"name": "Cargo", "category": "4. Build Tools", "desc": "Rust Package Manager"},
     "ninja": {"name": "Ninja", "category": "4. Build Tools", "desc": "Build System"},
+    "make": {"name": "Make", "category": "4. Build Tools", "desc": "Build Automation"},
 }
 
 TECH_HEADER_TEMPLATE = """# TECHNOLOGY STACK (技术栈版本锁定)
@@ -241,9 +208,10 @@ MEMORY_TEMPLATE = """# PROJECT MEMORY (关键决策记录)
 <!-- NIKI_VERSION: {version} -->
 
 ## 1. Active Decisions (生效决策)
-*   [ADR-001] Adopt EnTT as ECS Framework.
-*   [ADR-002] Use FlatBuffers for FFI boundary.
-*   [ADR-003] Separate Logic/Render Loops.
+*   [ADR-001] (Title)
+    *   **Context**: (Why we made this decision?)
+    *   **Decision**: (What we decided?)
+    *   **Consequences**: (What are the trade-offs?)
 
 ## 2. Deprecated Paths (已废弃路径)
 *   (None)
@@ -276,14 +244,14 @@ ARCH_TEMPLATE = """# PROJECT ARCHITECTURE (架构视图)
 > **Tags**: `@ARCH` `@GRAPH`
 <!-- NIKI_VERSION: {version} -->
 
-## 1. Engine Module Dependency Graph (C++)
-> Generated by `ndoc graph` based on `#include` analysis.
+## 1. Module Dependency Graph
+> Generated by `ndoc graph` based on analysis.
 
 ```mermaid
 {mermaid_graph}
 ```
 
 ## 2. Analysis
-*   **Nodes**: Modules found in `engine/modules/`.
-*   **Edges**: `A --> B` means A includes headers from B.
+*   **Nodes**: Modules found in source directories.
+*   **Edges**: `A --> B` means A depends on B.
 """
