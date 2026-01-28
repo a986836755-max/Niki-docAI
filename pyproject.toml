@@ -1,7 +1,7 @@
 [project]
 name = "niki_docai"
 version = "0.1.0"
-description = "Niki_docAI: Documentation and Toolchain for NikiDice"
+description = "Niki-docAI: Documentation and Toolchain for NikiDice"
 authors = [
     {name = "TraeAI", email = "trae@example.com"},
 ]

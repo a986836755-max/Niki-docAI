@@ -1,8 +1,8 @@
-# Niki_docAI
+# Niki-docAI
 
 > **Context Ops & Architecture Guard for NikiDice**
 
-Niki_docAI is an intelligent toolchain designed to enforce **Data-Oriented Design (DOD)** principles and maintain "Living Documentation" for the NikiDice engine. It bridges the gap between Code (Reality) and Documentation (Knowledge), ensuring that architecture constraints are not just written, but verified.
+**Niki-docAI** is an intelligent toolchain designed to enforce **Data-Oriented Design (DOD)** principles and maintain "Living Documentation" for the NikiDice engine. It bridges the gap between Code (Reality) and Documentation (Knowledge), ensuring that architecture constraints are not just written, but verified.
 
 ## Core Philosophy
 
