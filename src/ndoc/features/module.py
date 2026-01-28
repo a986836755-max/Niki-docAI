@@ -1,7 +1,7 @@
 from pathlib import Path
-from niki.core import console
-from niki.core import utils
-from niki.core import config
+from ndoc.core import console
+from ndoc.core import utils
+from ndoc.core import config
 
 def create_module(root, name):
     base_path = root / "engine" / "modules" / name

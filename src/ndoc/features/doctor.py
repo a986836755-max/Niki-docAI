@@ -1,5 +1,5 @@
 import shutil
-from niki.core import console, config
+from ndoc.core import console, config
 
 def check_tool(name):
     path = shutil.which(name)

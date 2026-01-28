@@ -6,7 +6,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 import fnmatch
 from pathlib import Path
-from niki.core import console, config, utils
+from ndoc.core import console, config, utils
 
 # -----------------------------------------------------------------------------
 # Docs Audit Logic (formerly audit_docs_sync.py)

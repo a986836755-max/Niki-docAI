@@ -1,8 +1,8 @@
 import re
 import sys
 from pathlib import Path
-from niki.core import console
-from niki.core import config
+from ndoc.core import console
+from ndoc.core import config
 
 def get_engine_modules(root):
     """Returns a list of module names found in engine/modules."""

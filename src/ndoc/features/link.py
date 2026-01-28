@@ -2,8 +2,8 @@ import re
 import os
 import sys
 from pathlib import Path
-from niki.core import console
-from niki.core import config
+from ndoc.core import console
+from ndoc.core import config
 
 def parse_glossary(root):
     """

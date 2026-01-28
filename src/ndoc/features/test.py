@@ -2,9 +2,9 @@ import sys
 import datetime
 import re
 from pathlib import Path
-from niki.core import console
-from niki.core import utils
-from niki.core import config
+from ndoc.core import console
+from ndoc.core import utils
+from ndoc.core import config
 
 def update_doc_status(file_path):
     """

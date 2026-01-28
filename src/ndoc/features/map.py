@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from niki.core import console, config, utils
+from ndoc.core import console, config, utils
 
 # -----------------------------------------------------------------------------
 # Map Update Logic (formerly update_map.py)

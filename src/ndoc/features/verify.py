@@ -1,8 +1,8 @@
 import re
 import sys
 from pathlib import Path
-from niki.core import console
-from niki.core import config
+from ndoc.core import console
+from ndoc.core import config
 
 class RuleViolation:
     def __init__(self, rule_id, file_path, line_num, content, message):
@@ -124,7 +124,7 @@ def cmd_verify(root):
     all_violations.extend(v_code)
     
     if not all_violations:
-        console.success("√ All rules passed. Project is clean.")
+        console.success("All rules passed. Project is clean.")
     else:
         # Use simple print to ensure visibility
         print(f"\n[!] Found {len(all_violations)} rule violations:")

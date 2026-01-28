@@ -1,7 +1,7 @@
 import argparse
 import sys
-from niki.core import console, config, utils
-from niki.features import tech, docs, map, graph, link, log, verify, fix, test, module, build, doctor
+from ndoc.core import console, config, utils
+from ndoc.features import tech, docs, map, graph, link, log, verify, fix, test, module, build, doctor
 
 def cmd_init(args):
     """Initialize toolchain meta files."""
@@ -24,8 +24,8 @@ def cmd_init(args):
     console.success("Initialization Complete.")
 
 def main():
-    parser = argparse.ArgumentParser(prog="niki", description="NikiDice Toolchain CLI")
-    parser.add_argument("--version", action="version", version=f"niki-toolchain v{config.TOOLCHAIN_VERSION}")
+    parser = argparse.ArgumentParser(prog="ndoc", description="NikiDice Toolchain CLI (Niki_docAI)")
+    parser.add_argument("--version", action="version", version=f"Niki_docAI v{config.TOOLCHAIN_VERSION}")
     
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     

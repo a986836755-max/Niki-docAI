@@ -1,8 +1,8 @@
 import sys
 from pathlib import Path
-from niki.core import console
-from niki.core import utils
-from niki.features import docs
+from ndoc.core import console
+from ndoc.core import utils
+from ndoc.features import docs
 
 def cmd_build(root):
     console.step("[Phase 1] Generating FBS...")

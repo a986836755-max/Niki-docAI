@@ -1,7 +1,7 @@
 import re
 import yaml
 from pathlib import Path
-from niki.core import console, config, utils
+from ndoc.core import console, config, utils
 
 # -----------------------------------------------------------------------------
 # Dependency Scanning Logic (formerly deps_scanner.py)

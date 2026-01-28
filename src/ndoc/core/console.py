@@ -15,11 +15,12 @@ WHITE = "\033[37m"
 
 def success(msg):
     """Prints a success message with a green checkmark."""
-    print(f"{GREEN}√ {BOLD}{msg}{RESET}")
+    # Use standard ASCII if unicode fails in some terminals
+    print(f"{GREEN}V {BOLD}{msg}{RESET}")
 
 def error(msg):
     """Prints an error message with a red cross."""
-    print(f"{RED}x {BOLD}{msg}{RESET}")
+    print(f"{RED}X {BOLD}{msg}{RESET}")
 
 def warning(msg):
     """Prints a warning message with a yellow exclamation mark."""

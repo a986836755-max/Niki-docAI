@@ -1,8 +1,8 @@
 import os
 import re
 from pathlib import Path
-from niki.core import console
-from niki.core import config
+from ndoc.core import console
+from ndoc.core import config
 from . import link
 
 def fix_formatting(file_path):

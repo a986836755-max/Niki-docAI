@@ -1,7 +1,7 @@
 import datetime
 import re
 from pathlib import Path
-from niki.core import console
+from ndoc.core import console
 
 def cmd_log(root, title, content, tag="Decision"):
     """

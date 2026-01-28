@@ -1,19 +1,18 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "niki-toolchain"
+name = "niki_docai"
 version = "0.1.0"
-description = "DOD Context Ops Toolchain for NikiDice"
-requires-python = ">=3.9"
-readme = "README.md"
-authors = [{ name = "TraeAI", email = "ai@trae.ai" }]
-license = { text = "MIT" }
-dependencies = [
-    "pyyaml",
-    "colorama",
+description = "Niki_docAI: Documentation and Toolchain for NikiDice"
+authors = [
+    {name = "TraeAI", email = "trae@example.com"},
 ]
+dependencies = [
+    "pyyaml>=6.0",
+]
+requires-python = ">=3.9"
 
 [project.scripts]
-niki = "niki.cli:main"
+ndoc = "ndoc.cli:main"
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
