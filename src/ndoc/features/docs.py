@@ -8,6 +8,86 @@ import fnmatch
 from pathlib import Path
 from ndoc.core import console, config, utils
 
+def init_ai_md(path_str, verbose=True, reset=False):
+    """
+    Creates an _AI.md file in the specified directory.
+    """
+    root = utils.get_project_root()
+    # Handle path_str being a Path object or string
+    if isinstance(path_str, Path):
+        # If it's absolute, make it relative to root for consistency if needed, 
+        # but here we just want the target directory.
+        if path_str.is_absolute():
+            target_dir = path_str
+        else:
+            target_dir = (root / path_str).resolve()
+    else:
+        target_dir = (root / path_str).resolve()
+    
+    if not target_dir.exists():
+        console.error(f"Directory not found: {target_dir}")
+        console.info(f"Creating directory: {target_dir}")
+        target_dir.mkdir(parents=True, exist_ok=True)
+        
+    ai_file = target_dir / "_AI.md"
+    
+    if ai_file.exists() and not reset:
+        if verbose:
+            console.warning(f"{ai_file} already exists.")
+        return False
+        
+    module_name = target_dir.name
+    domain_tag = f"domain.{module_name.lower()}"
+    
+    content = config.AI_TEMPLATE.format(
+        module_name=module_name,
+        domain_tag=domain_tag
+    )
+    
+    try:
+        ai_file.write_text(content, encoding='utf-8')
+        if reset and ai_file.exists():
+             console.success(f"Reset {ai_file}")
+        else:
+             console.success(f"Created {ai_file}")
+        return True
+    except Exception as e:
+        console.error(f"Failed to create {ai_file}: {e}")
+        return False
+
+def init_all_recursive(start_path=".", reset=False):
+    """
+    Recursively creates _AI.md in all subdirectories of start_path,
+    skipping ignored directories.
+    """
+    root = utils.get_project_root()
+    start_dir = (root / start_path).resolve()
+    
+    if not start_dir.exists():
+        console.error(f"Directory not found: {start_dir}")
+        return
+
+    console.log(f"Scanning for directories in {start_dir}...")
+    created_count = 0
+    skipped_count = 0
+    
+    for current_root, dirs, files in os.walk(start_dir):
+        # Filter ignored dirs in-place
+        dirs[:] = [d for d in dirs if d not in config.IGNORE_DIRS and not d.startswith('.')]
+        
+        current_path = Path(current_root)
+        
+        # Try to create _AI.md
+        # Pass verbose=False to avoid spamming "already exists"
+        if init_ai_md(current_path, verbose=False, reset=reset):
+            created_count += 1
+        else:
+            skipped_count += 1
+            
+    console.success(f"Batch initialization complete.")
+    console.info(f"  Processed: {created_count}")
+    console.info(f"  Skipped (Already exists): {skipped_count}")
+
 # -----------------------------------------------------------------------------
 # Docs Audit Logic (formerly audit_docs_sync.py)
 # -----------------------------------------------------------------------------
@@ -209,20 +289,66 @@ def find_doxygen_executable(root_path):
         
     return None
 
+def parse_lightweight_docs(root_path):
+    """
+    Fallback parser when Doxygen is missing.
+    Scans for class/struct definitions and updates _AI.md.
+    """
+    console.log("Running Lightweight Code Analysis (Doxygen not found)...")
+    docs_map = {}
+    
+    # Regex for definitions
+    # C++/Dart: class Name or struct Name
+    # Capture group 1: kind (class/struct), group 2: Name
+    def_pattern = re.compile(r'^\s*(?:abstract\s+)?(class|struct|enum)\s+(\w+)', re.MULTILINE)
+    
+    for current_root, dirs, files in os.walk(root_path):
+        # Skip ignored dirs
+        dirs[:] = [d for d in dirs if d not in config.IGNORE_DIRS and not d.startswith('.')]
+        
+        for file in files:
+            file_path = Path(current_root) / file
+            if file_path.suffix not in config.CODE_EXTENSIONS:
+                continue
+                
+            # Find nearest _AI.md
+            target_ai_md = find_nearest_ai_md(file_path, root_path)
+            if not target_ai_md:
+                continue
+                
+            try:
+                content = file_path.read_text(encoding='utf-8', errors='replace')
+            except Exception:
+                continue
+                
+            matches = def_pattern.findall(content)
+            if not matches:
+                continue
+                
+            entry_lines = []
+            for kind, name in matches:
+                # Simple heuristic: Just list them
+                entry_lines.append(f"*   **{kind} {name}** (Found in `{file}`) {config.BADGE_TEMPLATE}")
+                
+            if entry_lines:
+                if target_ai_md not in docs_map:
+                    docs_map[target_ai_md] = []
+                docs_map[target_ai_md].extend(entry_lines)
+                
+    return docs_map
+
 def run_doxygen(root_path):
     doxyfile_path = root_path / config.DOXYFILE_PATH
     if not doxyfile_path.exists():
-        console.error(f"{doxyfile_path} not found.")
+        # console.error(f"{doxyfile_path} not found.") # Optional: Warning
         return False
     
     doxygen_exe = find_doxygen_executable(root_path)
     if not doxygen_exe:
-        console.error("'doxygen' executable not found.")
-        console.info("  1. Install it and add to PATH, OR")
-        console.info(f"  2. Download doxygen.exe and place it in {root_path / 'tools'}")
-        return False
+        return False # Fail silently to trigger fallback
 
     console.log(f"Running Doxygen ({doxygen_exe})...")
+    # ... (rest of Doxygen logic)
     # Ensure build dir exists
     (root_path / "build" / "docs").mkdir(parents=True, exist_ok=True)
     
@@ -399,15 +525,21 @@ def update_ai_md_files(docs_map):
             console.detail("Status", "No changes")
 
 def update(root=None):
-    """Main entry point for updating docs via Doxygen."""
+    """Main entry point for updating docs via Doxygen or Lightweight fallback."""
     if root is None:
         root = utils.get_project_root()
         
-    if not run_doxygen(root):
-        return False
+    if run_doxygen(root):
+        console.log("Parsing XML and Updating _AI.md...")
+        docs_map = parse_xml_docs(root)
+    else:
+        # Fallback
+        docs_map = parse_lightweight_docs(root)
         
-    console.log("Parsing XML and Updating _AI.md...")
-    docs_map = parse_xml_docs(root)
+    if not docs_map:
+        console.warning("No documentation data found to update.")
+        return True
+
     update_ai_md_files(docs_map)
     console.success("Doc Sync Complete.")
     return True

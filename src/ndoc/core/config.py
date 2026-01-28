@@ -196,7 +196,7 @@ TECH_HEADER_TEMPLATE = """# TECHNOLOGY STACK (技术栈版本锁定)
 
 > **Context**: 明确锁定的技术版本清单，防止兼容性问题。
 > **Tags**: `@TECH` `@VERSION`
-<!-- NIKI_VERSION: {toolchain} -->
+<!-- NIKI_VERSION: {version} -->
 
 """
 
@@ -254,4 +254,18 @@ ARCH_TEMPLATE = """# PROJECT ARCHITECTURE (架构视图)
 ## 2. Analysis
 *   **Nodes**: Modules found in source directories.
 *   **Edges**: `A --> B` means A depends on B.
+"""
+
+# Next Steps Template
+NEXT_STEP_TEMPLATE = """# PROJECT NEXT STEPS (规划与待办)
+
+> **Context**: 项目的下一步计划、待办事项和路线图。
+> **Tags**: `@PLAN` `@TODO`
+<!-- NIKI_VERSION: {version} -->
+
+## 1. High Priority (高优先级)
+*   (Add high priority tasks here...)
+
+## 2. Backlog (待办池)
+*   (Add backlog items here...)
 """

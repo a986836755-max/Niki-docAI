@@ -5,9 +5,20 @@ from pathlib import Path
 from . import console
 
 def get_project_root():
-    """Returns the current working directory as the project root."""
-    # When installed as a package, we assume niki is run from the project root.
-    return Path.cwd()
+    """Returns the project root directory by searching upwards for markers."""
+    cwd = Path.cwd()
+    
+    # Markers that identify the project root
+    markers = ["pyproject.toml", "_RULES.md", ".git"]
+    
+    # Check current directory and parents
+    for path in [cwd] + list(cwd.parents):
+        for marker in markers:
+            if (path / marker).exists():
+                return path
+                
+    # Fallback to CWD if nothing found (e.g. fresh init)
+    return cwd
 
 def run_command(cmd, cwd=None, shell=True, env=None, fail_exit=True):
     """Executes a shell command."""
