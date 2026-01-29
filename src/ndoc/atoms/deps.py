@@ -7,6 +7,7 @@ from typing import Dict, List, Set, Counter
 import re
 import configparser
 import json
+import ast
 
 # --- Language Stats ---
 
@@ -73,6 +74,26 @@ def detect_languages(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[
     return {lang: round((count / total_files) * 100, 1) for lang, count in stats.most_common()}
 
 # --- Dependency Parsing ---
+
+def extract_imports(content: str) -> List[str]:
+    """
+    Extract imported module names from Python code using AST.
+    Returns list of module names (e.g., 'os', 'ndoc.atoms').
+    Handles 'import x', 'from x import y'.
+    """
+    imports = set()
+    try:
+        tree = ast.parse(content)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    imports.add(alias.name)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    imports.add(node.module)
+    except Exception:
+        pass
+    return sorted(list(imports))
 
 def parse_requirements_txt(file_path: Path) -> List[str]:
     """Parse requirements.txt"""

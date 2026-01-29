@@ -2,8 +2,8 @@
 > @CONTEXT: Global | _TECH.md | @TAGS: @TECH @DEPS
 
 ## 1. Languages (语言分布)
-*   **Python**: `██████████░░░░░░░░░░` 52.8%
-*   **Markdown**: `█████████░░░░░░░░░░░` 47.2%
+*   **Python**: `██████████░░░░░░░░░░` 54.1%
+*   **Markdown**: `█████████░░░░░░░░░░░` 45.9%
 
 ## 2. Dependencies (依赖库)
 ### requirements.txt

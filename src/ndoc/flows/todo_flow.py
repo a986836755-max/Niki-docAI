@@ -45,7 +45,8 @@ def collect_todos(root: Path, ignore_patterns: List[str]) -> List[TodoItem]:
     # We need to scan all files.
     
     # 1. Get all files
-    files = fs.list_files_recursive(root, filter_config)
+    # Use walk_files instead of list_files_recursive which doesn't exist
+    files = fs.walk_files(root, list(filter_config.ignore_patterns))
     
     for file_path in files:
         # Only scan text files (skip binary, images, etc.)

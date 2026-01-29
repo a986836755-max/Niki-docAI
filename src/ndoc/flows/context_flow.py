@@ -76,31 +76,34 @@ def format_symbol_list(ctx: FileContext) -> str:
 def generate_dir_content(context: DirectoryContext) -> str:
     """
     生成目录上下文内容 (Generate directory context content).
-    Only generates the dynamic body (FILES, SUBDIRS).
-    Header and Rules are handled by the template in process_directory.
+    Merged FILES and SUBDIRS into STRUCTURE for unified view.
     """
     lines = []
     
-    lines.append("## @FILES")
+    lines.append("## @STRUCTURE")
     
-    if not context.files:
-        lines.append("*   *(No source files)*")
+    has_content = False
     
-    for f_ctx in context.files:
-        lines.append(format_file_summary(f_ctx))
-        # Add symbols as sub-list
-        sym_list = format_symbol_list(f_ctx)
-        if sym_list:
-            lines.append(sym_list)
-            
-    lines.append("")
-    lines.append("## @SUBDIRS")
-    if not context.subdirs:
-        lines.append("*   *(No subdirectories)*")
-    else:
-        for subdir in context.subdirs:
-            lines.append(f"*   **[{subdir.name}/]({subdir.name}/_AI.md)**")
+    # 1. Subdirectories (Navigation first)
+    if context.subdirs:
+        has_content = True
+        for d_path in context.subdirs:
+            # Add trailing slash to indicate directory clearly
+            lines.append(f"*   **[{d_path.name}/]({d_path.name}/_AI.md)**")
 
+    # 2. Files (Content second)
+    if context.files:
+        has_content = True
+        for f_ctx in context.files:
+            lines.append(format_file_summary(f_ctx))
+            # Add symbols as sub-list
+            sym_list = format_symbol_list(f_ctx)
+            if sym_list:
+                lines.append(sym_list)
+                
+    if not has_content:
+        lines.append("*   *(Empty directory)*")
+            
     return "\n".join(lines)
 
 # --- Engine (Pipeline) ---

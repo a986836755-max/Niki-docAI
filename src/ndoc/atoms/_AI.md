@@ -5,7 +5,7 @@
 <!-- Add local rules here -->
 
 <!-- NIKI_AUTO_Context_START -->
-## @FILES
+## @STRUCTURE
 *   **[__init__.py](__init__.py)**: Atoms: File System Operations.
 *   **[ast.py](ast.py)**: Atoms: AST Parsing (Tree-sitter Wrapper).
     *   `PUB:` CLS **AstNode**
@@ -19,6 +19,7 @@
     *   `PRV:` FUN _extract_docstring_from_node`(node: Node, content_bytes: bytes) -> Optional[str]`
 *   **[deps.py](deps.py)**: Atom: Dependency Parser.
     *   `PUB:` FUN **detect_languages**`(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, float]`
+    *   `PUB:` FUN **extract_imports**`(content: str) -> List[str]`
     *   `PUB:` FUN **get_project_dependencies**`(root_path: Path) -> Dict[str, List[str]]`
     *   `PUB:` FUN **parse_package_json**`(file_path: Path) -> List[str]`
     *   `PUB:` FUN **parse_pyproject_toml**`(file_path: Path) -> List[str]`
@@ -44,14 +45,10 @@
     *   `PUB:` CLS **ScanResult**
     *   `PUB:` CLS **TokenRule**
     *   `PUB:` FUN **extract_docstring**`(content: str) -> str`
-    *   `PUB:` FUN **extract_docstring**`(content: str) -> str`
     *   `PUB:` FUN **extract_summary**`(content: str, docstring: str) -> str`
     *   `PUB:` FUN **extract_todos**`(content: str) -> List[dict]`
     *   `PUB:` FUN **parse_sections**`(content: str) -> Dict[str, Section]`
     *   `PUB:` FUN **parse_tags**`(content: str) -> List[Tag]`
     *   `PUB:` FUN **scan_file_content**`(content: str, file_path: Optional[Path] = None) -> ScanResult`
     *   `PRV:` FUN _extract_args`(args_str: Optional[str]) -> List[str]`
-
-## @SUBDIRS
-*   *(No subdirectories)*
 <!-- NIKI_AUTO_Context_END -->

@@ -5,7 +5,7 @@
 <!-- Add local rules here -->
 
 <!-- NIKI_AUTO_Context_START -->
-## @FILES
+## @STRUCTURE
 *   **[__init__.py](__init__.py)**: Flows: Business Logic Pipelines.
 *   **[context_flow.py](context_flow.py)**: Flow: Recursive Context Generation.
     *   `PUB:` FUN **cleanup_legacy_map**`(file_path: Path) -> None`
@@ -31,7 +31,4 @@
     *   `PUB:` FUN **format_todo_lines**`(todos: List[TodoItem], root: Path) -> str`
     *   `GET->` VAR **priority_icon**`(self) -> str`
     *   `PUB:` FUN **run**`(config: ProjectConfig) -> bool`
-
-## @SUBDIRS
-*   *(No subdirectories)*
 <!-- NIKI_AUTO_Context_END -->

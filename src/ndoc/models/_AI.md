@@ -5,7 +5,7 @@
 <!-- Add local rules here -->
 
 <!-- NIKI_AUTO_Context_START -->
-## @FILES
+## @STRUCTURE
 *   **[__init__.py](__init__.py)**: Models: Data Definitions.
 *   **[config.py](config.py)**: Models: Configuration definitions.
     *   `PUB:` CLS **ProjectConfig**
@@ -19,7 +19,4 @@
     *   `GET->` VAR **has_content**`(self) -> bool`
     *   `GET->` VAR **is_public**`(self) -> bool`
     *   `GET->` VAR **name**`(self) -> str`
-
-## @SUBDIRS
-*   *(No subdirectories)*
 <!-- NIKI_AUTO_Context_END -->

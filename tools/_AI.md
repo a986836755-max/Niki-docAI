@@ -5,9 +5,6 @@
 <!-- Add local rules here -->
 
 <!-- NIKI_AUTO_Context_START -->
-## @FILES
+## @STRUCTURE
 *   **[doxygen.exe](doxygen.exe)**
-
-## @SUBDIRS
-*   *(No subdirectories)*
 <!-- NIKI_AUTO_Context_END -->

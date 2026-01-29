@@ -5,7 +5,10 @@
 <!-- Add local rules here -->
 
 <!-- NIKI_AUTO_Context_START -->
-## @FILES
+## @STRUCTURE
+*   **[atoms/](atoms/_AI.md)**
+*   **[flows/](flows/_AI.md)**
+*   **[models/](models/_AI.md)**
 *   **[__init__.py](__init__.py)**: Niki-docAI Source Root.
 *   **[daemon.py](daemon.py)**: Daemon: Live Context Watcher.
     *   `PUB:` CLS **DocChangeHandler**
@@ -16,9 +19,4 @@
     *   `PRV:` FUN __init__`(self, config: ProjectConfig, debounce_interval: float = 2.0)`
 *   **[entry.py](entry.py)**: Entry Point: CLI Execution.
     *   `PUB:` FUN **main**`()`
-
-## @SUBDIRS
-*   **[atoms/](atoms/_AI.md)**
-*   **[flows/](flows/_AI.md)**
-*   **[models/](models/_AI.md)**
 <!-- NIKI_AUTO_Context_END -->

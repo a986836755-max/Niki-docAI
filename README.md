@@ -89,78 +89,40 @@ pip install -e packages/nk_doc_ai
 
 ### Quick Start
 ```bash
-ndoc init               # Initialize context files (初始化上下文文件)
-ndoc map update         # Generate project map (生成项目地图)
-ndoc graph              # Generate architecture graph (生成架构图)
-ndoc tech update        # Scan dependencies (扫描依赖)
+ndoc all                # Run all update flows (执行所有更新流程)
+ndoc watch              # Start daemon to auto-update on file changes (启动守护进程自动更新)
 ```
 
 For detailed usage, check the [Detailed Usage](#6-detailed-usage--详细使用说明) section below.
 
 ---
 
-
 ## 6. Detailed Usage (详细使用说明)
 
-### 1. Initialization (项目初始化)
+### 1. Core Commands (核心命令)
 
-Start by initializing the documentation meta-files (`_RULES.md`, `_TECH.md`, etc.).
-首先初始化文档元文件（如 `_RULES.md`, `_TECH.md` 等）。
-
-```bash
-ndoc init               # Initialize meta files if missing / 初始化缺失的元文件
-ndoc init --reset-meta  # Force reset global meta files / 强制重置全局元文件
-ndoc init --reset-all   # Force reset all meta and _AI.md files recursively / 强制递归重置所有元文件和 _AI.md
-ndoc init --reset-path <path> # Reset _AI.md in specific path / 重置指定路径下的 _AI.md
-```
-
-### 2. Context Management (上下文管理)
-
-Keep your project's high-level context up to date.
-保持项目的高层上下文处于最新状态。
+Manually trigger updates for specific context files.
+手动触发特定上下文文件的更新。
 
 ```bash
-ndoc tech update        # Scan dependencies and update _TECH.md / 扫描依赖并更新 _TECH.md
-ndoc map update         # Scan directory structure and update _MAP.md / 扫描目录结构并更新 _MAP.md
-ndoc log "Title" words  # Append a decision record to _MEMORY.md / 向 _MEMORY.md 追加决策记录
+ndoc map      # Scan directory structure and update _MAP.md / 扫描目录结构并更新 _MAP.md
+ndoc tech     # Scan dependencies and update _TECH.md / 扫描依赖并更新 _TECH.md
+ndoc context  # Update _AI.md and other context files / 更新 _AI.md 等上下文文件
+ndoc todo     # Scan code TODOs and update _NEXT.md / 扫描代码 TODO 并更新 _NEXT.md
+ndoc all      # Run all of the above / 执行以上所有命令
 ```
 
-### 3. Documentation Automation (文档自动化)
-
-Tools to maintain living documentation.
-用于维护“活文档”的工具。
+### 2. Automation (自动化)
 
 ```bash
-ndoc docs init <path>   # Create _AI.md in a specific directory / 在指定目录创建 _AI.md
-ndoc docs init --all    # Recursively create _AI.md in all subdirectories / 递归在所有子目录创建 _AI.md
-ndoc docs audit         # Check if _AI.md files are out of sync with code / 检查 _AI.md 文件是否与代码不同步
-ndoc docs audit --hook <files> # Run as pre-commit hook / 作为 pre-commit 钩子运行
-ndoc docs update        # Update _AI.md files with latest code summaries / 用最新的代码摘要更新 _AI.md 文件
-ndoc link               # Auto-link glossary terms in markdown files / 自动链接 Markdown 文件中的术语
-ndoc fix                # Attempt to auto-fix missing documentation or bad links / 尝试自动修复缺失的文档或错误链接
+ndoc watch    # Monitor file changes and auto-update relevant docs / 监听文件变更并自动更新相关文档
 ```
 
-### 4. Architecture Guard (架构守护)
+### 3. Planned Commands (计划中命令)
 
-Ensure the project adheres to defined rules.
-确保项目遵守已定义的规则。
-
-```bash
-ndoc verify             # Run static analysis to verify architecture rules / 运行静态分析以验证架构规则
-ndoc graph              # Generate and display module dependency graph (Mermaid) / 生成并显示模块依赖图 (Mermaid)
-ndoc doctor             # Check toolchain health and environment / 检查工具链健康状况和环境
-```
-
-### 5. Development Helpers (开发辅助)
-
-Helpers for common development tasks.
-常用开发任务的辅助工具。
-
-```bash
-ndoc module create <name> # Scaffold a new engine module (Standard Structure) / 创建新的引擎模块脚手架（标准结构）
-ndoc build                # Trigger project build (via CMake/Script) / 触发项目构建（通过 CMake/脚本）
-ndoc test                 # Run tests and update documentation with results / 运行测试并用结果更新文档
-```
+*   `ndoc init`: Initialize project structure (初始化项目结构)
+*   `ndoc verify`: Architecture verification (架构验证)
+*   `ndoc graph`: Dependency visualization (依赖可视化)
 
 ---
 

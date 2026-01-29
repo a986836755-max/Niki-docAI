@@ -12,7 +12,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 from ndoc.models.config import ProjectConfig
-from ndoc.flows import map_flow, context_flow, tech_flow
+from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow
 
 class DocChangeHandler(FileSystemEventHandler):
     """
@@ -87,6 +87,11 @@ class DocChangeHandler(FileSystemEventHandler):
                 map_flow.run(self.config)
                 # Tech flow might need update if new file types introduced
                 tech_flow.run(self.config)
+                
+            # Always run Todo Flow on any code change
+            # Optimization: could be smarter, but fast enough for now
+            print("[Watch] Updating Todos...")
+            todo_flow.run(self.config)
             
             # 2. Content Update (Context Flow)
             # We determine which directories need update

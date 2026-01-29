@@ -5,7 +5,10 @@
 <!-- Add local rules here -->
 
 <!-- NIKI_AUTO_Context_START -->
-## @FILES
+## @STRUCTURE
+*   **[src/](src/_AI.md)**
+*   **[tests/](tests/_AI.md)**
+*   **[tools/](tools/_AI.md)**
 *   **[README.md](README.md)**
 *   **[_ARCH.md](_ARCH.md)**
 *   **[_MAP.md](_MAP.md)**
@@ -15,9 +18,4 @@
 *   **[_SYNTAX.md](_SYNTAX.md)**
 *   **[_TECH.md](_TECH.md)**
 *   **[requirements.txt](requirements.txt)**
-
-## @SUBDIRS
-*   **[src/](src/_AI.md)**
-*   **[tests/](tests/_AI.md)**
-*   **[tools/](tools/_AI.md)**
 <!-- NIKI_AUTO_Context_END -->

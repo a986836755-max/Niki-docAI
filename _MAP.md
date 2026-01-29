@@ -7,28 +7,28 @@
     *   **ndoc/**
         *   **atoms/**
             *   `_AI.md`
-            *   `__init__.py`
-            *   `ast.py`
-            *   `deps.py`
-            *   `fs.py`
-            *   `io.py`
-            *   `scanner.py`
+            *   `__init__.py` - *Atoms: File System Operations.*
+            *   `ast.py` - *Atoms: AST Parsing (Tree-sitter Wrapper).*
+            *   `deps.py` - *Atom: Dependency Parser.*
+            *   `fs.py` - *Atoms: File System Traversal.*
+            *   `io.py` - *Atoms: Input/Output Operations.*
+            *   `scanner.py` - *Atoms: Content Scanner.*
         *   **flows/**
             *   `_AI.md`
-            *   `__init__.py`
-            *   `context_flow.py`
-            *   `map_flow.py`
-            *   `tech_flow.py`
-            *   `todo_flow.py`
+            *   `__init__.py` - *Flows: Business Logic Pipelines.*
+            *   `context_flow.py` - *Flow: Recursive Context Generation.*
+            *   `map_flow.py` - *Flow: Map Generation.*
+            *   `tech_flow.py` - *Flow: Tech Stack Snapshot Generation.*
+            *   `todo_flow.py` - *Flow: Todo Aggregation.*
         *   **models/**
             *   `_AI.md`
-            *   `__init__.py`
-            *   `config.py`
-            *   `context.py`
+            *   `__init__.py` - *Models: Data Definitions.*
+            *   `config.py` - *Models: Configuration definitions.*
+            *   `context.py` - *Models: Context Models.*
         *   `_AI.md`
-        *   `__init__.py`
-        *   `daemon.py`
-        *   `entry.py`
+        *   `__init__.py` - *Niki-docAI Source Root.*
+        *   `daemon.py` - *Daemon: Live Context Watcher.*
+        *   `entry.py` - *Entry Point: CLI Execution.*
     *   `_AI.md`
 *   **tests/**
     *   `_AI.md`
