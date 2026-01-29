@@ -2,6 +2,7 @@
 Flow: Map Generation.
 业务流：生成项目结构图 (_MAP.md)。
 """
+from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Callable
@@ -24,24 +25,25 @@ def format_dir_entry(name: str, level: int) -> str:
     indent = "    " * level
     return f"{indent}*   **{name}/**"
 
-def format_file_entry(path: Path, level: int) -> str:
+def format_file_entry(path: Path, root: Path, level: int) -> str:
     """
-    Format file entry: * `name` - summary
+    Format file entry: * [`name`](path#L1) - summary
     Reads first few lines to extract summary using scanner.
     """
     indent = "    " * level
     name = path.name
     
-    # Skip summary for meta files to keep map clean?
-    # Or maybe useful to see what _TECH.md is.
+    # Calculate relative path for link
+    try:
+        rel_path = path.relative_to(root).as_posix()
+    except ValueError:
+        rel_path = name # Fallback
     
     summary = ""
     try:
         content = io.read_text(path)
         if content:
             # Only need partial scan for summary, but scanner does full.
-            # Optimization: pass content to scanner.extract_summary directly?
-            # But we need docstring first.
             docstring = scanner.extract_docstring(content)
             raw_summary = scanner.extract_summary(content, docstring)
             if raw_summary:
@@ -52,7 +54,8 @@ def format_file_entry(path: Path, level: int) -> str:
     except Exception:
         pass
 
-    return f"{indent}*   `{name}`{summary}"
+    # Link with #L1
+    return f"{indent}*   [`{name}`]({rel_path}#L1){summary}"
 
 # --- Engine (Recursive Pipeline) ---
 
@@ -76,7 +79,8 @@ def build_tree_lines(current_path: Path, context: MapContext, level: int = 0) ->
             # Recurse
             lines.extend(build_tree_lines(entry, context, level + 1))
         else:
-            lines.append(format_file_entry(entry, level))
+            # Pass context.root for relative path calculation
+            lines.append(format_file_entry(entry, context.root, level))
             
     return lines
 
@@ -112,9 +116,12 @@ def run(config: ProjectConfig) -> bool:
     # 3. Execute IO (Side Effect)
     print(f"Updating MAP at {map_file}...")
     
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
     if not map_file.exists():
         template = f"""# Project Map
 > @CONTEXT: Map | Project Structure
+> 最后更新 (Last Updated): {timestamp}
 
 ## @STRUCTURE
 {start_marker}
@@ -123,4 +130,9 @@ def run(config: ProjectConfig) -> bool:
 """
         return io.write_text(map_file, template)
     else:
-        return io.update_section(map_file, start_marker, end_marker, tree_content)
+        # Update body
+        success = io.update_section(map_file, start_marker, end_marker, tree_content)
+        # Update header timestamp
+        if success:
+            io.update_header_timestamp(map_file)
+        return success

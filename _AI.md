@@ -1,5 +1,6 @@
 # Context: nk_doc_ai
 > @CONTEXT: Local | nk_doc_ai | @TAGS: @LOCAL
+> 最后更新 (Last Updated): 2026-01-29 19:27:34
 
 ## !RULE
 <!-- Add local rules here -->

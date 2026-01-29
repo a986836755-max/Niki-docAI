@@ -1,5 +1,6 @@
 # Tech Stack Snapshot
 > @CONTEXT: Global | _TECH.md | @TAGS: @TECH @DEPS
+> 最后更新 (Last Updated): 2026-01-29 19:27:34
 
 ## 1. Languages (语言分布)
 *   **Python**: `███████████░░░░░░░░░` 59.2%

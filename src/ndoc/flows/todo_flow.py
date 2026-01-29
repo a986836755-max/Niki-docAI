@@ -2,6 +2,7 @@
 Flow: Todo Aggregation.
 业务流：聚合代码中的 TODO/FIXME 标记到 _NEXT.md。
 """
+from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Dict
@@ -96,7 +97,7 @@ def format_todo_lines(todos: List[TodoItem], root: Path) -> str:
         # Markdown link to line
         link = f"[{rel_path}:{todo.line}]({rel_path}#L{todo.line})"
         
-        line = f"*   {todo.priority_icon} **{todo.type}** `{link}`: {todo.content}"
+        line = f"*   {todo.priority_icon} **{todo.type}** {link}: {todo.content}"
         lines.append(line)
         
     return "\n".join(lines)
@@ -122,7 +123,19 @@ def run(config: ProjectConfig) -> bool:
     print(f"Updating TODOS in {next_file} ({len(todos)} found)...")
     
     if not next_file.exists():
-        # Should exist usually, but create if missing
-        return False # Fail safe
+        # Create if missing
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        template = f"""# Todo List
+> @CONTEXT: Todos | _NEXT.md
+> 最后更新 (Last Updated): {timestamp}
+
+{start_marker}
+{content}
+{end_marker}
+"""
+        return io.write_text(next_file, template)
     
-    return io.update_section(next_file, start_marker, end_marker, content)
+    success = io.update_section(next_file, start_marker, end_marker, content)
+    if success:
+        io.update_header_timestamp(next_file)
+    return success

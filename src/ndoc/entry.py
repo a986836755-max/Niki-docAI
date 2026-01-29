@@ -21,22 +21,25 @@ def main():
     description = """
 Niki-docAI 2.0 (Rebirth) - AI Context Ops Toolchain
 
-Commands:
+Core Commands (核心指令):
   init      : Initialize project structure (Create _RULES.md, _SYNTAX.md).
-              Use --force to reset configuration files.
-
-  clean     : Clean/Reset generated documentation artifacts.
-              (Deletes _AI.md, _MAP.md, etc.)
+              ⚠️  Use --force to RESET configuration files (Overwrite existing).
   
-  all       : Run ALL update flows (Recommended for init/update).
+  all       : Generate/Update ALL documentation (Recommended).
               (Map + Context + Tech + Todo + Deps)
               
   watch     : Start DAEMON mode to auto-update docs on file changes.
   
+  clean     : Clean/Reset generated documentation artifacts.
+              ⚠️  DELETES all _AI.md, _MAP.md, etc.
+              Usage: ndoc clean [target] (e.g. ndoc clean src/)
+
+Diagnostics (诊断与维护):
   verify    : Verify documentation artifacts.
   doctor    : Diagnose environment and configuration health.
   stats     : Show project statistics.
-  
+
+Granular Updates (单独更新):
   map       : Update Project Structure Map (_MAP.md).
   context   : Update Recursive Context (_AI.md).
   tech      : Update Tech Stack Snapshot (_TECH.md).
@@ -47,13 +50,17 @@ Commands:
         description=description,
         formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "all", "watch", "doctor", "init", "verify", "clean", "stats"], help="Command to execute")
+    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "all", "watch", "doctor", "init", "verify", "clean", "stats", "help"], help="Command to execute")
     parser.add_argument("target", nargs="?", help="Target file or directory (for clean command)")
     parser.add_argument("--root", default=".", help="Project root directory (Default: current dir)")
-    parser.add_argument("--force", action="store_true", help="Force execution (e.g. overwrite config in init, delete without confirm in clean)")
+    parser.add_argument("--force", action="store_true", help="⚠️ Force execution (DANGER: Overwrite configs in init, Delete without confirm in clean)")
     parser.add_argument("--dry-run", action="store_true", help="Preview changes without writing to disk")
     
     args = parser.parse_args()
+    
+    if args.command == "help":
+        parser.print_help()
+        sys.exit(0)
     
     root_path = Path(args.root).resolve()
 

@@ -44,21 +44,29 @@ In the era of AI-assisted coding, we face three major pain points:
 Niki-docAI provides a suite of tools to automate "Context Ops":
 
 *   **Automated Context Map (`_MAP.md`)**:
-    Automatically generates a navigational map of your project structure, helping AI find the right files instantly.
-    自动生成项目结构的导航地图，帮助 AI 瞬间找到正确的文件。
+    Automatically generates a navigational map of your project structure with **Precise Line References** (e.g., `file.py#L1`), helping AI find the right files instantly.
+    自动生成项目结构的导航地图，并包含**精确的行号引用**，帮助 AI 瞬间定位文件。
 
-*   **Living Architecture (`_ARCH.md`)**:
+*   **Dependency Graph (`_DEPS.md`)**:
     Scans your code to generate real-time dependency graphs (Mermaid), ensuring the architecture view is always synced with reality.
     扫描代码生成实时的依赖关系图，确保架构视图永远与现实同步。
 
-*   **Defensive Documentation (防御性文档)**:
-    Users' manual insights are preserved, while the tool automates the tedious parts (file lists, tech stacks).
-    保留用户的手动洞察，同时工具自动化处理繁琐的部分（文件列表、技术栈）。
+*   **Project Statistics (`_STATS.md`)**:
+    Provides insights into project scale, doc/code ratio, and AI context coverage.
+    提供项目规模、文档/代码比率及 AI 上下文覆盖率的统计洞察。
+
+*   **Task Tracking (`_NEXT.md`)**:
+    Aggregates TODOs and FIXMEs from source code into a prioritized roadmap.
+    自动聚合源码中的 TODO/FIXME，形成优先级明确的开发路线图。
+
+*   **Recursive Context (`_AI.md`)**:
+    Generates local context summaries in every directory, creating a fractal knowledge base.
+    在每个目录下生成局部上下文摘要，构建分形的知识库。
 
 ### Key Features (关键特性)
-1. **Configurability (可配置化)**: Unified config via `ndoc.toml`. (通过 `ndoc.toml` 进行统一配置)
+1. **Configurability (可配置化)**: Unified config via `_RULES.md` (Documentation as Configuration). (文档即配置)
 2. **Persistence (持久性)**: Respects user edits; never overwrites creative content. (尊重用户修改，绝不覆盖创作内容)
-3. **Automation (自动化)**: One-command maintenance (`ndoc map`, `ndoc graph`, `ndoc tech`). (一键维护)
+3. **Automation (自动化)**: One-command maintenance (`ndoc all`). (一键维护)
 
 ---
 
@@ -98,92 +106,62 @@ pip install -e .
 
 ### Quick Start (快速开始)
 
-1.  **Initialize/Update Docs (初始化/更新文档)**
-    ```bash
-    ndoc all
-    ```
-    This command will:
-    *   Create `_MAP.md` (Project Structure).
-    *   Create `_TECH.md` (Tech Stack).
-    *   Create `_SYNTAX.md` (Syntax Manual) if missing.
-    *   Update `_AI.md` (Recursive Context).
-    *   Scan for Todos.
-
-2.  **Configuration (配置)**
-    *   The tool will automatically create a `_RULES.md` file if it doesn't exist.
-    *   Edit `_RULES.md` to configure ignored files (`!IGNORE`) or allowed extensions (`!INCLUDE`).
-
-3.  **Watch Mode (自动监听模式)**
-    ```bash
-    ndoc watch
-    ```
-    Keep this running to auto-update documentation whenever you modify code.
-
----
-
-## 6. Detailed Usage (详细使用说明)
-
-### 1. Core Commands (核心命令)
+**1. Basic Usage (基础用法)**
 
 ```bash
-ndoc init       # Initialize project structure (use --force to reset) / 初始化项目结构
-ndoc clean      # Clean generated artifacts (use --force to skip confirm) / 清理生成产物
-ndoc all        # Run all update flows / 执行所有更新流程
-ndoc verify     # Verify documentation artifacts / 验证文档产物
-ndoc doctor     # Diagnose environment health / 诊断环境健康状态
+# Initialize Niki-docAI (Create _RULES.md, _SYNTAX.md)
+# 初始化项目（生成配置和语法手册）
+ndoc init
+
+# Generate/Update ALL documentation (Map, Context, Tech, Todo, Deps)
+# 生成/更新所有文档
+ndoc all
+
+# Start Watch Mode (Auto-update on file change)
+# 启动守护进程（文件变更时自动更新）
+ndoc watch
 ```
 
-### 2. Manual Updates (手动更新)
-
-Manually trigger updates for specific context files.
-手动触发特定上下文文件的更新。
+**2. Maintenance & Diagnostics (维护与诊断)**
 
 ```bash
-ndoc map        # Scan directory structure and update _MAP.md / 扫描目录结构并更新 _MAP.md
-ndoc tech       # Scan dependencies and update _TECH.md / 扫描依赖并更新 _TECH.md
-ndoc context    # Update _AI.md and other context files / 更新 _AI.md 等上下文文件
-ndoc todo       # Scan code TODOs and update _NEXT.md / 扫描代码 TODO 并更新 _NEXT.md
-ndoc deps       # Update Dependency Graph (_DEPS.md) / 更新依赖图谱
+# View Project Statistics (File count, Token usage, Context coverage)
+# 查看项目统计（文件数、Token 估算、上下文覆盖率）
+ndoc stats
+
+# Verify documentation artifacts and rules
+# 验证文档完整性与规则合规性
+ndoc verify
+
+# Diagnose environment and configuration health
+# 诊断环境与配置健康度
+ndoc doctor
 ```
 
-### 3. Automation (自动化)
+**⚠️ Safety Operations (安全操作与警告)**
 
 ```bash
-ndoc watch      # Monitor file changes and auto-update relevant docs / 监听文件变更并自动更新相关文档
+# Clean/Reset generated documentation artifacts
+# 清理/重置生成的文档
+# ⚠️ WARNING: Deletes ALL _AI.md, _MAP.md, etc. recursively!
+# ⚠️ 警告：这将递归删除所有的 _AI.md, _MAP.md 等生成文件！
+ndoc clean
+# Use with target to limit scope:
+# ndoc clean src/
+
+# Force Initialize
+# 强制初始化
+# ⚠️ WARNING: Overwrites _RULES.md and _SYNTAX.md!
+# ⚠️ 警告：这将覆盖现有的 _RULES.md 和 _SYNTAX.md 配置！
+ndoc init --force
 ```
 
-### 4. Maintenance (维护)
+**3. Advanced: Granular Updates (高级：单独更新)**
 
 ```bash
-ndoc clean          # Clean generated artifacts in root / 清理根目录生成产物
-ndoc clean src/     # Clean generated artifacts in specific dir / 清理指定目录产物
-ndoc init --force   # Reset configuration files / 重置配置文件
-```
-
----
-
-## CI/CD Integration / 持续集成
-
-Run `ndoc verify` in your pipeline with standard formats.
-在流水线中以标准格式运行 `ndoc verify`。
-
-```bash
-# JSON output for dashboards / 输出 JSON 供仪表盘使用
-ndoc verify --format=json
-
-# JUnit output for Jenkins/GitLab / 输出 JUnit 格式供 CI 使用
-ndoc verify --format=junit > report.xml
-```
-
-## Docker Usage / Docker 使用
-
-Run without installation via Docker.
-通过 Docker 直接运行。
-
-```bash
-# Build image / 构建镜像
-docker build -t ndoc .
-
-# Run verification / 运行验证
-docker run --rm -v $(pwd):/app ndoc verify
+ndoc map      # Update Project Map (_MAP.md)
+ndoc context  # Update Recursive Context (_AI.md)
+ndoc todo     # Scan Todos (_NEXT.md)
+ndoc deps     # Update Dependency Graph (_DEPS.md)
+ndoc tech     # Update Tech Stack (_TECH.md)
 ```

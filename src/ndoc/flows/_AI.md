@@ -1,5 +1,6 @@
 # Context: flows
 > @CONTEXT: Local | flows | @TAGS: @LOCAL
+> 最后更新 (Last Updated): 2026-01-29 19:27:32
 
 ## !RULE
 <!-- Add local rules here -->
@@ -41,7 +42,7 @@
     *   `PUB:` CLS **MapContext**
     *   `PUB:` FUN **build_tree_lines**`(current_path: Path, context: MapContext, level: int = 0) -> List[str]`
     *   `PUB:` FUN **format_dir_entry**`(name: str, level: int) -> str`
-    *   `PUB:` FUN **format_file_entry**`(path: Path, level: int) -> str`
+    *   `PUB:` FUN **format_file_entry**`(path: Path, root: Path, level: int) -> str`
     *   `PUB:` FUN **generate_tree_content**`(config: ProjectConfig) -> str`
     *   `PUB:` FUN **run**`(config: ProjectConfig) -> bool`
 *   **[stats_flow.py](stats_flow.py)**: Flow: Statistics.

@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import List, Optional
+from datetime import datetime
 
 from ..atoms import fs, io, scanner, ast, deps
 from ..models.config import ProjectConfig
@@ -20,7 +21,8 @@ def format_file_summary(ctx: FileContext) -> str:
     """
     格式化文件摘要 (Format file summary).
     """
-    summary = f"*   **[{ctx.path.name}]({ctx.path.name})**"
+    # Link to file with Line 1 reference
+    summary = f"*   **[{ctx.path.name}]({ctx.path.name}#L1)**"
     
     # Add docstring first line if available
     if ctx.docstring:
@@ -108,7 +110,8 @@ def generate_dir_content(context: DirectoryContext) -> str:
         has_content = True
         for d_path in context.subdirs:
             # Add trailing slash to indicate directory clearly
-            lines.append(f"*   **[{d_path.name}/]({d_path.name}/_AI.md)**")
+            # Link to _AI.md inside subdirectory, with #L1
+            lines.append(f"*   **[{d_path.name}/]({d_path.name}/_AI.md#L1)**")
 
     # 2. Files (Content second)
     if context.files:
@@ -147,22 +150,13 @@ def cleanup_legacy_map(file_path: Path) -> None:
     has_changes = False
     
     # Remove ## @MAP ... <!-- NIKI_MAP_END -->
-    # Pattern handles:
-    # ## @MAP
-    # <!-- NIKI_MAP_START -->
-    # ...
-    # <!-- NIKI_MAP_END -->
     pattern = r"## @MAP\s*<!-- NIKI_MAP_START -->.*?<!-- NIKI_MAP_END -->\s*"
     
     if re.search(pattern, content, re.DOTALL):
         content = re.sub(pattern, "", content, flags=re.DOTALL)
         has_changes = True
         
-    # Also clean up standalone ## @MAP if it remains (e.g. if markers were missing)
-    # Be careful not to delete user content if they used ## @MAP without markers
-    # But ## @MAP is a reserved system keyword in our design, so it should be safe.
     if "## @MAP" in content:
-        # Simple removal of the header line
         content = re.sub(r"^## @MAP\s*$", "", content, flags=re.MULTILINE)
         has_changes = True
         
@@ -178,13 +172,10 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True)
         recursive: Whether to process subdirectories recursively.
     """
     # 1. List Contents (Atom: fs)
-    # We use a localized filter config based on the project config
     filter_config = fs.FileFilter(
         ignore_patterns=set(config.scan.ignore_patterns),
-        # We can add extension filters here if needed, but for context we might want to see more
     )
     
-    # fs.list_dir returns sorted paths
     entries = fs.list_dir(path, filter_config)
     
     files: List[FileContext] = []
@@ -194,28 +185,16 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True)
     for entry in entries:
         if entry.is_dir():
             subdirs.append(entry)
-            # Recurse immediately (Depth-first)
             if recursive:
                 process_directory(entry, config, recursive=True)
         else:
-            # Check if it's a source file we care about (e.g., .py)
-            # For now, let's process all files that pass the filter, 
-            # but detailed AST only for Python.
-            
-            # Skip meta files (start with _) to avoid infinite loops or noise, 
-            # except maybe for referencing? 
-            # Rule: Don't document the documentation files themselves in the code context?
-            # Let's include them but maybe treat differently.
-            # For now, simple rule: Skip _AI.md to avoid self-reference loop in content generation
             if entry.name == "_AI.md":
                 continue
 
-            # Read content
             content = io.read_text(entry)
             if content is None:
                 continue
                 
-            # Scan
             scan_result = scanner.scan_file_content(content, entry)
             
             f_ctx = FileContext(
@@ -226,13 +205,9 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True)
                 symbols=scan_result.symbols,
                 docstring=scan_result.docstring
             )
-            
-            # AST Extraction is already done in scan_file_content if applicable
-                
             files.append(f_ctx)
     
     # 3. Generate Content (Transform)
-    # Only generate _AI.md if there is something relevant (files or subdirs)
     if not files and not subdirs:
         return
 
@@ -242,23 +217,18 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True)
     # 4. Write Output (Atom: io)
     ai_file = path / "_AI.md"
     
-    # Pre-cleanup: Remove legacy MAP section to avoid conflicts
     cleanup_legacy_map(ai_file)
-    
-    # We want to preserve manual sections if they exist, or just overwrite?
-    # The requirement is "Recursive Local Context". Usually these are auto-generated.
-    # But adhering to "Zero Overwrite", we should use markers if we want to allow user edits.
-    # However, for pure context files, maybe full generation is better?
-    # Let's stick to the Project Pattern: Use Markers.
     
     start_marker = "<!-- NIKI_AUTO_Context_START -->"
     end_marker = "<!-- NIKI_AUTO_Context_END -->"
     
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     # Check if file exists to initialize it with markers if needed
     if not ai_file.exists():
-        # Initialize with standard template (Header + Rules + Auto Body)
         template = f"""# Context: {path.name}
 > @CONTEXT: Local | {path.name} | @TAGS: @LOCAL
+> 最后更新 (Last Updated): {timestamp}
 
 ## !RULE
 <!-- Add local rules here -->
@@ -269,12 +239,13 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True)
 """
         io.write_text(ai_file, template)
     else:
-        # Update dynamic section only
-        if not io.update_section(ai_file, start_marker, end_marker, content):
-            # Markers missing, append them (fallback)
+        if io.update_section(ai_file, start_marker, end_marker, content):
+            io.update_header_timestamp(ai_file)
+        else:
             print(f"Injecting missing Context markers into {ai_file}")
             wrapped_content = f"\n\n{start_marker}\n{content}\n{end_marker}\n"
             io.append_text(ai_file, wrapped_content)
+            io.update_header_timestamp(ai_file)
 
 # --- Entry Point ---
 

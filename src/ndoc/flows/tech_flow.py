@@ -2,6 +2,7 @@
 Flow: Tech Stack Snapshot Generation.
 业务流：生成技术栈快照 (_TECH.md)。
 """
+from datetime import datetime
 from pathlib import Path
 from ndoc.models.config import ProjectConfig
 from ndoc.atoms import io, deps
@@ -60,9 +61,12 @@ def run(config: ProjectConfig) -> bool:
     
     tech_file = config.scan.root_path / "_TECH.md"
     
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
     # Template
     template = f"""# Tech Stack Snapshot
 > @CONTEXT: Global | _TECH.md | @TAGS: @TECH @DEPS
+> 最后更新 (Last Updated): {timestamp}
 
 {content}
 
