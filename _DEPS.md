@@ -9,7 +9,14 @@ graph TD
     ndoc.daemon --> ndoc.models.config
     ndoc.entry --> ndoc.daemon
     ndoc.entry --> ndoc.models.config
+    ndoc.flows.clean_flow --> ndoc.models.config
+    ndoc.flows.config_flow --> ndoc.models.config
+    ndoc.flows.doctor_flow --> ndoc.models.config
+    ndoc.flows.init_flow --> ndoc.models.config
+    ndoc.flows.stats_flow --> ndoc.models.config
+    ndoc.flows.syntax_flow --> ndoc.models.config
     ndoc.flows.tech_flow --> ndoc.models.config
+    ndoc.flows.verify_flow --> ndoc.models.config
     tests.test_ast --> ndoc.atoms.ast
     tests.test_ast --> ndoc.models.context
     tests.test_scanner --> ndoc.atoms.scanner

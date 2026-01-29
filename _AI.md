@@ -16,7 +16,9 @@
 *   **[_MEMORY.md](_MEMORY.md)**
 *   **[_NEXT.md](_NEXT.md)**
 *   **[_RULES.md](_RULES.md)**
+*   **[_STATS.md](_STATS.md)**
 *   **[_SYNTAX.md](_SYNTAX.md)**
 *   **[_TECH.md](_TECH.md)**
 *   **[requirements.txt](requirements.txt)**
+*   **[setup.py](setup.py)**
 <!-- NIKI_AUTO_Context_END -->

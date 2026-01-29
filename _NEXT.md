@@ -54,5 +54,5 @@
 > Auto-generated from source code. Do not edit manually.
 
 <!-- NIKI_TODO_START -->
-* *No code todos found.*
+*   🔵 **TODO** `[src/ndoc/flows/verify_flow.py:38](src/ndoc/flows/verify_flow.py#L38)`: Implement deeper rule verification
 <!-- NIKI_TODO_END -->

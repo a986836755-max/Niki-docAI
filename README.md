@@ -82,18 +82,42 @@ Niki-docAI aims to become the standard **Protocol** for how projects expose thei
 
 ## 5. Installation & Quick Start (安装与快速开始)
 
+### Installation (安装)
+
 ```bash
-# Install in editable mode / 以编辑模式安装
-pip install -e packages/nk_doc_ai
+# Clone the repository / 克隆仓库
+git clone https://github.com/your-org/nk_doc_ai.git
+cd nk_doc_ai
+
+# Install / 安装
+pip install .
+
+# For development (Editable mode) / 开发模式安装
+pip install -e .
 ```
 
-### Quick Start
-```bash
-ndoc all                # Run all update flows (执行所有更新流程)
-ndoc watch              # Start daemon to auto-update on file changes (启动守护进程自动更新)
-```
+### Quick Start (快速开始)
 
-For detailed usage, check the [Detailed Usage](#6-detailed-usage--详细使用说明) section below.
+1.  **Initialize/Update Docs (初始化/更新文档)**
+    ```bash
+    ndoc all
+    ```
+    This command will:
+    *   Create `_MAP.md` (Project Structure).
+    *   Create `_TECH.md` (Tech Stack).
+    *   Create `_SYNTAX.md` (Syntax Manual) if missing.
+    *   Update `_AI.md` (Recursive Context).
+    *   Scan for Todos.
+
+2.  **Configuration (配置)**
+    *   The tool will automatically create a `_RULES.md` file if it doesn't exist.
+    *   Edit `_RULES.md` to configure ignored files (`!IGNORE`) or allowed extensions (`!INCLUDE`).
+
+3.  **Watch Mode (自动监听模式)**
+    ```bash
+    ndoc watch
+    ```
+    Keep this running to auto-update documentation whenever you modify code.
 
 ---
 
@@ -101,28 +125,40 @@ For detailed usage, check the [Detailed Usage](#6-detailed-usage--详细使用�
 
 ### 1. Core Commands (核心命令)
 
+```bash
+ndoc init       # Initialize project structure (use --force to reset) / 初始化项目结构
+ndoc clean      # Clean generated artifacts (use --force to skip confirm) / 清理生成产物
+ndoc all        # Run all update flows / 执行所有更新流程
+ndoc verify     # Verify documentation artifacts / 验证文档产物
+ndoc doctor     # Diagnose environment health / 诊断环境健康状态
+```
+
+### 2. Manual Updates (手动更新)
+
 Manually trigger updates for specific context files.
 手动触发特定上下文文件的更新。
 
 ```bash
-ndoc map      # Scan directory structure and update _MAP.md / 扫描目录结构并更新 _MAP.md
-ndoc tech     # Scan dependencies and update _TECH.md / 扫描依赖并更新 _TECH.md
-ndoc context  # Update _AI.md and other context files / 更新 _AI.md 等上下文文件
-ndoc todo     # Scan code TODOs and update _NEXT.md / 扫描代码 TODO 并更新 _NEXT.md
-ndoc all      # Run all of the above / 执行以上所有命令
+ndoc map        # Scan directory structure and update _MAP.md / 扫描目录结构并更新 _MAP.md
+ndoc tech       # Scan dependencies and update _TECH.md / 扫描依赖并更新 _TECH.md
+ndoc context    # Update _AI.md and other context files / 更新 _AI.md 等上下文文件
+ndoc todo       # Scan code TODOs and update _NEXT.md / 扫描代码 TODO 并更新 _NEXT.md
+ndoc deps       # Update Dependency Graph (_DEPS.md) / 更新依赖图谱
 ```
 
-### 2. Automation (自动化)
+### 3. Automation (自动化)
 
 ```bash
-ndoc watch    # Monitor file changes and auto-update relevant docs / 监听文件变更并自动更新相关文档
+ndoc watch      # Monitor file changes and auto-update relevant docs / 监听文件变更并自动更新相关文档
 ```
 
-### 3. Planned Commands (计划中命令)
+### 4. Maintenance (维护)
 
-*   `ndoc init`: Initialize project structure (初始化项目结构)
-*   `ndoc verify`: Architecture verification (架构验证)
-*   `ndoc graph`: Dependency visualization (依赖可视化)
+```bash
+ndoc clean          # Clean generated artifacts in root / 清理根目录生成产物
+ndoc clean src/     # Clean generated artifacts in specific dir / 清理指定目录产物
+ndoc init --force   # Reset configuration files / 重置配置文件
+```
 
 ---
 

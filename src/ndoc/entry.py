@@ -10,31 +10,101 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ndoc.models.config import ProjectConfig, ScanConfig
-from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow
+from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow, config_flow, syntax_flow, doctor_flow, init_flow, verify_flow, clean_flow, stats_flow
 from ndoc.daemon import start_watch_mode
+from ndoc.atoms import io
 
 def main():
     """
     CLI 主入口 (CLI Main Entry).
     """
-    parser = argparse.ArgumentParser(description="Niki-docAI 2.0 (Rebirth)")
-    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "all", "watch"], help="Command to execute")
-    parser.add_argument("--root", default=".", help="Project root directory")
+    description = """
+Niki-docAI 2.0 (Rebirth) - AI Context Ops Toolchain
+
+Commands:
+  init      : Initialize project structure (Create _RULES.md, _SYNTAX.md).
+              Use --force to reset configuration files.
+
+  clean     : Clean/Reset generated documentation artifacts.
+              (Deletes _AI.md, _MAP.md, etc.)
+  
+  all       : Run ALL update flows (Recommended for init/update).
+              (Map + Context + Tech + Todo + Deps)
+              
+  watch     : Start DAEMON mode to auto-update docs on file changes.
+  
+  verify    : Verify documentation artifacts.
+  doctor    : Diagnose environment and configuration health.
+  stats     : Show project statistics.
+  
+  map       : Update Project Structure Map (_MAP.md).
+  context   : Update Recursive Context (_AI.md).
+  tech      : Update Tech Stack Snapshot (_TECH.md).
+  todo      : Scan and aggregate Todos (_NEXT.md).
+  deps      : Update Dependency Graph (_DEPS.md).
+"""
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "all", "watch", "doctor", "init", "verify", "clean", "stats"], help="Command to execute")
+    parser.add_argument("target", nargs="?", help="Target file or directory (for clean command)")
+    parser.add_argument("--root", default=".", help="Project root directory (Default: current dir)")
+    parser.add_argument("--force", action="store_true", help="Force execution (e.g. overwrite config in init, delete without confirm in clean)")
+    parser.add_argument("--dry-run", action="store_true", help="Preview changes without writing to disk")
     
     args = parser.parse_args()
     
     root_path = Path(args.root).resolve()
-    
-    # 构建配置 (Build Config)
-    # 暂时使用硬编码的默认配置，后续可以从 ndoc.toml 加载
-    config = ProjectConfig(
-        scan=ScanConfig(root_path=root_path),
-        name=root_path.name
-    )
+
+    # Set Global Dry Run Mode
+    if args.dry_run:
+        io.set_dry_run(True)
+        print("⚠️  DRY RUN MODE: No changes will be written to disk.")
     
     print(f"Starting Niki-docAI 2.0 in {root_path}")
+
+    # 1. Ensure Configuration Files Exist (Documentation as Configuration)
+    # Skip ensures for doctor command to diagnose raw state
+    # Also skip for init, as init handles it explicitly
+    if args.command not in ["doctor", "init"]:
+        config_flow.ensure_rules_file(root_path)
+        syntax_flow.run(ProjectConfig(scan=ScanConfig(root_path=root_path))) # Ensure syntax manual
+
+    # 2. Load Configuration
+    config = config_flow.load_project_config(root_path)
     
     success = True
+    
+    if args.command == "init":
+        if init_flow.run(config, force=args.force):
+            sys.exit(0)
+        else:
+            sys.exit(1)
+            
+    if args.command == "clean":
+        if clean_flow.run(config, target=args.target, force=args.force):
+            sys.exit(0)
+        else:
+            sys.exit(1)
+
+    if args.command == "doctor":
+        if doctor_flow.run(config):
+            sys.exit(0)
+        else:
+            sys.exit(1)
+
+    if args.command == "stats":
+        if stats_flow.run(config, force=True):
+            sys.exit(0)
+        else:
+            sys.exit(1)
+            
+    if args.command == "verify":
+        if verify_flow.run(config):
+            sys.exit(0)
+        else:
+            sys.exit(1)
     
     if args.command in ["map", "all"]:
         print("Running Map Flow...")
@@ -76,6 +146,13 @@ def main():
         else:
             print("❌ Dependency Graph update failed.")
             success = False
+
+    if args.command in ["stats", "all"]:
+        # Stats is low priority, run last. Check interval internally.
+        if stats_flow.run(config, force=False):
+            pass # Stats failures shouldn't fail the build usually
+        else:
+            print("❌ Stats update failed.")
             
     if args.command == "watch":
         start_watch_mode(config)
