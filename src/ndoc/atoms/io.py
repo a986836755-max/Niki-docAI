@@ -3,6 +3,7 @@ Atoms: Input/Output Operations.
 副作用隔离层：所有磁盘读写必须在此完成。
 """
 import os
+import re
 from pathlib import Path
 from typing import List, Optional
 
@@ -75,3 +76,42 @@ def append_text(path: Path, content: str) -> bool:
     except Exception as e:
         print(f"Error appending to {path}: {e}")
         return False
+
+def update_section(path: Path, start_marker: str, end_marker: str, new_content: str) -> bool:
+    """
+    更新文件指定标记之间的内容 (Update content between markers).
+    
+    Args:
+        path: 文件路径
+        start_marker: 开始标记 (不包含换行符)
+        end_marker: 结束标记 (不包含换行符)
+        new_content: 新内容
+        
+    Returns:
+        bool: 是否更新成功 (True if updated, False if marker not found or error)
+    """
+    content = read_text(path)
+    if content is None:
+        return False
+
+    # 转义标记以用于正则 (Escape markers for regex)
+    # 使用 DOTALL 模式匹配跨行内容
+    pattern = re.compile(
+        f"({re.escape(start_marker)})(.*?)({re.escape(end_marker)})",
+        re.DOTALL
+    )
+    
+    if not pattern.search(content):
+        print(f"Markers not found in {path}: {start_marker} ... {end_marker}")
+        return False
+    
+    # 保留标记，替换中间内容
+    # 确保新内容前后有换行，保持整洁
+    replacement = f"\\1\n{new_content}\n\\3"
+    updated_content = pattern.sub(replacement, content)
+    
+    if updated_content != content:
+        return write_text(path, updated_content)
+    
+    return True
+

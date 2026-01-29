@@ -16,22 +16,33 @@
 
 ## @TREE (Directory Structure)
 <!-- NIKI_MAP_START -->
-- **[ndoc_legacy](ndoc_legacy)**
-  - **[src](ndoc_legacy/src)**: Source Code Root (源代码根目录)
-    - **[ndoc](ndoc_legacy/src/ndoc)**
-      - **[base](ndoc_legacy/src/ndoc/base)**
-      - **[core](ndoc_legacy/src/ndoc/core)**: Core Logic (核心逻辑)
-      - **[features](ndoc_legacy/src/ndoc/features)**: Feature Modules (功能模块)
-      - **[resources](ndoc_legacy/src/ndoc/resources)**
-    - **[niki_docai.egg-info](ndoc_legacy/src/niki_docai.egg-info)**
-    - **[niki_toolchain.egg-info](ndoc_legacy/src/niki_toolchain.egg-info)**
-  - **[test](ndoc_legacy/test)**: Test Suites (测试套件)
-    - **[playground](ndoc_legacy/test/playground)**
-      - **[subdir](ndoc_legacy/test/playground/subdir)**
-- **[src](src)**: Source Code Root (源代码根目录)
-  - **[ndoc](src/ndoc)**
-    - **[atoms](src/ndoc/atoms)**
-    - **[flows](src/ndoc/flows)**
-    - **[models](src/ndoc/models)**
-- **[tools](tools)**: Dev Tools & Scripts (开发工具与脚本)
+*   **src/**
+    *   **ndoc/**
+        *   **atoms/**
+            *   `_AI.md`
+            *   `__init__.py`
+            *   `fs.py`
+            *   `io.py`
+        *   **flows/**
+            *   `_AI.md`
+            *   `__init__.py`
+            *   `map_flow.py`
+        *   **models/**
+            *   `_AI.md`
+            *   `__init__.py`
+            *   `config.py`
+        *   `_AI.md`
+        *   `__init__.py`
+        *   `entry.py`
+*   **tools/**
+    *   `_AI.md`
+    *   `doxygen.exe`
+*   `README.md`
+*   `_AI.md`
+*   `_ARCH.md`
+*   `_MAP.md`
+*   `_NEXT.md`
+*   `_RULES.md`
+*   `_SYNTAX.md`
+*   `_TECH.md`
 <!-- NIKI_MAP_END -->
