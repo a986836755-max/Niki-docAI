@@ -17,6 +17,7 @@
             *   `_AI.md`
             *   `__init__.py` - *Flows: Business Logic Pipelines.*
             *   `context_flow.py` - *Flow: Recursive Context Generation.*
+            *   `deps_flow.py` - *Flow: Dependency Graph Generation.*
             *   `map_flow.py` - *Flow: Map Generation.*
             *   `tech_flow.py` - *Flow: Tech Stack Snapshot Generation.*
             *   `todo_flow.py` - *Flow: Todo Aggregation.*
@@ -41,6 +42,7 @@
 *   `README.md`
 *   `_AI.md`
 *   `_ARCH.md`
+*   `_DEPS.md`
 *   `_MAP.md`
 *   `_MEMORY.md`
 *   `_NEXT.md`

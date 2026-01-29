@@ -7,7 +7,7 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from ..atoms import fs, io, scanner, ast
+from ..atoms import fs, io, scanner, ast, deps
 from ..models.config import ProjectConfig
 from ..models.context import FileContext, DirectoryContext
 
@@ -73,6 +73,25 @@ def format_symbol_list(ctx: FileContext) -> str:
         lines.append(f"    *   {display}")
     return "\n".join(lines)
 
+def format_dependencies(ctx: FileContext) -> str:
+    """
+    Format dependencies list (if any).
+    Uses indentation and keyword markers for visibility.
+    """
+    try:
+        content = io.read_text(ctx.path)
+        imports = deps.extract_imports(content)
+        if not imports:
+            return ""
+            
+        # Use simple indent line
+        deps_str = ", ".join(imports)
+        
+        # No truncation, allow full visibility
+        return f"    *   `@DEP` {deps_str}"
+    except:
+        return ""
+
 def generate_dir_content(context: DirectoryContext) -> str:
     """
     生成目录上下文内容 (Generate directory context content).
@@ -100,9 +119,14 @@ def generate_dir_content(context: DirectoryContext) -> str:
             sym_list = format_symbol_list(f_ctx)
             if sym_list:
                 lines.append(sym_list)
-                
+            
+            # Add dependencies
+            dep_info = format_dependencies(f_ctx)
+            if dep_info:
+                lines.append(dep_info)
+
     if not has_content:
-        lines.append("*   *(Empty directory)*")
+        lines.append("*   *No structural content.*")
             
     return "\n".join(lines)
 

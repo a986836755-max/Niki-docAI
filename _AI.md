@@ -11,6 +11,7 @@
 *   **[tools/](tools/_AI.md)**
 *   **[README.md](README.md)**
 *   **[_ARCH.md](_ARCH.md)**
+*   **[_DEPS.md](_DEPS.md)**
 *   **[_MAP.md](_MAP.md)**
 *   **[_MEMORY.md](_MEMORY.md)**
 *   **[_NEXT.md](_NEXT.md)**

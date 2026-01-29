@@ -22,8 +22,8 @@
 > **Goal**: 最大化 AI 对项目的理解能力，降低 Context Window 消耗，提供"上帝视角"。
 
 *   [ ] **Dependency Graph (_DEPS.md)**:
-    *   [ ] 实现 `deps.py` 的 AST Import 提取。
-    *   [ ] 生成模块依赖关系图 (Module Dependency Graph)，帮助 AI 理解修改的影响范围。
+    *   [x] 实现 `deps.py` 的 AST Import 提取。
+    *   [x] 生成模块依赖关系图 (Module Dependency Graph)，帮助 AI 理解修改的影响范围。
 *   [ ] **Symbol Index (_SYMBOLS.md)**:
     *   [ ] 生成全项目符号表 (Classes/Functions/Signatures)，提供 API 速查手册。
     *   [ ] 提取 Docstring Summary，建立语义索引。

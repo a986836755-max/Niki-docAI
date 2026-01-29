@@ -10,6 +10,7 @@
 *   **[config.py](config.py)**: Models: Configuration definitions.
     *   `PUB:` CLS **ProjectConfig**
     *   `PUB:` CLS **ScanConfig**
+    *   `@DEP` dataclasses, pathlib, typing
 *   **[context.py](context.py)**: Models: Context Models.
     *   `PUB:` CLS **DirectoryContext**
     *   `PUB:` CLS **FileContext**
@@ -19,4 +20,5 @@
     *   `GET->` VAR **has_content**`(self) -> bool`
     *   `GET->` VAR **is_public**`(self) -> bool`
     *   `GET->` VAR **name**`(self) -> str`
+    *   `@DEP` dataclasses, pathlib, typing
 <!-- NIKI_AUTO_Context_END -->

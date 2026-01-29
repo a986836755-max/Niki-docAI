@@ -17,6 +17,8 @@
     *   `PUB:` FUN **start_watch_mode**`(config: ProjectConfig)`
     *   `PUB:` FUN **trigger_update**`(self)`
     *   `PRV:` FUN __init__`(self, config: ProjectConfig, debounce_interval: float = 2.0)`
+    *   `@DEP` ndoc.flows, ndoc.models.config, pathlib, threading, time, typing, watchdog.events, watchdog.observers
 *   **[entry.py](entry.py)**: Entry Point: CLI Execution.
     *   `PUB:` FUN **main**`()`
+    *   `@DEP` argparse, ndoc.daemon, ndoc.flows, ndoc.models.config, pathlib, sys
 <!-- NIKI_AUTO_Context_END -->

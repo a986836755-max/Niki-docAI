@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ndoc.models.config import ProjectConfig, ScanConfig
-from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow
+from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow
 from ndoc.daemon import start_watch_mode
 
 def main():
@@ -18,7 +18,7 @@ def main():
     CLI 主入口 (CLI Main Entry).
     """
     parser = argparse.ArgumentParser(description="Niki-docAI 2.0 (Rebirth)")
-    parser.add_argument("command", choices=["map", "context", "tech", "todo", "all", "watch"], help="Command to execute")
+    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "all", "watch"], help="Command to execute")
     parser.add_argument("--root", default=".", help="Project root directory")
     
     args = parser.parse_args()
@@ -67,6 +67,14 @@ def main():
             print("✅ Todo updated successfully.")
         else:
             print("❌ Todo update failed.")
+            success = False
+
+    if args.command in ["deps", "all"]:
+        print("Running Deps Flow...")
+        if deps_flow.run(config):
+            print("✅ Dependency Graph updated successfully.")
+        else:
+            print("❌ Dependency Graph update failed.")
             success = False
             
     if args.command == "watch":
