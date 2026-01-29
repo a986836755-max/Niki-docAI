@@ -17,10 +17,10 @@
 *   **[context_flow.py](context_flow.py)**: Flow: Recursive Context Generation.
     *   `PUB:` FUN **cleanup_legacy_map**`(file_path: Path) -> None`
     *   `PUB:` FUN **format_dependencies**`(ctx: FileContext) -> str`
-    *   `PUB:` FUN **format_file_summary**`(ctx: FileContext) -> str`
+    *   `PUB:` FUN **format_file_summary**`(ctx: FileContext, root: Optional[Path] = None) -> str`
     *   `PUB:` FUN **format_symbol_list**`(ctx: FileContext) -> str`
     *   `PUB:` FUN **generate_dir_content**`(context: DirectoryContext) -> str`
-    *   `PUB:` FUN **process_directory**`(path: Path, config: ProjectConfig, recursive: bool = True) -> None`
+    *   `PUB:` FUN **process_directory**`(path: Path, config: ProjectConfig, recursive: bool = True, parent_aggregate: bool = False) -> Optional[DirectoryContext]`
     *   `PUB:` FUN **run**`(config: ProjectConfig) -> bool`
     *   `PUB:` FUN **update_directory**`(path: Path, config: ProjectConfig) -> bool`
     *   `PRV:` FUN _format_single_symbol`(sym, level: int)`

@@ -37,6 +37,7 @@
     *   `PUB:` FUN **walk_files**`(root: Path, ignore_patterns: List[str], extensions: List[str] = None) -> Iterator[Path]`
 *   **[io.py](io.py)**: Atoms: Input/Output Operations.
     *   `PUB:` FUN **append_text**`(path: Path, content: str) -> bool`
+    *   `PUB:` FUN **delete_file**`(path: Path) -> bool`
     *   `PUB:` FUN **read_lines**`(path: Path) -> List[str]`
     *   `PUB:` FUN **read_text**`(path: Path) -> Optional[str]`
     *   `PUB:` FUN **safe_io**`(operation: Callable[..., Any], error_msg: str, *args, **kwargs) -> Any`
@@ -45,6 +46,7 @@
     *   `PUB:` FUN **update_section**`(path: Path, start_marker: str, end_marker: str, new_content: str) -> bool`
     *   `PUB:` FUN **write_text**`(path: Path, content: str) -> bool`
     *   `PRV:` FUN _append`()`
+    *   `PRV:` FUN _delete`()`
     *   `PRV:` FUN _read`()`
     *   `PRV:` FUN _write`()`
 *   **[queries.py](queries.py)**

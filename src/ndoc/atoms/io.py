@@ -218,3 +218,25 @@ def update_header_timestamp(path: Path) -> bool:
                 new_content = f"{ts_line}\n{content}"
     
     return write_text(path, new_content)
+
+def delete_file(path: Path) -> bool:
+    """
+    安全删除文件 (Safely delete file).
+    
+    Args:
+        path: 文件路径
+        
+    Returns:
+        bool: 是否成功
+    """
+    if _DRY_RUN_MODE:
+        if path.exists():
+            print(f"❌ [DryRun] Would delete: {path}")
+        return True
+
+    def _delete():
+        if path.exists():
+            path.unlink()
+        return True
+    
+    return safe_io(_delete, f"Error deleting {path}: {{e}}") is True

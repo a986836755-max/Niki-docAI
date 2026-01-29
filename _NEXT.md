@@ -56,4 +56,11 @@
 
 <!-- NIKI_TODO_START -->
 *   🔵 **TODO** `[src/ndoc/flows/verify_flow.py:38](src/ndoc/flows/verify_flow.py#L38)`: Implement deeper rule verification
+*   🔵 **TODO** `[vendors/tree-sitter-dart/grammar.js:42](vendors/tree-sitter-dart/grammar.js#L42)`: general things to add
+*   🔵 **TODO** `[vendors/tree-sitter-dart/grammar.js:858](vendors/tree-sitter-dart/grammar.js#L858)`: The spec says optional but it breaks tests, and I'm not sure in a good way.
+*   🔵 **TODO** `[vendors/tree-sitter-dart/grammar.js:1218](vendors/tree-sitter-dart/grammar.js#L1218)`: add rethrow statement.
+*   🔵 **TODO** `[vendors/tree-sitter-dart/grammar.js:1923](vendors/tree-sitter-dart/grammar.js#L1923)`: This should only work with native?
+*   🔵 **TODO** `[vendors/tree-sitter-dart/grammar.js:2007](vendors/tree-sitter-dart/grammar.js#L2007)`: add in the 'late' keyword from the informal draft spec:
+*   🔵 **TODO** `[vendors/tree-sitter-dart/grammar.js:2833](vendors/tree-sitter-dart/grammar.js#L2833)`: add support for triple-slash comments as a special category.
+*   🔵 **TODO** `[vendors/tree-sitter-dart/test/corpus/flutter.txt:53](vendors/tree-sitter-dart/test/corpus/flutter.txt#L53)`: implement build
 <!-- NIKI_TODO_END -->

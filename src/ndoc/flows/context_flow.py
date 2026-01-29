@@ -17,12 +17,27 @@ from ..models.context import FileContext, DirectoryContext
 
 # --- Transformations (Pure) ---
 
-def format_file_summary(ctx: FileContext) -> str:
+def format_file_summary(ctx: FileContext, root: Optional[Path] = None) -> str:
     """
     格式化文件摘要 (Format file summary).
+    Args:
+        root: Root directory for relative path calculation.
     """
+    # Calculate display path
+    display_name = ctx.path.name
+    link_target = ctx.path.name
+    
+    if root:
+        try:
+            # Use forward slashes for Markdown links
+            rel = ctx.path.relative_to(root)
+            display_name = str(rel).replace('\\', '/')
+            link_target = display_name
+        except ValueError:
+            pass
+            
     # Link to file with Line 1 reference
-    summary = f"*   **[{ctx.path.name}]({ctx.path.name}#L1)**"
+    summary = f"*   **[{display_name}]({link_target}#L1)**"
     
     # Add docstring first line if available
     if ctx.docstring:
@@ -165,7 +180,7 @@ def generate_dir_content(context: DirectoryContext) -> str:
             # Add dependencies
             dep_info = format_dependencies(f_ctx)
             
-            summary = format_file_summary(f_ctx)
+            summary = format_file_summary(f_ctx, root=context.path)
             if dep_info:
                 summary += dep_info
             
@@ -212,32 +227,82 @@ def cleanup_legacy_map(file_path: Path) -> None:
     if has_changes:
         io.write_text(file_path, content.strip() + "\n")
 
-def process_directory(path: Path, config: ProjectConfig, recursive: bool = True) -> None:
+def process_directory(path: Path, config: ProjectConfig, recursive: bool = True, parent_aggregate: bool = False) -> Optional[DirectoryContext]:
     """
     处理单个目录 (Process single directory).
     Args:
         path: Target directory path.
         config: Project configuration.
         recursive: Whether to process subdirectories recursively.
+        parent_aggregate: Whether the parent directory is aggregating this one.
     """
+    # 0. Read Local Context & Tags to determine behavior
+    ai_file = path / "_AI.md"
+    local_tags = []
+    if ai_file.exists():
+        content = io.read_text(ai_file) or ""
+        local_tags = scanner.parse_tags(content)
+
+    is_aggregate = any(t.name == "@AGGREGATE" for t in local_tags)
+    is_check_ignore = any(t.name == "@CHECK_IGNORE" for t in local_tags)
+    
+    # Logic:
+    # 1. If parent is aggregating, we do NOT write _AI.md (parent_aggregate=True)
+    # 2. If @CHECK_IGNORE, we do NOT write _AI.md (treated as ignored for doc gen)
+    should_write_ai = not parent_aggregate and not is_check_ignore
+    
     # 1. List Contents (Atom: fs)
+    # We iterate manually to handle !IGNORE cleanup properly
     filter_config = fs.FileFilter(
         ignore_patterns=set(config.scan.ignore_patterns),
     )
     
-    entries = fs.list_dir(path, filter_config)
+    try:
+        all_entries = sorted(list(path.iterdir()), key=lambda x: (x.is_file(), x.name))
+    except (PermissionError, FileNotFoundError):
+        return None
     
     files: List[FileContext] = []
     subdirs: List[Path] = []
     
-    # 2. Classify & Scan (Atom: scanner, ast)
-    for entry in entries:
+    # 2. Classify & Scan
+    for entry in all_entries:
+        # Check Ignore Rules
+        if fs.should_ignore(entry.name, filter_config):
+            # CLEANUP: If it's a directory, ensure no _AI.md exists
+            if entry.is_dir():
+                ignored_ai = entry / "_AI.md"
+                if ignored_ai.exists():
+                    # print(f"Cleaning up ignored context: {ignored_ai}")
+                    io.delete_file(ignored_ai)
+            continue
+            
         if entry.is_dir():
-            subdirs.append(entry)
             if recursive:
-                process_directory(entry, config, recursive=True)
-        else:
+                # Recurse
+                # If we are aggregating, tell child to NOT write (parent_aggregate=True)
+                # If we are @CHECK_IGNORE, also tell child to NOT write (cleanup only)
+                pass_aggregate = is_aggregate or is_check_ignore
+                
+                child_ctx = process_directory(entry, config, recursive=True, parent_aggregate=pass_aggregate)
+                
+                if child_ctx:
+                    if is_aggregate and not is_check_ignore:
+                        # @AGGREGATE: Merge child content (files & subdirs)
+                        files.extend(child_ctx.files)
+                        subdirs.extend(child_ctx.subdirs)
+                    elif not is_check_ignore:
+                        # Normal: Link to subdir
+                        subdirs.append(entry)
+            else:
+                if not is_check_ignore:
+                    subdirs.append(entry)
+                    
+        else: # File
             if entry.name == "_AI.md":
+                continue
+                
+            if is_check_ignore:
                 continue
 
             content = io.read_text(entry)
@@ -257,25 +322,24 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True)
             files.append(f_ctx)
     
     # 3. Generate Content (Transform)
-    if not files and not subdirs:
-        return
+    # Even if we don't write, we return context for parent
+    ctx = DirectoryContext(path=path, files=files, subdirs=subdirs)
+    
+    if should_write_ai:
+        if files or subdirs:
+            content = generate_dir_content(ctx)
+            
+            # 4. Write Output (Atom: io)
+            cleanup_legacy_map(ai_file)
+            
+            start_marker = "<!-- NIKI_AUTO_Context_START -->"
+            end_marker = "<!-- NIKI_AUTO_Context_END -->"
+            
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    dir_context = DirectoryContext(path=path, files=files, subdirs=subdirs)
-    content = generate_dir_content(dir_context)
-    
-    # 4. Write Output (Atom: io)
-    ai_file = path / "_AI.md"
-    
-    cleanup_legacy_map(ai_file)
-    
-    start_marker = "<!-- NIKI_AUTO_Context_START -->"
-    end_marker = "<!-- NIKI_AUTO_Context_END -->"
-    
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # Check if file exists to initialize it with markers if needed
-    if not ai_file.exists():
-        template = f"""# Context: {path.name}
+            # Check if file exists to initialize it with markers if needed
+            if not ai_file.exists():
+                template = f"""# Context: {path.name}
 > @CONTEXT: Local | {path.name} | @TAGS: @LOCAL
 > 最后更新 (Last Updated): {timestamp}
 
@@ -286,15 +350,22 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True)
 {content}
 {end_marker}
 """
-        io.write_text(ai_file, template)
+                io.write_text(ai_file, template)
+            else:
+                if io.update_section(ai_file, start_marker, end_marker, content):
+                    io.update_header_timestamp(ai_file)
+                else:
+                    print(f"Injecting missing Context markers into {ai_file}")
+                    wrapped_content = f"\n\n{start_marker}\n{content}\n{end_marker}\n"
+                    io.append_text(ai_file, wrapped_content)
+                    io.update_header_timestamp(ai_file)
     else:
-        if io.update_section(ai_file, start_marker, end_marker, content):
-            io.update_header_timestamp(ai_file)
-        else:
-            print(f"Injecting missing Context markers into {ai_file}")
-            wrapped_content = f"\n\n{start_marker}\n{content}\n{end_marker}\n"
-            io.append_text(ai_file, wrapped_content)
-            io.update_header_timestamp(ai_file)
+        # Cleanup: If we shouldn't write, ensure file doesn't exist
+        if ai_file.exists():
+            # print(f"Removing redundant context: {ai_file}")
+            io.delete_file(ai_file)
+
+    return ctx
 
 # --- Entry Point ---
 

@@ -36,6 +36,11 @@ try:
 except ImportError:
     tsrust = None
 
+try:
+    import tree_sitter_dart as tsdart
+except ImportError:
+    tsdart = None
+
 from tree_sitter import Language, Parser, Tree, Node
 
 from ..models.context import Symbol
@@ -54,7 +59,8 @@ EXT_MAP = {
     '.ts': 'typescript',
     '.tsx': 'typescript',
     '.go': 'go',
-    '.rs': 'rust'
+    '.rs': 'rust',
+    '.dart': 'dart'
 }
 
 # Cache languages
@@ -79,6 +85,8 @@ def get_language(lang_key: str) -> Optional[Language]:
         lang_obj = Language(tsgo.language())
     elif lang_key == 'rust' and tsrust:
         lang_obj = Language(tsrust.language())
+    elif lang_key == 'dart' and tsdart:
+        lang_obj = Language(tsdart.language())
         
     if lang_obj:
         _LANGUAGES[lang_key] = lang_obj

@@ -168,6 +168,13 @@ RUST_SCM = """
 ) @func_def
 """
 
+DART_SCM = """
+(class_definition name: (identifier) @name) @class_def
+(mixin_declaration name: (identifier) @name) @class_def
+(enum_declaration name: (identifier) @name) @class_def
+(function_definition name: (identifier) @name) @func_def
+"""
+
 # Map language keys to SCM
 QUERY_MAP = {
     "python": PYTHON_SCM,
@@ -175,5 +182,6 @@ QUERY_MAP = {
     "javascript": JAVASCRIPT_SCM,
     "typescript": TYPESCRIPT_SCM,
     "go": GO_SCM,
-    "rust": RUST_SCM
+    "rust": RUST_SCM,
+    "dart": DART_SCM
 }
