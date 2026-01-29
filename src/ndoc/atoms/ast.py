@@ -131,11 +131,16 @@ def parse_code(content: str, file_path: Optional[Path] = None) -> Optional[Tree]
     Returns:
         Tree: Tree-sitter Tree 对象
     """
-    lang_key = 'python' # Default
+    lang_key = None
     if file_path:
         ext = file_path.suffix.lower()
-        lang_key = EXT_MAP.get(ext, 'python')
+        lang_key = EXT_MAP.get(ext)
+    else:
+        lang_key = 'python' # Default only if no file_path provided (e.g. testing)
         
+    if not lang_key:
+        return None
+
     parser = get_parser(lang_key)
     if not parser:
         return None
@@ -389,6 +394,12 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
                 kind = 'method'
             if parent_name and kind == 'async_function':
                 kind = 'async_method'
+
+            # Prevent recursion/collision for constructors or same-named methods
+            # If a method has the same name as its parent (common in C++ constructors),
+            # append '()' to the name to distinguish it in the hierarchy map.
+            if parent_name and name == parent_name and kind in ('function', 'method', 'async_function', 'async_method'):
+                name = f"{name}()"
 
             sym = Symbol(
                 name=name,
