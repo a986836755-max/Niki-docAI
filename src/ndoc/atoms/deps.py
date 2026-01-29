@@ -9,6 +9,17 @@ import re
 import configparser
 import json
 import ast
+from . import fs
+
+# --- Configuration (Logic as Data) ---
+
+DEFAULT_IGNORE_PATTERNS = {
+    '.git', '.vscode', '.idea', '__pycache__', 
+    'node_modules', 'venv', 'env', '.env', 
+    'dist', 'build', 'target', 'out', 
+    '.dart_tool', '.pub-cache', 
+    'coverage', 'tmp', 'temp'
+}
 
 # --- Language Stats ---
 
@@ -43,34 +54,24 @@ LANGUAGE_EXTENSIONS = {
 def detect_languages(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, float]:
     """
     扫描项目文件扩展名，统计语言占比 (Scan project for language statistics).
+    Uses recursive scan with pruning for performance.
+    
     Returns:
         Dict[Language, Percentage]
     """
-    from . import fs # Avoid circular import if any
-    
-    # Use existing fs lister but we need recursive all files
-    # Simple walk for now as we need stats
     stats = Counter()
     total_files = 0
     
-    ignore = ignore_patterns or {'.git', '.vscode', '__pycache__', 'node_modules', 'venv', 'env', 'dist', 'build'}
+    # Use default ignore patterns if not provided
+    ignores = list(ignore_patterns or DEFAULT_IGNORE_PATTERNS)
     
-    for path in root_path.rglob('*'):
-        if path.is_dir():
-            if path.name in ignore:
-                continue
-            # Skip if parent is ignored (rough check)
-            if any(p in ignore for p in path.parts):
-                continue
-        elif path.is_file():
-            if any(p in ignore for p in path.parts):
-                continue
-                
-            ext = path.suffix.lower()
-            if ext in LANGUAGE_EXTENSIONS:
-                lang = LANGUAGE_EXTENSIONS[ext]
-                stats[lang] += 1
-                total_files += 1
+    # Use fs.walk_files for consistent ignoring and pruning
+    for path in fs.walk_files(root_path, ignore_patterns=ignores):
+        ext = path.suffix.lower()
+        if ext in LANGUAGE_EXTENSIONS:
+            lang = LANGUAGE_EXTENSIONS[ext]
+            stats[lang] += 1
+            total_files += 1
     
     if total_files == 0:
         return {}
@@ -288,6 +289,7 @@ def extract_dart_imports(content: str) -> List[str]:
 def get_project_dependencies(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, List[str]]:
     """
     Detect and parse dependency files recursively.
+    Uses fs.walk_files for efficient pruning.
     Returns: Dict[RelativeFilePath, List[Dependency]]
     """
     results = {}
@@ -300,30 +302,19 @@ def get_project_dependencies(root_path: Path, ignore_patterns: Set[str] = None) 
         'CMakeLists.txt': parse_cmake_lists,
     }
     
-    ignore = ignore_patterns or {'.git', '.vscode', '__pycache__', 'node_modules', 'venv', 'env', 'dist', 'build', '.dart_tool'}
+    ignores = list(ignore_patterns or DEFAULT_IGNORE_PATTERNS)
 
-    # Walk the directory tree
-    for path in root_path.rglob('*'):
-        if path.is_dir():
-            if path.name in ignore:
-                continue
-            # Check if any parent is ignored (optimization: rglob descends, so we might process children of ignored dirs if not careful)
-            # Actually rglob returns all files. We need to manually filter paths inside ignored dirs.
-            if any(p in ignore for p in path.parts):
-                continue
-        elif path.is_file():
-            if any(p in ignore for p in path.parts):
-                continue
-            
-            if path.name in target_files:
-                parser = target_files[path.name]
-                try:
-                    deps = parser(path)
-                    if deps:
-                        # Use relative path for readability
-                        rel_path = path.relative_to(root_path).as_posix()
-                        results[rel_path] = deps
-                except Exception:
-                    pass
+    # Walk with pruning
+    for path in fs.walk_files(root_path, ignore_patterns=ignores):
+        if path.name in target_files:
+            parser = target_files[path.name]
+            try:
+                deps = parser(path)
+                if deps:
+                    # Use relative path for readability
+                    rel_path = fs.get_relative_path(path, root_path)
+                    results[rel_path] = deps
+            except Exception:
+                pass
                     
     return results
