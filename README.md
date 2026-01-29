@@ -64,10 +64,23 @@ Niki-docAI provides a suite of tools to automate "Context Ops":
     在每个目录下生成局部上下文摘要，构建分形的知识库。
 
 ### Key Features (关键特性)
-1. **Configurability (可配置化)**: Unified config via `_RULES.md` (Documentation as Configuration). (文档即配置)
-2. **Persistence (持久性)**: Respects user edits; never overwrites creative content. (尊重用户修改，绝不覆盖创作内容)
-3. **Automation (自动化)**: One-command maintenance (`ndoc all`). (一键维护)
-4. **Multi-Language Support (多语言支持)**: Built-in Tree-sitter integration for polyglot codebases. (内置 Tree-sitter 集成，支持多语言代码库)
+1. **Configurability (可配置化)**:
+    Unified config via `_RULES.md` (Documentation as Configuration).
+    通过 `_RULES.md` 进行统一配置（文档即配置）。
+    - *Reference `_RULES.md` for `!IGNORE`, `!INCLUDE`, and special keywords like `@AGGREGATE` and `@CHECK_IGNORE`.*
+    - *参阅 `_RULES.md` 了解 `!IGNORE`, `!INCLUDE` 以及 `@AGGREGATE`, `@CHECK_IGNORE` 等特殊关键字。*
+
+2. **Persistence (持久性)**:
+    Respects user edits; never overwrites creative content.
+    尊重用户修改；绝不覆盖用户的创作内容。
+
+3. **Automation (自动化)**:
+    One-command maintenance (`ndoc all`).
+    一键自动化维护 (`ndoc all`)。
+
+4. **Multi-Language Support (多语言支持)**:
+    Built-in Tree-sitter integration for polyglot codebases.
+    内置 Tree-sitter 集成，支持多语言混合代码库。
 
 ### Supported Languages (支持的语言)
 *   **Python** (`.py`)
