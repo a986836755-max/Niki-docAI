@@ -1,3 +1,4 @@
+import os
 import re
 import yaml
 from pathlib import Path
@@ -25,30 +26,35 @@ def scan_languages(root):
     counts = {}
     
     # Limit depth to avoid scanning huge node_modules or build dirs
-    dirs_to_scan = [
-        root / 'engine',
-        root / 'client',
-        root / 'scripts',
-        root / 'tools',
-        root / 'src',
-        root / 'packages',
-    ]
+    # We now scan based on what's available, skipping ignored dirs
+    dirs_to_scan = []
     
-    for d in dirs_to_scan:
-        if not d.exists(): continue
-        for p in d.rglob('*'):
-            if p.is_file():
-                ext = p.suffix.lower()
-                name = p.name
+    # 1. Add root itself
+    dirs_to_scan.append(root)
+
+    # 2. Add common subdirectories if they exist and are not ignored
+    # Note: We rely on os.walk recursion in a real scan, but here we just list specific roots to check for existence
+    # to avoid scanning the entire hard drive if root is /.
+    # But since we use rglob('*'), we should be careful.
+    
+    # Better approach: Recursively scan from root, respecting IGNORE_DIRS
+    for current_root, dirs, files in os.walk(root):
+        # Modify dirs in-place to skip ignored directories
+        dirs[:] = [d for d in dirs if d not in config.IGNORE_DIRS and not d.startswith('.')]
+        
+        path_obj = Path(current_root)
+        
+        for name in files:
+            ext = Path(name).suffix.lower()
+            
+            lang = None
+            if name in ext_map: # Check full filename first
+                lang = ext_map[name]
+            elif ext in ext_map:
+                lang = ext_map[ext]
                 
-                lang = None
-                if name in ext_map: # Check full filename first (like CMakeLists.txt)
-                    lang = ext_map[name]
-                elif ext in ext_map:
-                    lang = ext_map[ext]
-                    
-                if lang:
-                    counts[lang] = counts.get(lang, 0) + 1
+            if lang:
+                counts[lang] = counts.get(lang, 0) + 1
 
     # Filter out low noise
     for lang, count in counts.items():
@@ -289,7 +295,7 @@ def update(root):
     lines = []
     
     # Header
-    lines.append(config.TECH_HEADER_TEMPLATE.format(toolchain=config.TOOLCHAIN_VERSION))
+    lines.append(config.TECH_HEADER_TEMPLATE.format(version=config.TOOLCHAIN_VERSION))
     
     for cat in sorted_cats:
         lines.append(f"## {cat}")

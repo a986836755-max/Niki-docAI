@@ -106,6 +106,17 @@ def scan_physical_dirs(root_path):
                 
         if is_valid:
             context = get_ai_context(item)
+            # Fix: If get_ai_context returns None, try to find @DOMAIN tag
+            if not context and item.is_dir():
+                try:
+                    ai_file = item / "_AI.md"
+                    if ai_file.exists():
+                        content = ai_file.read_text(encoding='utf-8')
+                        match = re.search(r'@DOMAIN:\s*(.*)', content)
+                        if match:
+                            context = match.group(1).strip()
+                except: pass
+                
             results[item.name] = context
             
     return results
@@ -124,22 +135,15 @@ def update_map_content(content, root_path):
         if config.MAP_HEADER_PATTERN.match(line):
             in_map = True
             map_start_idx = i
-            new_lines.append(line)
             continue
             
         if in_map:
             if config.NEXT_HEADER_PATTERN.match(line):
                 in_map = False
                 map_end_idx = i
-                new_lines.append(line)
             else:
-                if map_end_idx == -1: # Still in map
-                    map_lines.append(line)
-                else:
-                    new_lines.append(line)
-        else:
-            new_lines.append(line)
-            
+                map_lines.append(line)
+        
     if map_start_idx == -1:
         # No map header found, just return content
         return content
@@ -204,9 +208,9 @@ def update_map_content(content, root_path):
         
     # 5. Re-insert into content
     prefix_lines = lines[:map_start_idx+1]
-    suffix_lines = lines[map_end_idx:] if map_end_idx != len(lines) else []
+    suffix_lines = lines[map_end_idx:]
     
-    return "\n".join(prefix_lines + final_lines + suffix_lines)
+    return "\n".join(prefix_lines + final_lines + suffix_lines) + "\n"
 
 def process_file(file_path):
     if not file_path.exists():

@@ -5,8 +5,74 @@ import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 import fnmatch
+import ast
 from pathlib import Path
 from ndoc.core import console, config, utils
+
+def extract_docstring(file_path):
+    """
+    Extracts the top-level docstring or first comment from a code file.
+    Supports Python (via AST) and C++/Dart/JS (via Regex).
+    """
+    try:
+        content = file_path.read_text(encoding='utf-8', errors='replace')
+        suffix = file_path.suffix.lower()
+
+        # 1. Python: Use AST + Comment Fallback
+        if suffix == '.py':
+            try:
+                tree = ast.parse(content)
+                docstring = ast.get_docstring(tree)
+                if docstring:
+                    # Return first line of docstring
+                    return docstring.strip().split('\n')[0]
+            except:
+                pass
+                
+            # Fallback: Check first few lines for # comments
+            for line in content.splitlines()[:10]:
+                line = line.strip()
+                if not line: continue
+                if line.startswith('#'):
+                    # Skip shebang/encoding
+                    if line.startswith('#!') or line.startswith('# -*-'):
+                        continue
+                    return line.lstrip('#').strip()
+                else:
+                    # Found code or other stuff (imports, defs), stop searching
+                    break
+
+        # 2. C-style (C++, C, Dart, JS, TS, Java, Swift)
+        if suffix in {'.cpp', '.h', '.hpp', '.c', '.cc', '.dart', '.js', '.ts', '.java', '.kt', '.swift'}:
+            # Match /** ... */ or // ... at start of file
+            # Limit search to first 1000 chars to save time
+            header = content[:1000]
+            
+            # Pattern 1: Doxygen/Javadoc style /** ... */
+            match = re.search(r'/\*\*(.*?)\*/', header, re.DOTALL)
+            if match:
+                raw = match.group(1).strip()
+                # Remove leading *
+                clean = re.sub(r'^\s*\*\s?', '', raw, flags=re.MULTILINE).strip()
+                return clean.split('\n')[0]
+
+            # Pattern 2: Simple block comment /* ... */
+            match = re.search(r'/\*(.*?)\*/', header, re.DOTALL)
+            if match:
+                raw = match.group(1).strip()
+                clean = re.sub(r'^\s*\*\s?', '', raw, flags=re.MULTILINE).strip()
+                return clean.split('\n')[0]
+                
+            # Pattern 3: Top-level line comments // ...
+            # Must be at the very beginning or after whitespace
+            match = re.search(r'^\s*//\s*(.*)', header, re.MULTILINE)
+            if match:
+                return match.group(1).strip()
+
+    except Exception:
+        pass
+        
+    return None
 
 def init_ai_md(path_str, verbose=True, reset=False):
     """
@@ -15,14 +81,19 @@ def init_ai_md(path_str, verbose=True, reset=False):
     root = utils.get_project_root()
     # Handle path_str being a Path object or string
     if isinstance(path_str, Path):
-        # If it's absolute, make it relative to root for consistency if needed, 
-        # but here we just want the target directory.
-        if path_str.is_absolute():
-            target_dir = path_str
+        target_path = path_str
+        if target_path.is_absolute():
+            pass # Keep as is
         else:
-            target_dir = (root / path_str).resolve()
+            target_path = (root / target_path).resolve()
     else:
-        target_dir = (root / path_str).resolve()
+        target_path = (root / path_str).resolve()
+        
+    # If input is a file (ends with .md or exists as file), use its parent
+    if target_path.name.lower() == '_ai.md' or (target_path.exists() and target_path.is_file()):
+        target_dir = target_path.parent
+    else:
+        target_dir = target_path
     
     if not target_dir.exists():
         console.error(f"Directory not found: {target_dir}")
@@ -39,10 +110,22 @@ def init_ai_md(path_str, verbose=True, reset=False):
     module_name = target_dir.name
     domain_tag = f"domain.{module_name.lower()}"
     
+    # Smart Description Inference
+    desc_override = None
+    if module_name.lower() in config.COMMON_DIR_PATTERNS:
+        desc_override = config.COMMON_DIR_PATTERNS[module_name.lower()]
+    
     content = config.AI_TEMPLATE.format(
         module_name=module_name,
         domain_tag=domain_tag
     )
+    
+    # Apply override if found
+    if desc_override:
+        content = content.replace(
+            "(Describe the core responsibility of this module. Why does it exist?)",
+            desc_override
+        )
     
     try:
         ai_file.write_text(content, encoding='utf-8')
@@ -83,10 +166,157 @@ def init_all_recursive(start_path=".", reset=False):
             created_count += 1
         else:
             skipped_count += 1
+
+        # Check for @AGGREGATE tag to stop recursion
+        ai_file = current_path / "_AI.md"
+        if ai_file.exists():
+            try:
+                content = ai_file.read_text(encoding='utf-8')
+                if config.AGGREGATE_TAG in content:
+                    # Stop recursing into subdirectories for this branch
+                    dirs[:] = []
+                    # console.info(f"  [Aggregate] Stopping recursion at {current_path.name}")
+            except:
+                pass
             
     console.success(f"Batch initialization complete.")
     console.info(f"  Processed: {created_count}")
     console.info(f"  Skipped (Already exists): {skipped_count}")
+
+def update_ai_md(path_str):
+    """
+    Updates the _AI.md file in the specified directory with auto-generated content.
+    """
+    root = utils.get_project_root()
+    # Handle path_str being a Path object or string
+    if isinstance(path_str, Path):
+        target_dir = path_str
+    else:
+        target_dir = (root / path_str).resolve()
+        
+    ai_file = target_dir / "_AI.md"
+    
+    if not ai_file.exists():
+        return False
+        
+    try:
+        content = ai_file.read_text(encoding='utf-8')
+        
+        # Check for auto-doc markers
+        if config.MARKER_START not in content or config.MARKER_END not in content:
+            # If markers are missing, check if we can migrate the old template
+            # Old template pattern: ## 2. Architecture\n### Components...
+            if "## 2. Architecture" in content:
+                # We will try to replace everything between "## 2. Architecture" and "## 3. Constraints"
+                # or just inject markers if the structure matches old default.
+                
+                # Regex to match the old default body of Section 2
+                old_default_pattern = re.compile(
+                    r"## 2\. Architecture\s+### Components.*?### Systems.*?(?=## 3\.)", 
+                    re.DOTALL
+                )
+                
+                if old_default_pattern.search(content):
+                    # Replace with new structure containing markers
+                    new_section_template = f"## 2. Architecture\n{config.MARKER_START}\n(Auto-generated file list)\n{config.MARKER_END}\n\n"
+                    content = old_default_pattern.sub(new_section_template, content)
+                    # Write back immediately so we can proceed to update
+                    ai_file.write_text(content, encoding='utf-8')
+                else:
+                    # If it doesn't match exact default, maybe just append markers after "## 2. Architecture"
+                    # But be careful not to destroy user content.
+                    # For now, let's just insert markers after "## 2. Architecture" line if we can't find them.
+                    content = content.replace("## 2. Architecture", f"## 2. Architecture\n{config.MARKER_START}\n{config.MARKER_END}")
+                    ai_file.write_text(content, encoding='utf-8')
+            
+            # Re-read content or continue with modified content
+            # (We already updated 'content' variable if we did replace)
+            if config.MARKER_START not in content:
+                 return False
+
+        # Scan for code files
+        code_files = []
+        is_aggregate = config.AGGREGATE_TAG in content
+
+        if is_aggregate:
+            # Recursive scan for aggregated modules
+            for r, ds, fs in os.walk(target_dir):
+                # Filter ignored dirs
+                ds[:] = [d for d in ds if d not in config.IGNORE_DIRS and not d.startswith('.')]
+                
+                for f in fs:
+                    fpath = Path(r) / f
+                    if fpath.suffix in config.CODE_EXTENSIONS:
+                        rel_path = fpath.relative_to(target_dir)
+                        code_files.append(str(rel_path).replace(os.sep, '/'))
+        else:
+            # Flat scan (default)
+            for f in target_dir.iterdir():
+                if f.is_file() and f.suffix in config.CODE_EXTENSIONS:
+                    code_files.append(f.name)
+        
+        code_files.sort()
+        
+        if not code_files:
+            file_list_md = "(No code files detected)"
+        else:
+            file_list_md = ""
+            if is_aggregate:
+                file_list_md += "<!-- (Aggregated View) -->\n"
+            for f in code_files:
+                # Try to extract docstring
+                desc = ""
+                # f is relative path string, need full path
+                full_path = target_dir / f
+                
+                doc_summary = extract_docstring(full_path)
+                if doc_summary:
+                    desc = f": {doc_summary}"
+                
+                file_list_md += f"- [{f}]({f}){desc}\n"
+                
+        # Replace content between markers
+        pattern = re.compile(
+            re.escape(config.MARKER_START) + r".*?" + re.escape(config.MARKER_END),
+            re.DOTALL
+        )
+        
+        new_section = f"{config.MARKER_START}\n### Files\n{file_list_md}{config.MARKER_END}"
+        new_content = pattern.sub(new_section, content)
+        
+        if new_content != content:
+            ai_file.write_text(new_content, encoding='utf-8')
+            return True
+            
+    except Exception as e:
+        console.warning(f"Failed to update {ai_file}: {e}")
+        
+    return False
+
+def update_all_recursive(start_path="."):
+    """
+    Recursively updates _AI.md in all subdirectories.
+    """
+    root = utils.get_project_root()
+    start_dir = (root / start_path).resolve()
+    
+    if not start_dir.exists():
+        console.error(f"Directory not found: {start_dir}")
+        return
+
+    console.log(f"Updating _AI.md files in {start_dir}...")
+    updated_count = 0
+    
+    for current_root, dirs, files in os.walk(start_dir):
+        # Filter ignored dirs in-place
+        dirs[:] = [d for d in dirs if d not in config.IGNORE_DIRS and not d.startswith('.')]
+        
+        current_path = Path(current_root)
+        if (current_path / "_AI.md").exists():
+            if update_ai_md(current_path):
+                updated_count += 1
+                
+    console.success(f"Batch update complete. Updated: {updated_count} files.")
 
 # -----------------------------------------------------------------------------
 # Docs Audit Logic (formerly audit_docs_sync.py)

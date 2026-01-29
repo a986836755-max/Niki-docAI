@@ -95,3 +95,31 @@ ndoc module create <name> # Scaffold a new engine module (Standard Structure) / 
 ndoc build                # Trigger project build (via CMake/Script) / 触发项目构建（通过 CMake/脚本）
 ndoc test                 # Run tests and update documentation with results / 运行测试并用结果更新文档
 ```
+
+---
+
+## CI/CD Integration / 持续集成
+
+Run `ndoc verify` in your pipeline with standard formats.  
+在流水线中以标准格式运行 `ndoc verify`。
+
+```bash
+# JSON output for dashboards / 输出 JSON 供仪表盘使用
+ndoc verify --format=json
+
+# JUnit output for Jenkins/GitLab / 输出 JUnit 格式供 CI 使用
+ndoc verify --format=junit > report.xml
+```
+
+## Docker Usage / Docker 使用
+
+Run without installation via Docker.  
+通过 Docker 直接运行。
+
+```bash
+# Build image / 构建镜像
+docker build -t ndoc .
+
+# Run verification / 运行验证
+docker run --rm -v $(pwd):/app ndoc verify
+```

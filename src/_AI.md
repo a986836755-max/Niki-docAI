@@ -7,11 +7,9 @@
 (Describe the core responsibility of this module. Why does it exist?)
 
 ## 2. Architecture
-### Components
-- [ExampleComponent](components/example_component.ext): Description.
-
-### Systems
-- [ExampleSystem](systems/example_system.ext): Description.
+<!-- NIKI_AUTO_DOC_START -->
+### Files
+(No code files detected)<!-- NIKI_AUTO_DOC_END -->
 
 ## 3. Constraints (!RULE)
 - !RULE: (Add constraint here)

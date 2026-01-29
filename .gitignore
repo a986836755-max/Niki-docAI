@@ -143,3 +143,7 @@ cython_debug/
 # IDE
 .vscode/
 .idea/
+
+# Local Tools (Binaries)
+tools/
+

@@ -9,7 +9,8 @@
 
 ```mermaid
 graph TD;
-    root[Root] --> ...
+    src;
+    tools;
 ```
 
 ## 2. Analysis

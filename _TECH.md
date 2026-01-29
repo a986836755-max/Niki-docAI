@@ -4,3 +4,10 @@
 > **Tags**: `@TECH` `@VERSION`
 <!-- NIKI_VERSION: 0.1.0 -->
 
+
+## 1. Core Languages
+*   **Python**: `Detected` (Scripting Language)
+
+## 5. Other Dependencies
+*   **Pyyaml**: `>=6.0`
+*   **Tomli**: `>=2.0.0; python_version < '3.11'`
