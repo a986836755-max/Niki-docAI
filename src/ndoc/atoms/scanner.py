@@ -174,6 +174,42 @@ def extract_summary(content: str, docstring: str) -> str:
     return ""
 
 
+def regex_scan(content: str, ext: str) -> List[Symbol]:
+    """
+    Fallback regex scanner for unsupported languages (Dart, FlatBuffers).
+    """
+    symbols = []
+    
+    if ext == '.dart':
+        # Class/Mixin/Enum
+        for m in re.finditer(r'^\s*(class|mixin|enum)\s+(\w+)', content, re.MULTILINE):
+            kind = m.group(1)
+            name = m.group(2)
+            line = content[:m.start()].count('\n') + 1
+            symbols.append(Symbol(name=name, kind=kind, line=line))
+            
+        # Function/Method (Simplified: Type name(params))
+        # Matches: Future<void> main() or void main() or String getName()
+        # Avoid control flow keywords
+        for m in re.finditer(r'^\s*([a-zA-Z0-9_<>]+)\s+([a-zA-Z0-9_]+)\s*\(', content, re.MULTILINE):
+             ret_type = m.group(1)
+             name = m.group(2)
+             if ret_type in ('if', 'for', 'while', 'switch', 'catch', 'return'): 
+                 continue
+             line = content[:m.start()].count('\n') + 1
+             symbols.append(Symbol(name=name, kind='function', line=line, signature=ret_type))
+
+    elif ext == '.fbs':
+        # table/struct/enum Name
+        for m in re.finditer(r'^\s*(table|struct|enum)\s+(\w+)', content, re.MULTILINE):
+            kind = m.group(1)
+            name = m.group(2)
+            line = content[:m.start()].count('\n') + 1
+            symbols.append(Symbol(name=name, kind=kind, line=line))
+            
+    return symbols
+
+
 def scan_file_content(content: str, file_path: Optional[Path] = None) -> ScanResult:
     """
     全量扫描文件内容 (Full scan of file content).
@@ -190,19 +226,25 @@ def scan_file_content(content: str, file_path: Optional[Path] = None) -> ScanRes
     symbols = []
     # Now supports multiple languages, let ast.py decide based on extension
     if file_path:
+        tree = None
         try:
             tree = parse_code(content, file_path)
-            if tree:
-                # extract_symbols requires bytes for accurate byte offsets if needed,
-                # though our implementation uses AST nodes which map to byte offsets usually.
-                # But let's check extract_symbols signature: (tree, content_bytes)
-                symbols = extract_symbols(tree, content.encode("utf-8"), file_path)
         except Exception as e:
-            # Fallback or log warning? For now, silent fail or minimal logging is safer for a scanner
-            # to avoid crashing the whole process on one bad file.
-            # But in dev, we might want to know.
-            print(f"AST Scan Error in {file_path}: {e}")
+            print(f"AST Parse Error in {file_path}: {e}")
             pass
+            
+        if tree:
+            try:
+                symbols = extract_symbols(tree, content.encode("utf-8"), file_path)
+            except Exception as e:
+                print(f"AST Extraction Error in {file_path}: {e}")
+                pass
+        
+        # Fallback to Regex if AST failed or returned nothing (and it's a target language)
+        if not symbols:
+            ext = file_path.suffix.lower()
+            if ext in ('.dart', '.fbs'):
+                symbols = regex_scan(content, ext)
 
     return ScanResult(
         tags=tags,

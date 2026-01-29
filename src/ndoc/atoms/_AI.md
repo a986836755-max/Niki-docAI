@@ -56,6 +56,7 @@
     *   `PUB:` FUN **extract_todos**`(content: str) -> List[dict]`
     *   `PUB:` FUN **parse_sections**`(content: str) -> Dict[str, Section]`
     *   `PUB:` FUN **parse_tags**`(content: str) -> List[Tag]`
+    *   `PUB:` FUN **regex_scan**`(content: str, ext: str) -> List[Symbol]`
     *   `PUB:` FUN **scan_file_content**`(content: str, file_path: Optional[Path] = None) -> ScanResult`
     *   `PRV:` FUN _extract_args`(args_str: Optional[str]) -> List[str]`
 <!-- NIKI_AUTO_Context_END -->

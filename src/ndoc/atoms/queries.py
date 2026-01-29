@@ -81,6 +81,11 @@ CPP_SCM = """
     ]
   )
 ) @func_def
+
+(field_declaration
+  type: (_) @field_type
+  declarator: (field_identifier) @field_name
+) @field_def
 """
 
 JAVASCRIPT_SCM = """
