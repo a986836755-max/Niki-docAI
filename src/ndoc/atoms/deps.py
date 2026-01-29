@@ -1,3 +1,4 @@
+
 """
 Atom: Dependency Parser.
 原子能力：依赖文件解析与语言统计。
@@ -284,36 +285,45 @@ def extract_dart_imports(content: str) -> List[str]:
         pass
     return sorted(list(imports))
 
-def get_project_dependencies(root_path: Path) -> Dict[str, List[str]]:
+def get_project_dependencies(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, List[str]]:
     """
-    Detect and parse dependency files.
-    Returns: Dict[SourceFile, List[Dependency]]
+    Detect and parse dependency files recursively.
+    Returns: Dict[RelativeFilePath, List[Dependency]]
     """
     results = {}
     
-    # Python
-    req_txt = root_path / "requirements.txt"
-    if req_txt.exists():
-        results["requirements.txt"] = parse_requirements_txt(req_txt)
-        
-    pyproj = root_path / "pyproject.toml"
-    if pyproj.exists():
-        results["pyproject.toml"] = parse_pyproject_toml(pyproj)
-        
-    # JS/TS
-    pkg_json = root_path / "package.json"
-    if pkg_json.exists():
-        results["package.json"] = parse_package_json(pkg_json)
+    target_files = {
+        'requirements.txt': parse_requirements_txt,
+        'pyproject.toml': parse_pyproject_toml,
+        'package.json': parse_package_json,
+        'pubspec.yaml': parse_pubspec_yaml,
+        'CMakeLists.txt': parse_cmake_lists,
+    }
+    
+    ignore = ignore_patterns or {'.git', '.vscode', '__pycache__', 'node_modules', 'venv', 'env', 'dist', 'build', '.dart_tool'}
 
-    # Dart/Flutter
-    pubspec = root_path / "pubspec.yaml"
-    if pubspec.exists():
-        results["pubspec.yaml"] = parse_pubspec_yaml(pubspec)
-
-    # C++ (CMake)
-    # Check top-level CMakeLists.txt
-    cmake_lists = root_path / "CMakeLists.txt"
-    if cmake_lists.exists():
-        results["CMakeLists.txt"] = parse_cmake_lists(cmake_lists)
-        
+    # Walk the directory tree
+    for path in root_path.rglob('*'):
+        if path.is_dir():
+            if path.name in ignore:
+                continue
+            # Check if any parent is ignored (optimization: rglob descends, so we might process children of ignored dirs if not careful)
+            # Actually rglob returns all files. We need to manually filter paths inside ignored dirs.
+            if any(p in ignore for p in path.parts):
+                continue
+        elif path.is_file():
+            if any(p in ignore for p in path.parts):
+                continue
+            
+            if path.name in target_files:
+                parser = target_files[path.name]
+                try:
+                    deps = parser(path)
+                    if deps:
+                        # Use relative path for readability
+                        rel_path = path.relative_to(root_path).as_posix()
+                        results[rel_path] = deps
+                except Exception:
+                    pass
+                    
     return results
