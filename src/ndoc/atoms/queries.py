@@ -51,7 +51,7 @@ CPP_SCM = """
 
 (struct_specifier
   name: (type_identifier) @name
-) @class_def
+) @struct_def
 
 (function_definition
   declarator: (function_declarator
@@ -137,6 +137,13 @@ GO_SCM = """
     name: (type_identifier) @name
     type: (struct_type)
   )
+) @struct_def
+
+(type_declaration
+  (type_spec
+    name: (type_identifier) @name
+    type: (interface_type)
+  )
 ) @class_def
 
 (function_declaration
@@ -155,7 +162,7 @@ GO_SCM = """
 RUST_SCM = """
 (struct_item
   name: (type_identifier) @name
-) @class_def
+) @struct_def
 
 (trait_item
   name: (type_identifier) @name
@@ -170,8 +177,8 @@ RUST_SCM = """
 
 DART_SCM = """
 (class_definition name: (identifier) @name) @class_def
-(mixin_declaration name: (identifier) @name) @class_def
-(enum_declaration name: (identifier) @name) @class_def
+(mixin_declaration name: (identifier) @name) @struct_def
+(enum_declaration name: (identifier) @name) @struct_def
 (function_definition name: (identifier) @name) @func_def
 """
 

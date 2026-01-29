@@ -10,6 +10,7 @@
 *   **[src/](src/_AI.md)**
 *   **[tests/](tests/_AI.md)**
 *   **[tools/](tools/_AI.md)**
+*   **[vendors/](vendors/_AI.md)**
 *   **[README.md](README.md)**
 *   **[_ARCH.md](_ARCH.md)**
 *   **[_DEPS.md](_DEPS.md)**

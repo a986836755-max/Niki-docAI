@@ -319,6 +319,14 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
                 name = captures['name'][0].text.decode('utf8')
             parent_name = _get_parent_name(node, lang_key)
 
+        # 1.5 Handle Struct Definitions (New)
+        elif 'struct_def' in captures:
+            node = captures['struct_def'][0] if isinstance(captures['struct_def'], list) else captures['struct_def']
+            kind = 'struct'
+            if 'name' in captures:
+                name = captures['name'][0].text.decode('utf8')
+            parent_name = _get_parent_name(node, lang_key)
+
         # 2. Handle Function Definitions
         elif 'func_def' in captures:
             node = captures['func_def'][0] if isinstance(captures['func_def'], list) else captures['func_def']
@@ -394,7 +402,7 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
 
         if node and name:
             # Extract docstring if not already done (for classes/functions)
-            if kind in ('class', 'function', 'async_function', 'method', 'classmethod', 'staticmethod', 'property'):
+            if kind in ('class', 'struct', 'function', 'async_function', 'method', 'classmethod', 'staticmethod', 'property'):
                 docstring = _extract_docstring_from_node(node, content_bytes)
             
             # Determine effective kind (method vs function)

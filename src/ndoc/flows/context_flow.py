@@ -85,6 +85,10 @@ def format_symbol_list(ctx: FileContext) -> str:
         # Kind icon/prefix
         kind_map = {
             'class': 'CLS',
+            'struct': 'STC',
+            'mixin': 'STC',
+            'enum': 'STC',
+            'table': 'CLS',
             'function': 'FUN',
             'method': 'MET',
             'async_function': 'ASY',
