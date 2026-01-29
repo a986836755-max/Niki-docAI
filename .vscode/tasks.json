@@ -1,0 +1,60 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "ndoc: watch",
+            "type": "shell",
+            "command": "ndoc watch",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "ndoc",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceFolder}"
+                ],
+                "pattern": {
+                    "regexp": "^\\[(!RULE:.*)\\] (.*):(\\d+) - (.*)$",
+                    "code": 1,
+                    "file": 2,
+                    "line": 3,
+                    "message": 4
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "Niki-docAI Watch Daemon",
+                    "endsPattern": "Watching:.*"
+                }
+            },
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        },
+        {
+            "label": "ndoc: verify",
+            "type": "shell",
+            "command": "ndoc verify",
+            "problemMatcher": {
+                "owner": "ndoc",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceFolder}"
+                ],
+                "pattern": {
+                    "regexp": "^\\[(!RULE:.*)\\] (.*):(\\d+) - (.*)$",
+                    "code": 1,
+                    "file": 2,
+                    "line": 3,
+                    "message": 4
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
