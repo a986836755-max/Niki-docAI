@@ -14,6 +14,7 @@
 | Kind | Meaning | Context |
 | :--- | :--- | :--- |
 | `CLS` | **Class**: 类定义 | Object/Type |
+| `STC` | **Struct**: 结构体/数据 | Data/Schema |
 | `FUN` | **Function**: 函数/方法 | Action/Logic |
 | `VAR` | **Variable**: 变量/属性 | State/Data |
 | `MOD` | **Module**: 模块/文件 | Container |
