@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / Packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+tests/__pycache__/
+
+# IDEs
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# System
+.DS_Store
+Thumbs.db
