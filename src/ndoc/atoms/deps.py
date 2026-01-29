@@ -34,6 +34,9 @@ LANGUAGE_EXTENSIONS = {
     '.c': 'C',
     '.cpp': 'C++',
     '.h': 'C/C++ Header',
+    '.hpp': 'C++ Header',
+    '.dart': 'Dart',
+    '.cmake': 'CMake',
 }
 
 def detect_languages(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, float]:
@@ -174,6 +177,113 @@ def parse_package_json(file_path: Path) -> List[str]:
         pass
     return deps
 
+def parse_pubspec_yaml(file_path: Path) -> List[str]:
+    """
+    Parse pubspec.yaml for Dart/Flutter dependencies.
+    Extracts dependencies and dev_dependencies.
+    """
+    deps = []
+    if not file_path.exists():
+        return deps
+
+    try:
+        content = file_path.read_text(encoding='utf-8')
+        # Simple YAML parsing without external lib to avoid extra dependencies
+        # Looks for "dependencies:" and "dev_dependencies:" sections
+        
+        lines = content.splitlines()
+        current_section = None
+        
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#'):
+                continue
+                
+            # Check indentation to ensure we are at top level or child level
+            indent = len(line) - len(line.lstrip())
+            
+            if stripped == 'dependencies:':
+                current_section = 'deps'
+                continue
+            elif stripped == 'dev_dependencies:':
+                current_section = 'dev_deps'
+                continue
+            elif stripped.endswith(':') and indent == 0:
+                # Other top-level sections
+                current_section = None
+                continue
+                
+            if current_section and indent > 0:
+                # It's a dependency entry: "name: version" or "name:"
+                if ':' in stripped:
+                    name = stripped.split(':')[0].strip()
+                    # Skip sdk entries or path/git dependencies for simplicity or include them
+                    # e.g., flutter:
+                    #         sdk: flutter
+                    deps.append(name if current_section == 'deps' else f"{name} (dev)")
+    except Exception:
+        pass
+    return deps
+
+def parse_cmake_lists(file_path: Path) -> List[str]:
+    """
+    Parse CMakeLists.txt for C++ dependencies.
+    Extracts FetchContent_Declare and find_package.
+    """
+    deps = []
+    if not file_path.exists():
+        return deps
+        
+    try:
+        content = file_path.read_text(encoding='utf-8')
+        
+        # Regex for find_package(Name ...)
+        # Case insensitive for cmake commands
+        find_pkg_matches = re.findall(r'find_package\s*\(\s*([A-Za-z0-9_]+)', content, re.IGNORECASE)
+        for name in find_pkg_matches:
+            deps.append(f"find_package: {name}")
+            
+        # Regex for FetchContent_Declare(Name ...)
+        fetch_matches = re.findall(r'FetchContent_Declare\s*\(\s*([A-Za-z0-9_]+)', content, re.IGNORECASE)
+        for name in fetch_matches:
+            deps.append(f"FetchContent: {name}")
+            
+    except Exception:
+        pass
+    return deps
+
+def extract_cpp_includes(content: str) -> List[str]:
+    """
+    Extract #include directives from C++ code.
+    Returns list of included files/libs.
+    """
+    includes = set()
+    try:
+        # Match #include <vector> or #include "my_header.h"
+        # Allow spaces between # and include
+        matches = re.findall(r'#\s*include\s*[<"]([^>"]+)[>"]', content)
+        for inc in matches:
+            includes.add(inc)
+    except Exception:
+        pass
+    return sorted(list(includes))
+
+def extract_dart_imports(content: str) -> List[str]:
+    """
+    Extract import statements from Dart code.
+    Returns list of package names or file paths.
+    """
+    imports = set()
+    try:
+        # Match import 'package:name/...' or import 'file.dart'
+        matches = re.findall(r"import\s+['\"]([^'\"]+)['\"]", content)
+        for imp in matches:
+            # Filter standard dart: imports if desired, but user asked for imports
+            imports.add(imp)
+    except Exception:
+        pass
+    return sorted(list(imports))
+
 def get_project_dependencies(root_path: Path) -> Dict[str, List[str]]:
     """
     Detect and parse dependency files.
@@ -194,5 +304,16 @@ def get_project_dependencies(root_path: Path) -> Dict[str, List[str]]:
     pkg_json = root_path / "package.json"
     if pkg_json.exists():
         results["package.json"] = parse_package_json(pkg_json)
+
+    # Dart/Flutter
+    pubspec = root_path / "pubspec.yaml"
+    if pubspec.exists():
+        results["pubspec.yaml"] = parse_pubspec_yaml(pubspec)
+
+    # C++ (CMake)
+    # Check top-level CMakeLists.txt
+    cmake_lists = root_path / "CMakeLists.txt"
+    if cmake_lists.exists():
+        results["CMakeLists.txt"] = parse_cmake_lists(cmake_lists)
         
     return results
