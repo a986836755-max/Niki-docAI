@@ -1,22 +1,25 @@
-# models
-> @CONTEXT: domain.models | @TAGS: @OVERVIEW @ARCH
-<!-- NIKI_VERSION: 0.1.0 -->
-
-## @OVERVIEW
-
-## @ARCH
-<!-- NIKI_AUTO_DOC_START -->
-### Files
-(Auto-generated)
-<!-- NIKI_AUTO_DOC_END -->
+# Context: models
+> @CONTEXT: Local | models | @TAGS: @LOCAL
 
 ## !RULE
-- !RULE: 
+<!-- Add local rules here -->
 
-## @MAP
-<!-- NIKI_MAP_START -->
-- [__init__.py](__init__.py)
-- [config.py](config.py)
-<!-- NIKI_MAP_END -->
-## @CONFIG
-<!-- @CHECK_IGNORE: generated/ -->
+<!-- NIKI_AUTO_Context_START -->
+## @FILES
+*   **[__init__.py](__init__.py)**: Models: Data Definitions.
+*   **[config.py](config.py)**: Models: Configuration definitions.
+    *   `PUB:` CLS **ProjectConfig**
+    *   `PUB:` CLS **ScanConfig**
+*   **[context.py](context.py)**: Models: Context Models.
+    *   `PUB:` CLS **DirectoryContext**
+    *   `PUB:` CLS **FileContext**
+    *   `PUB:` CLS **Section**
+    *   `PUB:` CLS **Symbol**
+    *   `PUB:` CLS **Tag**
+    *   `GET->` VAR **has_content**`(self) -> bool`
+    *   `GET->` VAR **is_public**`(self) -> bool`
+    *   `GET->` VAR **name**`(self) -> str`
+
+## @SUBDIRS
+*   *(No subdirectories)*
+<!-- NIKI_AUTO_Context_END -->

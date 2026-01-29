@@ -15,6 +15,11 @@
 *   **!PURE**: 逻辑函数应为纯函数 (Input -> Output)。副作用必须隔离在 `Atoms` 中。
 *   **!MODULE**: 使用 Python 模块 (Module) 作为命名空间。不要创建 "Manager" 或 "Handler" 类。
 
+### Paradigm (DOD/FP)
+*   **!DATA_DRIVEN**: 逻辑即数据 (Logic as Data)。**严禁**硬编码的复杂控制流 (`if-else`, `switch`)。必须将业务规则提取为数据结构 (Table/Config/Rules)，仅编写通用的执行引擎。
+*   **!PIPELINE**: 变换即管道 (Transformation as Pipeline)。代码应组织为数据变换链 (`Input -> Transform -> Output`)。
+*   **!NO_BRANCH**: 消除分支 (Eliminate Branching)。优先使用字典映射 (Dispatch Table)、模式匹配或多态来替代条件判断。
+
 ### Style & Convention
 *   **!LANG**: Docstrings 和注释应采用 **Hybrid** 风格 (中文描述，英文技术术语)。
     *   *Good*: `def scan(path): """扫描目录结构 (Scan directory structure)"""`

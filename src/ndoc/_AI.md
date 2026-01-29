@@ -1,25 +1,24 @@
-# ndoc
-> @CONTEXT: domain.ndoc | @TAGS: @OVERVIEW @ARCH
-<!-- NIKI_VERSION: 0.1.0 -->
-
-## @OVERVIEW
-
-## @ARCH
-<!-- NIKI_AUTO_DOC_START -->
-### Files
-(Auto-generated)
-<!-- NIKI_AUTO_DOC_END -->
+# Context: ndoc
+> @CONTEXT: Local | ndoc | @TAGS: @LOCAL
 
 ## !RULE
-- !RULE: 
+<!-- Add local rules here -->
 
-## @MAP
-<!-- NIKI_MAP_START -->
-- **[atoms](atoms)**
-- **[flows](flows)**
-- **[models](models)**
-- [__init__.py](__init__.py)
-- [entry.py](entry.py)
-<!-- NIKI_MAP_END -->
-## @CONFIG
-<!-- @CHECK_IGNORE: generated/ -->
+<!-- NIKI_AUTO_Context_START -->
+## @FILES
+*   **[__init__.py](__init__.py)**: Niki-docAI Source Root.
+*   **[daemon.py](daemon.py)**: Daemon: Live Context Watcher.
+    *   `PUB:` CLS **DocChangeHandler**
+    *   `PUB:` FUN **on_any_event**`(self, event: FileSystemEvent)`
+    *   `PUB:` FUN **run_update**`(self)`
+    *   `PUB:` FUN **start_watch_mode**`(config: ProjectConfig)`
+    *   `PUB:` FUN **trigger_update**`(self)`
+    *   `PRV:` FUN __init__`(self, config: ProjectConfig, debounce_interval: float = 2.0)`
+*   **[entry.py](entry.py)**: Entry Point: CLI Execution.
+    *   `PUB:` FUN **main**`()`
+
+## @SUBDIRS
+*   **[atoms/](atoms/_AI.md)**
+*   **[flows/](flows/_AI.md)**
+*   **[models/](models/_AI.md)**
+<!-- NIKI_AUTO_Context_END -->

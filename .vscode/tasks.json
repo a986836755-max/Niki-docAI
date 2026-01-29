@@ -2,58 +2,31 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "ndoc: watch",
+            "label": "ndoc: context (all)",
             "type": "shell",
-            "command": "ndoc watch",
-            "isBackground": true,
-            "problemMatcher": {
-                "owner": "ndoc",
-                "fileLocation": [
-                    "relative",
-                    "${workspaceFolder}"
-                ],
-                "pattern": {
-                    "regexp": "^\\[(!RULE:.*)\\] (.*):(\\d+) - (.*)$",
-                    "code": 1,
-                    "file": 2,
-                    "line": 3,
-                    "message": 4
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": "Niki-docAI Watch Daemon",
-                    "endsPattern": "Watching:.*"
-                }
-            },
+            "command": "py src/ndoc/entry.py all",
+            "problemMatcher": [],
             "presentation": {
-                "reveal": "silent",
+                "reveal": "always",
                 "panel": "dedicated"
-            },
-            "runOptions": {
-                "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "ndoc: verify",
-            "type": "shell",
-            "command": "ndoc verify",
-            "problemMatcher": {
-                "owner": "ndoc",
-                "fileLocation": [
-                    "relative",
-                    "${workspaceFolder}"
-                ],
-                "pattern": {
-                    "regexp": "^\\[(!RULE:.*)\\] (.*):(\\d+) - (.*)$",
-                    "code": 1,
-                    "file": 2,
-                    "line": 3,
-                    "message": 4
-                }
             },
             "group": {
                 "kind": "build",
                 "isDefault": true
+            }
+        },
+        {
+            "label": "ndoc: watch (daemon)",
+            "type": "shell",
+            "command": "py src/ndoc/entry.py watch",
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "never",
+                "panel": "dedicated"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
             }
         }
     ]

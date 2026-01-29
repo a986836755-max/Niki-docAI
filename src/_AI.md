@@ -1,13 +1,13 @@
-# Context: tools
-> @CONTEXT: Local | tools | @TAGS: @LOCAL
+# Context: src
+> @CONTEXT: Local | src | @TAGS: @LOCAL
 
 ## !RULE
 <!-- Add local rules here -->
 
 <!-- NIKI_AUTO_Context_START -->
 ## @FILES
-*   **[doxygen.exe](doxygen.exe)**
+*   *(No source files)*
 
 ## @SUBDIRS
-*   *(No subdirectories)*
+*   **[ndoc/](ndoc/_AI.md)**
 <!-- NIKI_AUTO_Context_END -->

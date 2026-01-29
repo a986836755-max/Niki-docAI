@@ -3,116 +3,124 @@ Flow: Map Generation.
 业务流：生成项目结构图 (_MAP.md)。
 """
 from pathlib import Path
-from typing import List
+from dataclasses import dataclass
+from typing import List, Callable
 
-from ndoc.atoms import fs, io
-from ndoc.models.config import ProjectConfig
+from ..atoms import fs, io, scanner
+from ..models.config import ProjectConfig
 
-def generate_tree(root: Path, config: ProjectConfig) -> str:
+# --- Data Structures (Pipeline Config) ---
+
+@dataclass
+class MapContext:
+    root: Path
+    ignore_patterns: List[str]
+    # No state, just configuration data
+
+# --- Transformations (Pure Functions) ---
+
+def format_dir_entry(name: str, level: int) -> str:
+    """Format directory entry: * **name/**"""
+    indent = "    " * level
+    return f"{indent}*   **{name}/**"
+
+def format_file_entry(path: Path, level: int) -> str:
     """
-    生成目录树字符串 (Generate directory tree string).
-    
-    Args:
-        root: 根目录
-        config: 项目配置
-        
-    Returns:
-        str: Markdown 格式的目录树
-    """
-    lines = []
-    
-    # 1. 获取所有文件 (Get all files)
-    # 我们需要先遍历得到结构，然后构建树
-    # 为了简单起见，这里我们再次使用 fs.walk_files，但为了构建树状结构，
-    # 我们可能需要自定义的遍历逻辑，或者对路径列表进行后处理。
-    # 这里我们采用“先获取路径，再构建树”的策略，这样可以复用 fs.walk_files 的过滤逻辑。
-    
-    # 注意：fs.walk_files 返回的是文件路径。我们需要目录结构。
-    # 所以我们需要一个能返回目录的遍历器，或者修改 fs.walk_files。
-    # 让我们直接使用 fs.walk_files 并推导目录结构。
-    
-    all_paths = sorted(list(fs.walk_files(root, config.scan.ignore_patterns, config.scan.extensions)))
-    
-    if not all_paths:
-        return "* (No files found)"
-
-    # 构建树结构 (Build tree structure)
-    # 这是一个简化版的树生成，仅展示文件和目录
-    
-    # 使用 set 存储所有需要显示的目录，包括中间目录
-    dirs_to_show = set()
-    files_to_show = []
-    
-    for p in all_paths:
-        rel = p.relative_to(root)
-        files_to_show.append(rel)
-        # 添加所有父目录
-        for parent in rel.parents:
-            if parent != Path('.'):
-                dirs_to_show.add(parent)
-                
-    # 排序目录
-    sorted_dirs = sorted(list(dirs_to_show))
-    
-    # 简单的一层一层输出可能比较乱，我们尝试直接按行输出
-    # 更好的方法是递归打印，但我们需要复用 fs 的忽略逻辑。
-    # 让我们换一种方式：递归遍历，但使用 fs.should_ignore 检查。
-    
-    return _recursive_tree(root, root, config.scan.ignore_patterns)
-
-def _recursive_tree(current_path: Path, root: Path, ignore_patterns: List[str], level: int = 0) -> str:
-    """
-    递归生成树 (Recursive tree generation).
+    Format file entry: * `name` - summary
+    Reads first few lines to extract summary using scanner.
     """
     indent = "    " * level
+    name = path.name
+    
+    # Skip summary for meta files to keep map clean?
+    # Or maybe useful to see what _TECH.md is.
+    
+    summary = ""
+    try:
+        content = io.read_text(path)
+        if content:
+            # Only need partial scan for summary, but scanner does full.
+            # Optimization: pass content to scanner.extract_summary directly?
+            # But we need docstring first.
+            docstring = scanner.extract_docstring(content)
+            raw_summary = scanner.extract_summary(content, docstring)
+            if raw_summary:
+                # Truncate if too long
+                if len(raw_summary) > 50:
+                    raw_summary = raw_summary[:47] + "..."
+                summary = f" - *{raw_summary}*"
+    except Exception:
+        pass
+
+    return f"{indent}*   `{name}`{summary}"
+
+# --- Engine (Recursive Pipeline) ---
+
+def build_tree_lines(current_path: Path, context: MapContext, level: int = 0) -> List[str]:
+    """
+    递归构建树行列表 (Recursively build tree lines).
+    Implementation: Recursive Pipeline.
+    """
     lines = []
     
-    # 获取当前目录下的条目
-    try:
-        entries = sorted(list(current_path.iterdir()), key=lambda x: (x.is_file(), x.name))
-    except PermissionError:
-        return ""
+    # 1. Construct Filter (Data)
+    filter_config = fs.FileFilter(ignore_patterns=set(context.ignore_patterns))
+
+    # 2. Get Entries (IO + Filter + Sort via Atom)
+    entries = fs.list_dir(current_path, filter_config)
 
     for entry in entries:
-        if fs.should_ignore(entry.name, ignore_patterns):
-            continue
-            
-        rel_path = fs.get_relative_path(entry, root)
-        
+        # 3. Transform (Format)
         if entry.is_dir():
-            # 目录
-            lines.append(f"{indent}*   **{entry.name}/**")
-            # 递归
-            lines.append(_recursive_tree(entry, root, ignore_patterns, level + 1))
+            lines.append(format_dir_entry(entry.name, level))
+            # Recurse
+            lines.extend(build_tree_lines(entry, context, level + 1))
         else:
-            # 文件
-            # 检查扩展名（如果配置了）- 这里暂时跳过，假设 ignore_patterns 已经够了，
-            # 或者我们需要传入 extensions。
-            # 为了保持一致性，我们应该在这里也检查 extensions，但在 map 中通常显示所有非忽略文件。
-            lines.append(f"{indent}*   `{entry.name}`")
+            lines.append(format_file_entry(entry, level))
             
-    return "\n".join(filter(None, lines))
+    return lines
 
-def update_map_doc(config: ProjectConfig) -> bool:
+def generate_tree_content(config: ProjectConfig) -> str:
     """
-    更新 _MAP.md 文件 (Update _MAP.md file).
+    生成树内容 (Generate tree content).
+    Pipeline: Config -> Context -> Build Lines -> Join.
+    """
+    context = MapContext(
+        root=config.scan.root_path,
+        ignore_patterns=config.scan.ignore_patterns
+    )
     
-    Args:
-        config: 项目配置
-        
-    Returns:
-        bool: 是否成功
+    lines = build_tree_lines(context.root, context)
+    return "\n".join(lines)
+
+# --- Entry Point (Flow) ---
+
+def run(config: ProjectConfig) -> bool:
+    """
+    执行 Map 生成流 (Execute Map Flow).
+    Pipeline: Config -> Generate -> Update IO.
     """
     map_file = config.scan.root_path / "_MAP.md"
-    if not map_file.exists():
-        print(f"_MAP.md not found at {map_file}")
-        return False
-        
-    print(f"Generating project tree for {config.name}...")
-    tree_content = generate_tree(config.scan.root_path, config)
     
-    # 标记定义
+    # 1. Generate Content (Pure)
+    tree_content = generate_tree_content(config)
+    
+    # 2. Define Markers (Data)
     start_marker = "<!-- NIKI_MAP_START -->"
     end_marker = "<!-- NIKI_MAP_END -->"
     
-    return io.update_section(map_file, start_marker, end_marker, tree_content)
+    # 3. Execute IO (Side Effect)
+    print(f"Updating MAP at {map_file}...")
+    
+    if not map_file.exists():
+        template = f"""# Project Map
+> @CONTEXT: Map | Project Structure
+
+## @STRUCTURE
+{start_marker}
+{tree_content}
+{end_marker}
+"""
+        return io.write_text(map_file, template)
+    else:
+        return io.update_section(map_file, start_marker, end_marker, tree_content)

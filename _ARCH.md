@@ -9,6 +9,7 @@
 ## @VISION
 *   **Data > Objects**: 状态 (State) 作为明确的数据结构传递，而不是隐藏在类实例中。
 *   **Functions > Methods**: 逻辑实现为纯函数 (Pure Functions) 或隔离的副作用原子 (Side-effect Atoms)。
+*   **Logic as Data**: 业务规则提取为数据表，代码仅作为通用执行引擎 (Generic Engine)。
 *   **Docs > Code**: 文档定义系统；代码仅仅是执行代理。
 
 ## @LAYER
@@ -51,8 +52,8 @@
 <!-- NIKI_AUTO_DOC_START -->
 ```mermaid
 graph TD;
-    ndoc_legacy;
     src;
+    tests;
     tools;
 ```
 <!-- NIKI_AUTO_DOC_END -->

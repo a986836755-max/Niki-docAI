@@ -1,20 +1,23 @@
-# PROJECT CONTEXT
-> @CONTEXT: Root | Entry | @TAGS: @INDEX
+# Context: nk_doc_ai
+> @CONTEXT: Local | nk_doc_ai | @TAGS: @LOCAL
 
-<!-- NIKI_VERSION: 2.0.0 -->
+## !RULE
+<!-- Add local rules here -->
 
-## @OVERVIEW
-**Niki-docAI** 是一个用于 AI 编程助手的自文档化、上下文感知的工具。
-这是 **Rebirth (v2.0)** 版本，采用了数据驱动的架构。
+<!-- NIKI_AUTO_Context_START -->
+## @FILES
+*   **[README.md](README.md)**
+*   **[_ARCH.md](_ARCH.md)**
+*   **[_MAP.md](_MAP.md)**
+*   **[_MEMORY.md](_MEMORY.md)**
+*   **[_NEXT.md](_NEXT.md)**
+*   **[_RULES.md](_RULES.md)**
+*   **[_SYNTAX.md](_SYNTAX.md)**
+*   **[_TECH.md](_TECH.md)**
+*   **[requirements.txt](requirements.txt)**
 
-## @META_FILES (Context Index)
-*   **[Architecture](_ARCH.md)**: 系统设计与核心理念。
-*   **[Map](_MAP.md)**: 项目结构与导航。
-*   **[Rules](_RULES.md)**: 约束与开发标准。
-*   **[Stack](_TECH.md)**: 技术栈与依赖。
-*   **[Syntax](_SYNTAX.md)**: 标签定义与 DSL。
-
-## @STATUS
-*   **Phase**: 初始化 / 重生 (Initialization / Rebirth)。
-*   **Current Focus**: 建立 "新世界" 基础设施。
-*   **Next Step**: 实现 `src/ndoc/models` 和 `src/ndoc/atoms`。
+## @SUBDIRS
+*   **[src/](src/_AI.md)**
+*   **[tests/](tests/_AI.md)**
+*   **[tools/](tools/_AI.md)**
+<!-- NIKI_AUTO_Context_END -->

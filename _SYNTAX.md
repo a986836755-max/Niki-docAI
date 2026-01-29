@@ -3,6 +3,21 @@
 
 <!-- NIKI_VERSION: 2.0.0 -->
 
+## @MOD
+| Mod | Meaning | Concept |
+| :--- | :--- | :--- |
+| `PUB:` | **Public**: 公开接口 (Exported API) | Scope: Global |
+| `PRV:` | **Private**: 私有实现 (Internal Impl) | Scope: Local |
+| `GET->`| **Getter**: 读取/属性 (Property) | Flow: Output |
+
+## @KIND
+| Kind | Meaning | Context |
+| :--- | :--- | :--- |
+| `CLS` | **Class**: 类定义 | Object/Type |
+| `FUN` | **Function**: 函数/方法 | Action/Logic |
+| `VAR` | **Variable**: 变量/属性 | State/Data |
+| `MOD` | **Module**: 模块/文件 | Container |
+
 ## @OP
 | Op | Meaning |
 | :--- | :--- |
@@ -11,7 +26,6 @@
 | `=>` | **Map**: 映射 (ID => Sprite) |
 | `>>` | **Move**: 移动/转移 (Ptr >> Sys) |
 | `?` | **Check**: 检查 (Dirty?) |
-| `+` | **Mix**: 组合/混合 (Pos + Vel) |
 | `!` | **Ban**: 禁止 (!Draw) |
 
 ## @TAGS
