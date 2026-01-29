@@ -67,6 +67,14 @@ Niki-docAI provides a suite of tools to automate "Context Ops":
 1. **Configurability (可配置化)**: Unified config via `_RULES.md` (Documentation as Configuration). (文档即配置)
 2. **Persistence (持久性)**: Respects user edits; never overwrites creative content. (尊重用户修改，绝不覆盖创作内容)
 3. **Automation (自动化)**: One-command maintenance (`ndoc all`). (一键维护)
+4. **Multi-Language Support (多语言支持)**: Built-in Tree-sitter integration for polyglot codebases. (内置 Tree-sitter 集成，支持多语言代码库)
+
+### Supported Languages (支持的语言)
+*   **Python** (`.py`)
+*   **C/C++** (`.cpp`, `.c`, `.h`, `.hpp`)
+*   **JavaScript/TypeScript** (`.js`, `.ts`, `.jsx`, `.tsx`)
+*   **Go** (`.go`)
+*   **Rust** (`.rs`)
 
 ---
 
@@ -78,13 +86,13 @@ Niki-docAI aims to become the standard **Protocol** for how projects expose thei
 
 *   **Semantic Search Indexing**: Pre-computed vector embeddings for the codebase.
 *   **Active Architectural Linter**: Preventing "Architecture Drift" before code is committed.
-*   **Universal Language Support**: Expanding beyond Python/C++ to any language via LSP integration.
+*   **Deeper Semantic Analysis**: LSP Integration for cross-file references and precise call graphs.
 
 我们相信 **文档是 AI Agent 的 API**。Niki-docAI 旨在成为项目向 AI 暴露其内部结构的标准 **协议**。在未来，我们计划支持：
 
 *   **语义搜索索引**：为代码库预计算向量嵌入 (Vector Embeddings)。
 *   **主动架构 Linter**：在代码提交前防止“架构漂移” (Architecture Drift)。
-*   **通用语言支持**：通过 LSP 集成，将支持扩展到 Python/C++ 以外的任何语言。
+*   **深度语义分析**：通过 LSP 集成，实现跨文件引用分析和精准调用图。
 
 ---
 
@@ -125,6 +133,10 @@ ndoc watch
 **2. Maintenance & Diagnostics (维护与诊断)**
 
 ```bash
+# Update Niki-docAI to the latest version
+# 更新 Niki-docAI 到最新版本
+ndoc update
+
 # View Project Statistics (File count, Token usage, Context coverage)
 # 查看项目统计（文件数、Token 估算、上下文覆盖率）
 ndoc stats

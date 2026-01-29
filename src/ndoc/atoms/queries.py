@@ -55,18 +55,31 @@ CPP_SCM = """
 
 (function_definition
   declarator: (function_declarator
-    declarator: (identifier) @name
-    parameters: (parameter_list) @params
+    declarator: [
+      (identifier) @name
+      (qualified_identifier) @name
+      (destructor_name) @name
+    ]
   )
-  type: (_)? @ret
 ) @func_def
 
-(function_definition
+(declaration
   declarator: (function_declarator
-    declarator: (field_identifier) @name
-    parameters: (parameter_list) @params
+    declarator: [
+      (identifier) @name
+      (qualified_identifier) @name
+      (destructor_name) @name
+    ]
   )
-  type: (_)? @ret
+) @func_def
+
+(field_declaration
+  declarator: (function_declarator
+    declarator: [
+      (identifier) @name
+      (destructor_name) @name
+    ]
+  )
 ) @func_def
 """
 
