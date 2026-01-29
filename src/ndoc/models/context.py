@@ -40,8 +40,7 @@ class Symbol:
     line: int
     docstring: Optional[str] = None
     signature: Optional[str] = None # e.g. "(x: int) -> int"
-    # For simplicity, we don't store full children recursively here yet,
-    # but we can add parent/children relationships if needed.
+    parent: Optional[str] = None # e.g. "ClassName" for methods/fields
 
     @property
     def is_public(self) -> bool:

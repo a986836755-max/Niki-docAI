@@ -1,10 +1,9 @@
 # Tech Stack Snapshot
 > @CONTEXT: Global | _TECH.md | @TAGS: @TECH @DEPS
-> 最后更新 (Last Updated): 2026-01-29 19:27:34
 
 ## 1. Languages (语言分布)
-*   **Python**: `███████████░░░░░░░░░` 59.2%
-*   **Markdown**: `████████░░░░░░░░░░░░` 40.8%
+*   **Python**: `████████████░░░░░░░░` 60.4%
+*   **Markdown**: `███████░░░░░░░░░░░░░` 39.6%
 
 ## 2. Dependencies (依赖库)
 ### requirements.txt

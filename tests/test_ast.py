@@ -47,24 +47,81 @@ def test_extract_symbols_basic():
     # 2. Method
     method = symbols[1]
     assert method.name == "method_one"
-    assert method.kind == "function" 
+    assert method.kind == "method" 
+    assert method.parent == "MyClass"
     
     # 3. Property
     prop = symbols[2]
     assert prop.name == "prop_one"
     assert prop.kind == "property"
+    assert prop.parent == "MyClass"
     
     # 4. Class Method
     cm = symbols[3]
     assert cm.name == "class_method"
     assert cm.kind == "classmethod"
+    assert cm.parent == "MyClass"
     
     # 5. Static Method
     sm = symbols[4]
     assert sm.name == "static_method"
     assert sm.kind == "staticmethod"
+    assert sm.parent == "MyClass"
     
     # 6. Global Function
     func = symbols[5]
     assert func.name == "global_func"
     assert func.kind == "function"
+    assert func.parent is None
+
+def test_extract_complex_api():
+    from ndoc.atoms.io import read_text
+    from pathlib import Path
+    
+    fixture_path = Path(__file__).parent / "fixtures" / "complex_api.py"
+    if not fixture_path.exists():
+        pytest.skip("complex_api.py fixture not found")
+        
+    content = read_text(fixture_path)
+    tree = parse_code(content)
+    symbols = extract_symbols(tree, content.encode('utf-8'))
+    
+    # Helper to find symbol
+    def find_sym(name):
+        return next((s for s in symbols if s.name == name), None)
+        
+    # Async Method
+    fetch = find_sym("fetch_data")
+    assert fetch is not None
+    assert fetch.kind == "async_method"
+    assert fetch.parent == "User"
+    assert "-> dict" in fetch.signature
+    
+    # Async Function
+    g_async = find_sym("global_async_func")
+    assert g_async is not None
+    assert g_async.kind == "async_function"
+    assert g_async.parent is None
+    
+    # Class Variables
+    name_var = find_sym("name")
+    # Note: 'name' might be ambiguous if multiple classes have it, but in fixture User.name is unique top level? No, it's inside User.
+    # But extract_symbols returns flat list. 
+    # Wait, variable names are 'name', 'age', '_internal'.
+    # If multiple classes have 'name', find_sym needs to check parent.
+    
+    def find_member(cls_name, name):
+        return next((s for s in symbols if s.name == name and s.parent == cls_name), None)
+
+    name_var = find_member("User", "name")
+    assert name_var.kind == "variable"
+    assert ": str" in name_var.signature
+    
+    age_var = find_member("User", "age")
+    assert age_var.kind == "variable"
+    assert "= 18" in age_var.signature
+    
+    # Classmethod with forward ref
+    from_dict = find_member("User", "from_dict")
+    assert from_dict.kind == "classmethod"
+    assert '-> "User"' in from_dict.signature

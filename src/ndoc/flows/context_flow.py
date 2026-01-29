@@ -36,32 +36,60 @@ def format_file_summary(ctx: FileContext) -> str:
 def format_symbol_list(ctx: FileContext) -> str:
     """
     格式化符号列表 (Format symbol list).
+    Supports hierarchical display (Classes -> Members).
     """
     if not ctx.symbols:
         return ""
         
-    lines = []
+    # Build hierarchy map: parent_name -> list[Symbol]
+    children_map = {}
+    roots = []
     
-    # Sort: Public first, then Private (alphabetical within groups)
-    sorted_symbols = sorted(ctx.symbols, key=lambda s: (not s.is_public, s.name))
+    # Pre-sort to ensure deterministic order
+    # Sort by line number to keep definition order
+    sorted_symbols = sorted(ctx.symbols, key=lambda s: s.line)
     
+    symbol_by_name = {s.name: s for s in sorted_symbols}
+
     for sym in sorted_symbols:
+        if sym.parent:
+            if sym.parent not in children_map:
+                children_map[sym.parent] = []
+            children_map[sym.parent].append(sym)
+        else:
+            roots.append(sym)
+            
+    lines = []
+    # Add API identifier wrapper
+    lines.append("    *   `@API`")
+    
+    def _format_single_symbol(sym, level: int):
+        # Base indent is 2 levels (File -> @API -> Symbol)
+        indent = "    " * (level + 2)
+        
         # Kind icon/prefix
         kind_map = {
             'class': 'CLS',
             'function': 'FUN',
-            'method': 'FUN',
-            'property': 'VAR'
+            'method': 'MET',
+            'async_function': 'ASY',
+            'async_method': 'ASY',
+            'property': 'PRP',
+            'variable': 'VAR',
+            'classmethod': 'CLM',
+            'staticmethod': 'STA'
         }
         kind_char = kind_map.get(sym.kind, '???')
         
         # Label-Op Protocol
+        label = "PUB:" if sym.is_public else "PRV:"
+        
         if sym.kind == 'property':
             label = "GET->"
-        elif sym.is_public:
-            label = "PUB:"
-        else:
-            label = "PRV:"
+        elif sym.kind == 'variable':
+            label = "VAL->"
+        elif 'async' in sym.kind:
+            label = "AWAIT"
         
         # Bold for public
         name_display = f"**{sym.name}**" if sym.is_public else f"{sym.name}"
@@ -72,7 +100,24 @@ def format_symbol_list(ctx: FileContext) -> str:
         if sym.signature:
             display += f"`{sym.signature}`"
             
-        lines.append(f"    *   {display}")
+        lines.append(f"{indent}*   {display}")
+        
+        # Recurse for children
+        if sym.name in children_map:
+            for child in children_map[sym.name]:
+                _format_single_symbol(child, level + 1)
+
+    for root in roots:
+        _format_single_symbol(root, 0)
+        
+    # Handle orphans (symbols with parent that wasn't found in roots/hierarchy? 
+    # e.g. if parent class is not in top-level for some reason, though tree-sitter should find it)
+    # With current logic, if parent is not a symbol (e.g. dynamic class?), they won't be printed via recursion.
+    # But extract_symbols returns ALL definitions.
+    # If `class A` is defined, it is a root.
+    # If `def foo` is defined, it is a root.
+    # So this should cover everything.
+    
     return "\n".join(lines)
 
 def format_dependencies(ctx: FileContext) -> str:
@@ -90,7 +135,7 @@ def format_dependencies(ctx: FileContext) -> str:
         deps_str = ", ".join(imports)
         
         # No truncation, allow full visibility
-        return f"    *   `@DEP` {deps_str}"
+        return f" @DEP: {deps_str}"
     except:
         return ""
 
@@ -117,17 +162,21 @@ def generate_dir_content(context: DirectoryContext) -> str:
     if context.files:
         has_content = True
         for f_ctx in context.files:
-            lines.append(format_file_summary(f_ctx))
+            # Add dependencies
+            dep_info = format_dependencies(f_ctx)
+            
+            summary = format_file_summary(f_ctx)
+            if dep_info:
+                summary += dep_info
+            
+            lines.append(summary)
             # Add symbols as sub-list
             sym_list = format_symbol_list(f_ctx)
             if sym_list:
                 lines.append(sym_list)
             
-            # Add dependencies
-            dep_info = format_dependencies(f_ctx)
-            if dep_info:
-                lines.append(dep_info)
-
+            # Dep info already added to summary
+            
     if not has_content:
         lines.append("*   *No structural content.*")
             

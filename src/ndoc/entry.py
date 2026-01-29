@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ndoc.models.config import ProjectConfig, ScanConfig
-from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow, config_flow, syntax_flow, doctor_flow, init_flow, verify_flow, clean_flow, stats_flow
+from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow, config_flow, syntax_flow, doctor_flow, init_flow, verify_flow, clean_flow, stats_flow, update_flow
 from ndoc.daemon import start_watch_mode
 from ndoc.atoms import io
 
@@ -29,6 +29,8 @@ Core Commands (核心指令):
               (Map + Context + Tech + Todo + Deps)
               
   watch     : Start DAEMON mode to auto-update docs on file changes.
+  
+  update    : Self-update the tool (git pull).
   
   clean     : Clean/Reset generated documentation artifacts.
               ⚠️  DELETES all _AI.md, _MAP.md, etc.
@@ -50,7 +52,7 @@ Granular Updates (单独更新):
         description=description,
         formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "all", "watch", "doctor", "init", "verify", "clean", "stats", "help"], help="Command to execute")
+    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "help"], help="Command to execute")
     parser.add_argument("target", nargs="?", help="Target file or directory (for clean command)")
     parser.add_argument("--root", default=".", help="Project root directory (Default: current dir)")
     parser.add_argument("--force", action="store_true", help="⚠️ Force execution (DANGER: Overwrite configs in init, Delete without confirm in clean)")
@@ -70,6 +72,13 @@ Granular Updates (单独更新):
         print("⚠️  DRY RUN MODE: No changes will be written to disk.")
     
     print(f"Starting Niki-docAI 2.0 in {root_path}")
+    
+    # 0. Handle Self-Update (No Config Needed)
+    if args.command == "update":
+        if update_flow.run():
+            sys.exit(0)
+        else:
+            sys.exit(1)
 
     # 1. Ensure Configuration Files Exist (Documentation as Configuration)
     # Skip ensures for doctor command to diagnose raw state

@@ -188,13 +188,15 @@ def scan_file_content(content: str, file_path: Optional[Path] = None) -> ScanRes
     
     # 2. Structural Analysis (AST) - Optional
     symbols = []
-    if file_path and file_path.suffix == ".py":
+    # Now supports multiple languages, let ast.py decide based on extension
+    if file_path:
         try:
-            tree = parse_code(content)
-            # extract_symbols requires bytes for accurate byte offsets if needed,
-            # though our implementation uses AST nodes which map to byte offsets usually.
-            # But let's check extract_symbols signature: (tree, content_bytes)
-            symbols = extract_symbols(tree, content.encode("utf-8"))
+            tree = parse_code(content, file_path)
+            if tree:
+                # extract_symbols requires bytes for accurate byte offsets if needed,
+                # though our implementation uses AST nodes which map to byte offsets usually.
+                # But let's check extract_symbols signature: (tree, content_bytes)
+                symbols = extract_symbols(tree, content.encode("utf-8"), file_path)
         except Exception as e:
             # Fallback or log warning? For now, silent fail or minimal logging is safer for a scanner
             # to avoid crashing the whole process on one bad file.

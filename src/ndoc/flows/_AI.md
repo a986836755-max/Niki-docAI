@@ -1,6 +1,6 @@
 # Context: flows
 > @CONTEXT: Local | flows | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-01-29 19:27:32
+> 最后更新 (Last Updated): 2026-01-29 20:01:46
 
 ## !RULE
 <!-- Add local rules here -->
@@ -23,6 +23,7 @@
     *   `PUB:` FUN **process_directory**`(path: Path, config: ProjectConfig, recursive: bool = True) -> None`
     *   `PUB:` FUN **run**`(config: ProjectConfig) -> bool`
     *   `PUB:` FUN **update_directory**`(path: Path, config: ProjectConfig) -> bool`
+    *   `PRV:` FUN _format_single_symbol`(sym, level: int)`
 *   **[deps_flow.py](deps_flow.py)**: Flow: Dependency Graph Generation.
     *   `PUB:` FUN **build_dependency_graph**`(import_map: Dict[str, List[str]]) -> Dict[str, Set[str]]`
     *   `PUB:` FUN **collect_imports**`(root: Path) -> Dict[str, List[str]]`
@@ -59,6 +60,9 @@
     *   `PUB:` FUN **format_todo_lines**`(todos: List[TodoItem], root: Path) -> str`
     *   `GET->` VAR **priority_icon**`(self) -> str`
     *   `PUB:` FUN **run**`(config: ProjectConfig) -> bool`
+*   **[update_flow.py](update_flow.py)**: Flow: Self-Update Flow.
+    *   `PUB:` FUN **run**`() -> bool`
+    *   `PRV:` FUN _is_git_repo`(path: Path) -> bool`
 *   **[verify_flow.py](verify_flow.py)**: Flow: Verification.
     *   `PUB:` FUN **run**`(config: ProjectConfig) -> bool`
 <!-- NIKI_AUTO_Context_END -->

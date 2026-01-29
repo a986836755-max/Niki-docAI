@@ -4,13 +4,86 @@ Atoms: AST Parsing (Tree-sitter Wrapper).
 """
 from typing import List, Optional, Dict, Any, Iterator
 from dataclasses import dataclass, field
-import tree_sitter_python as tspython
+from pathlib import Path
+
+try:
+    import tree_sitter_python as tspython
+except ImportError:
+    tspython = None
+
+try:
+    import tree_sitter_cpp as tscpp
+except ImportError:
+    tscpp = None
+
+try:
+    import tree_sitter_javascript as tsjs
+except ImportError:
+    tsjs = None
+    
+try:
+    import tree_sitter_typescript as tsts
+except ImportError:
+    tsts = None
+
+try:
+    import tree_sitter_go as tsgo
+except ImportError:
+    tsgo = None
+
+try:
+    import tree_sitter_rust as tsrust
+except ImportError:
+    tsrust = None
+
 from tree_sitter import Language, Parser, Tree, Node
 
 from ..models.context import Symbol
+from . import queries
 
 # --- Configuration ---
-PY_LANGUAGE = Language(tspython.language())
+# Map extension to language key
+EXT_MAP = {
+    '.py': 'python',
+    '.cpp': 'cpp',
+    '.c': 'cpp',
+    '.h': 'cpp',
+    '.hpp': 'cpp',
+    '.js': 'javascript',
+    '.jsx': 'javascript',
+    '.ts': 'typescript',
+    '.tsx': 'typescript',
+    '.go': 'go',
+    '.rs': 'rust'
+}
+
+# Cache languages
+_LANGUAGES = {}
+
+def get_language(lang_key: str) -> Optional[Language]:
+    if lang_key in _LANGUAGES:
+        return _LANGUAGES[lang_key]
+    
+    lang_obj = None
+    if lang_key == 'python' and tspython:
+        lang_obj = Language(tspython.language())
+    elif lang_key == 'cpp' and tscpp:
+        lang_obj = Language(tscpp.language())
+    elif lang_key == 'javascript' and tsjs:
+        lang_obj = Language(tsjs.language())
+    elif lang_key == 'typescript' and tsts:
+        # TypeScript has two dialects: typescript and tsx
+        # For simplicity, load standard typescript
+        lang_obj = Language(tsts.language_typescript())
+    elif lang_key == 'go' and tsgo:
+        lang_obj = Language(tsgo.language())
+    elif lang_key == 'rust' and tsrust:
+        lang_obj = Language(tsrust.language())
+        
+    if lang_obj:
+        _LANGUAGES[lang_key] = lang_obj
+        
+    return lang_obj
 
 # --- Data Structures (Logic as Data) ---
 
@@ -36,75 +109,53 @@ class AstNode:
 
 # --- Engine (Pure Functions) ---
 
-def get_parser() -> Parser:
+def get_parser(lang_key: str = 'python') -> Optional[Parser]:
     """
     获取解析器实例 (Get Parser Instance).
     """
-    parser = Parser(PY_LANGUAGE)
+    lang = get_language(lang_key)
+    if not lang:
+        return None
+        
+    parser = Parser(lang)
     return parser
 
-def parse_code(content: str) -> Tree:
+def parse_code(content: str, file_path: Optional[Path] = None) -> Optional[Tree]:
     """
     解析代码生成 CST (Parse code to CST).
     
     Args:
         content: 源代码字符串
+        file_path: 文件路径，用于推断语言
         
     Returns:
         Tree: Tree-sitter Tree 对象
     """
-    parser = get_parser()
+    lang_key = 'python' # Default
+    if file_path:
+        ext = file_path.suffix.lower()
+        lang_key = EXT_MAP.get(ext, 'python')
+        
+    parser = get_parser(lang_key)
+    if not parser:
+        return None
+        
     # Tree-sitter expects bytes, encoding handled here
     return parser.parse(bytes(content, "utf8"))
 
-def query_tree(tree: Tree, query_scm: str) -> List[Dict[str, Node]]:
+def query_tree(tree: Tree, query_scm: str, lang_key: str = 'python') -> List[Dict[str, Node]]:
     """
     使用 S-expression 查询树 (Query Tree using S-expressions).
     Implementation: Query as Data.
-    
-    Args:
-        tree: Tree 对象
-        query_scm: S-expression 查询语句
-        
-    Returns:
-        List[Dict[str, Node]]: 匹配的捕获组 (List of capture dicts)
-        e.g. [{'name': Node, 'definition': Node}, ...]
     """
-    query = PY_LANGUAGE.query(query_scm)
+    lang = get_language(lang_key)
+    if not lang:
+        return []
+        
+    query = lang.query(query_scm)
     captures = query.captures(tree.root_node)
-    
-    # Tree-sitter's captures API returns a list of (Node, str) tuples.
-    # We need to group them by match pattern if we want structured data,
-    # but captures() flattens everything.
-    # However, for simple extraction (like "get all classes"), a flat list of nodes is fine.
-    # But wait, we want to know WHICH capture name it matched (e.g. @name vs @class).
-    
-    # Improved return format: List of (capture_name, Node)
-    # We can't easily group by "match instance" without `matches()` API.
-    # Let's use `matches()` instead of `captures()` for structured extraction.
-    
-    results = []
-    matches = query.matches(tree.root_node)
-    for match in matches:
-        # match is (match_id, {capture_name: [Node, ...]}) (in older bindings)
-        # or just a match object.
-        # Let's check the latest binding behavior. 
-        # Assuming standard behavior: match is a dictionary of capture_name -> [Node] or Node.
-        
-        # In tree-sitter 0.23+ bindings, matches() returns iterator of Match.
-        # Match.captures is a dict { capture_name: Node | [Node] }.
-        
-        # Let's use a safe extraction assuming we get a dict-like structure from `matches`.
-        # Actually, `matches` returns `list[tuple[int, dict[str, Node | list[Node]]]]` in some versions.
-        # Let's stick to `captures` for now as it is simpler for flat lists, 
-        # but for associating Name with Class, we need structure.
-        
-        # Let's assume we want to extract definitions.
-        # A simple approach is iterating matches.
-        pass
-        
-    # Fallback to simple capture list for now, let the caller process.
     return [{'name': name, 'node': node} for node, name in captures]
+
 
 def node_to_data(node: Node, include_children: bool = False) -> AstNode:
     """
@@ -120,140 +171,46 @@ def node_to_data(node: Node, include_children: bool = False) -> AstNode:
         data.children = [node_to_data(child, True) for child in node.children]
     return data
 
-# --- High-Level Extraction (Business Logic) ---
+# --- Helpers ---
 
-def extract_symbols(tree: Tree, content_bytes: bytes) -> List[Symbol]:
+def _get_parent_name(node: Node, lang_key: str = 'python') -> Optional[str]:
     """
-    提取所有顶级符号 (Extract all top-level symbols).
-    Implementation: Query Pipeline.
+    获取父级类名 (Get parent class name).
+    Walks up the tree to find enclosing class_definition.
     """
-    symbols = []
+    curr = node.parent
     
-    # 1. Extract Classes and Functions
-    # We query for definition nodes AND their names.
-    # Note: 'decorator' field might vary by tree-sitter version or grammar version.
-    # In standard python grammar, it's usually (decorated_definition (decorator) definition)
-    # But let's check if we can query decorated_definition.
+    # Language specific class node types
+    class_types = {
+        'python': ['class_definition'],
+        'cpp': ['class_specifier', 'struct_specifier'],
+        'javascript': ['class_declaration'],
+        'typescript': ['class_declaration', 'interface_declaration'],
+        'go': ['type_declaration', 'type_spec'], # Go is tricky, usually type X struct
+        'rust': ['struct_item', 'trait_item', 'impl_item']
+    }
     
-    # Revised strategy: 
-    # Use simple definition queries first.
-    # If we need decorators, we check parent node or use a broader query.
+    target_types = class_types.get(lang_key, ['class_definition'])
     
-    query_scm = """
-    (class_definition
-      name: (identifier) @name
-    ) @class_def
-    
-    (function_definition
-      name: (identifier) @name
-      parameters: (parameters) @params
-      return_type: (type)? @ret
-    ) @func_def
-    
-    (decorated_definition
-      (decorator) @deco
-      (function_definition
-        name: (identifier) @name
-        parameters: (parameters) @params
-        return_type: (type)? @ret
-      ) @func_def
-    )
-    """
-    
-    query = PY_LANGUAGE.query(query_scm)
-    matches = query.matches(tree.root_node)
-    
-    unique_symbols = {} # Map[start_byte, Symbol]
-    
-    for match in matches:
-        # match is tuple: (pattern_index, capture_dict)
-        # capture_dict: { 'name': [Node], 'class_def': [Node], ... }
-        captures = match[1]
-        
-        node = None
-        kind = "unknown"
-        name = ""
-        signature = ""
-        decorators = []
-
-        # Collect decorators first
-        if 'deco' in captures:
-            deco_nodes = captures['deco']
-            if not isinstance(deco_nodes, list):
-                deco_nodes = [deco_nodes]
+    while curr:
+        if curr.type in target_types:
+            # Find name node
+            name_node = curr.child_by_field_name('name')
             
-            for deco in deco_nodes:
-                decorators.append(deco.text.decode('utf8').strip())
-
-        if 'class_def' in captures:
-            node = captures['class_def'][0] if isinstance(captures['class_def'], list) else captures['class_def']
-            kind = 'class'
-        elif 'func_def' in captures:
-            node = captures['func_def'][0] if isinstance(captures['func_def'], list) else captures['func_def']
-            kind = 'function'
+            # Special handling for Go type specs
+            if lang_key == 'go' and curr.type == 'type_declaration':
+                 # Go: type Name struct { ... }
+                 # type_declaration -> type_spec -> name
+                 # We might be inside type_spec already if using query
+                 pass
             
-            # Check decorator for @property or @classmethod or @staticmethod
-            for deco_text in decorators:
-                if '@property' in deco_text:
-                    kind = 'property'
-                elif '@classmethod' in deco_text:
-                    kind = 'classmethod'
-                elif '@staticmethod' in deco_text:
-                    kind = 'staticmethod'
-            
-            # Extract signature components
-            params_node = None
-            ret_node = None
-            
-            if 'params' in captures:
-                params_node = captures['params'][0] if isinstance(captures['params'], list) else captures['params']
-            
-            if 'ret' in captures:
-                ret_node = captures['ret'][0] if isinstance(captures['ret'], list) else captures['ret']
+            if name_node:
+                return name_node.text.decode('utf8')
                 
-            if params_node:
-                # Clean newlines from params for compact display
-                p_text = params_node.text.decode('utf8')
-                p_text = " ".join(p_text.split())
-                signature = p_text
-                
-            if ret_node:
-                r_text = ret_node.text.decode('utf8')
-                signature += f" -> {r_text}"
-            
-        if 'name' in captures:
-            name_node = captures['name'][0] if isinstance(captures['name'], list) else captures['name']
-            name = name_node.text.decode('utf8')
-            
-        if node and name:
-            # Try to find docstring (first expression statement string in block)
-            docstring = _extract_docstring_from_node(node, content_bytes)
-            
-            sym = Symbol(
-                name=name,
-                kind=kind,
-                line=node.start_point[0] + 1,
-                docstring=docstring,
-                signature=signature if signature else None
-            )
-            
-            # De-duplication logic
-            # Prioritize specific kinds (property/classmethod) over generic function
-            node_id = node.start_byte
-            if node_id in unique_symbols:
-                existing = unique_symbols[node_id]
-                # If existing is generic 'function' and new is specific, overwrite
-                if existing.kind == 'function' and sym.kind in ('property', 'classmethod', 'staticmethod'):
-                    unique_symbols[node_id] = sym
-                # If new has signature and existing doesn't, overwrite (unlikely with this logic but safe)
-                elif sym.signature and not existing.signature:
-                     unique_symbols[node_id] = sym
-            else:
-                unique_symbols[node_id] = sym
-                
-    # Sort by line number
-    symbols = sorted(unique_symbols.values(), key=lambda s: s.line)
-    return symbols
+            # Fallback for some languages where name might be different
+            # e.g. C++ class_specifier -> name is type_identifier
+        curr = curr.parent
+    return None
 
 def _extract_docstring_from_node(node: Node, content_bytes: bytes) -> Optional[str]:
     """
@@ -277,16 +234,183 @@ def _extract_docstring_from_node(node: Node, content_bytes: bytes) -> Optional[s
                     return raw[1:-1]
     return None
 
-# --- Predefined Queries (Logic as Data) ---
+def _is_async_function(node: Node, lang_key: str = 'python') -> bool:
+    """
+    Check if function definition is async.
+    """
+    try:
+        text = node.text.decode('utf8').strip()
+        if lang_key in ('python', 'javascript', 'typescript'):
+            return text.startswith('async ')
+        # C++/Go/Rust usually handle async differently (e.g. library based or keywords)
+        # Rust has async fn
+        if lang_key == 'rust':
+            return text.startswith('async ')
+        return False
+    except:
+        return False
 
-QUERY_CLASSES = """
-(class_definition
-  name: (identifier) @name
-) @class
-"""
+# --- High-Level Extraction (Business Logic) ---
 
-QUERY_FUNCTIONS = """
-(function_definition
-  name: (identifier) @name
-) @function
-"""
+def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] = None) -> List[Symbol]:
+    """
+    提取所有顶级符号 (Extract all top-level symbols).
+    Implementation: Query Pipeline.
+    """
+    # Determine language
+    lang_key = 'python'
+    if file_path:
+        ext = file_path.suffix.lower()
+        lang_key = EXT_MAP.get(ext, 'python')
+        
+    # Get Language Object
+    lang_obj = get_language(lang_key)
+    if not lang_obj:
+        return []
+        
+    # Get Query SCM
+    query_scm = queries.QUERY_MAP.get(lang_key)
+    if not query_scm:
+        # If no query for this language, return empty
+        return []
+    
+    query = lang_obj.query(query_scm)
+    matches = query.matches(tree.root_node)
+    
+    unique_symbols = {} # Map[start_byte, Symbol]
+    
+    for match in matches:
+        captures = match[1]
+        
+        node = None
+        kind = "unknown"
+        name = ""
+        signature = ""
+        decorators = []
+        parent_name = None
+        docstring = None
+
+        # Collect decorators first
+        if 'deco' in captures:
+            deco_nodes = captures['deco']
+            if not isinstance(deco_nodes, list):
+                deco_nodes = [deco_nodes]
+            for deco in deco_nodes:
+                decorators.append(deco.text.decode('utf8').strip())
+
+        # 1. Handle Class Definitions
+        if 'class_def' in captures:
+            node = captures['class_def'][0] if isinstance(captures['class_def'], list) else captures['class_def']
+            kind = 'class'
+            if 'name' in captures:
+                name = captures['name'][0].text.decode('utf8')
+            parent_name = _get_parent_name(node, lang_key)
+
+        # 2. Handle Function Definitions
+        elif 'func_def' in captures:
+            node = captures['func_def'][0] if isinstance(captures['func_def'], list) else captures['func_def']
+            kind = 'function'
+            
+            # Check async
+            if _is_async_function(node, lang_key):
+                kind = 'async_function'
+            
+            # Check decorators for kind override (Python specific mostly)
+            for deco_text in decorators:
+                if '@property' in deco_text:
+                    kind = 'property'
+                elif '@classmethod' in deco_text:
+                    kind = 'classmethod'
+                elif '@staticmethod' in deco_text:
+                    kind = 'staticmethod'
+            
+            if 'name' in captures:
+                name = captures['name'][0].text.decode('utf8')
+                
+            # Signature extraction
+            params_node = None
+            ret_node = None
+            
+            if 'params' in captures:
+                params_node = captures['params'][0] if isinstance(captures['params'], list) else captures['params']
+            if 'ret' in captures:
+                ret_node = captures['ret'][0] if isinstance(captures['ret'], list) else captures['ret']
+                
+            if params_node:
+                p_text = params_node.text.decode('utf8')
+                p_text = " ".join(p_text.split()) # Clean newlines
+                signature = p_text
+            
+            if ret_node:
+                r_text = ret_node.text.decode('utf8')
+                signature += f" -> {r_text}"
+            
+            # Go specific: func (r Receiver) Name()
+            # We might need better query to capture receiver as parent, but for now logic is simple
+            
+            parent_name = _get_parent_name(node, lang_key)
+
+        # 3. Handle Field/Variable Definitions
+        elif 'field_def' in captures:
+            node = captures['field_def'][0] if isinstance(captures['field_def'], list) else captures['field_def']
+            kind = 'variable'
+            
+            if 'field_name' in captures:
+                name = captures['field_name'][0].text.decode('utf8')
+            
+            # Signature for fields: type = value
+            type_text = ""
+            value_text = ""
+            
+            if 'field_type' in captures:
+                type_node = captures['field_type'][0] if isinstance(captures['field_type'], list) else captures['field_type']
+                type_text = type_node.text.decode('utf8')
+            
+            if 'field_value' in captures:
+                val_node = captures['field_value'][0] if isinstance(captures['field_value'], list) else captures['field_value']
+                value_text = val_node.text.decode('utf8')
+            
+            if type_text and value_text:
+                signature = f": {type_text} = {value_text}"
+            elif type_text:
+                signature = f": {type_text}"
+            elif value_text:
+                signature = f" = {value_text}"
+                
+            parent_name = _get_parent_name(node, lang_key)
+
+        if node and name:
+            # Extract docstring if not already done (for classes/functions)
+            if kind in ('class', 'function', 'async_function', 'method', 'classmethod', 'staticmethod', 'property'):
+                docstring = _extract_docstring_from_node(node, content_bytes)
+            
+            # Determine effective kind (method vs function)
+            if parent_name and kind == 'function':
+                kind = 'method'
+            if parent_name and kind == 'async_function':
+                kind = 'async_method'
+
+            sym = Symbol(
+                name=name,
+                kind=kind,
+                line=node.start_point[0] + 1,
+                docstring=docstring,
+                signature=signature if signature else None,
+                parent=parent_name
+            )
+            
+            # De-duplication logic
+            node_id = node.start_byte
+            if node_id in unique_symbols:
+                existing = unique_symbols[node_id]
+                # Priority: property/classmethod > function/method
+                if existing.kind in ('function', 'method') and sym.kind in ('property', 'classmethod', 'staticmethod'):
+                    unique_symbols[node_id] = sym
+                elif sym.signature and not existing.signature:
+                    unique_symbols[node_id] = sym
+            else:
+                unique_symbols[node_id] = sym
+                
+    # Sort by line number
+    symbols = sorted(unique_symbols.values(), key=lambda s: s.line)
+    return symbols
