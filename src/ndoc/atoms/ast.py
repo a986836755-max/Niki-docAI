@@ -46,6 +46,11 @@ try:
 except ImportError:
     tscsharp = None
 
+try:
+    import tree_sitter_java as tsjava
+except ImportError:
+    tsjava = None
+
 from tree_sitter import Language, Parser, Tree, Node
 
 from ..models.context import Symbol
@@ -66,7 +71,8 @@ EXT_MAP = {
     '.go': 'go',
     '.rs': 'rust',
     '.dart': 'dart',
-    '.cs': 'c_sharp'
+    '.cs': 'c_sharp',
+    '.java': 'java'
 }
 
 # Cache languages
@@ -95,6 +101,8 @@ def get_language(lang_key: str) -> Optional[Language]:
         return Language(tsdart.language())
     if lang_key == 'c_sharp' and tscsharp:
         return Language(tscsharp.language())
+    elif lang_key == 'java' and tsjava:
+        return Language(tsjava.language())
     
     if lang_obj:
         _LANGUAGES[lang_key] = lang_obj
@@ -209,7 +217,8 @@ def _get_parent_name(node: Node, lang_key: str = 'python') -> Optional[str]:
         'typescript': ['class_declaration', 'interface_declaration', 'enum_declaration'],
         'go': ['type_declaration', 'type_spec'], # Go is tricky, usually type X struct
         'rust': ['struct_item', 'trait_item', 'impl_item'],
-        'c_sharp': ['class_declaration', 'struct_declaration', 'interface_declaration', 'record_declaration']
+        'c_sharp': ['class_declaration', 'struct_declaration', 'interface_declaration', 'record_declaration'],
+        'java': ['class_declaration', 'interface_declaration', 'enum_declaration', 'record_declaration']
     }
     
     target_types = class_types.get(lang_key, ['class_definition'])

@@ -279,6 +279,47 @@ DART_SCM = """
 (function_definition name: (identifier) @name) @func_def
 """
 
+JAVA_SCM = """
+(class_declaration
+  name: (identifier) @name
+) @class_def
+
+(interface_declaration
+  name: (identifier) @name
+) @class_def
+
+(enum_declaration
+  name: (identifier) @name
+) @class_def
+
+(record_declaration
+  name: (identifier) @name
+) @class_def
+
+(method_declaration
+  name: (identifier) @name
+  parameters: (formal_parameters) @params
+  type: [
+    (type_identifier)
+    (void_type)
+    (generic_type)
+  ]? @ret
+) @func_def
+
+(constructor_declaration
+  name: (identifier) @name
+  parameters: (formal_parameters) @params
+) @func_def
+
+(field_declaration
+  type: (_) @field_type
+  (variable_declarator
+    name: (identifier) @field_name
+    value: (_)? @field_value
+  )
+) @field_def
+"""
+
 # Map language keys to SCM
 QUERY_MAP = {
     "python": PYTHON_SCM,
@@ -288,5 +329,6 @@ QUERY_MAP = {
     "go": GO_SCM,
     "rust": RUST_SCM,
     "dart": DART_SCM,
-    "c_sharp": CSHARP_SCM
+    "c_sharp": CSHARP_SCM,
+    "java": JAVA_SCM
 }

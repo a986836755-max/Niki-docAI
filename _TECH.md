@@ -1,6 +1,6 @@
 # Tech Stack Snapshot
 > @CONTEXT: Global | _TECH.md | @TAGS: @TECH @DEPS
-> 最后更新 (Last Updated): 2026-01-30 18:59:06
+> 最后更新 (Last Updated): 2026-01-30 19:04:13
 
 ## 1. Languages (语言分布)
 *   **Markdown**: `███████░░░░░░░░░░░░░` 38.3%
@@ -22,6 +22,14 @@
 *   `watchdog>=6.0.0`
 *   `tree-sitter>=0.23.2`
 *   `tree-sitter-python>=0.23.6`
+*   `tree-sitter-cpp>=0.23.4`
+*   `tree-sitter-javascript>=0.23.1`
+*   `tree-sitter-typescript>=0.23.2`
+*   `tree-sitter-go>=0.23.4`
+*   `tree-sitter-rust>=0.23.2`
+*   `tree-sitter-dart>=0.23.2`
+*   `tree-sitter-c-sharp>=0.23.1`
+*   `tree-sitter-java>=0.23.5`
 *   `pytest>=8.4.2`
 *   `colorama>=0.4.6`
 
@@ -56,6 +64,7 @@
 *   `tree_sitter_cpp`
 *   `tree_sitter_dart`
 *   `tree_sitter_go`
+*   `tree_sitter_java`
 *   `tree_sitter_javascript`
 *   `tree_sitter_python`
 *   `tree_sitter_rust`
