@@ -31,17 +31,6 @@ PYTHON_SCM = """
     )
   )
 )
-(class_definition
-    body: (block
-        (expression_statement
-            (annotated_assignment
-                left: (identifier) @field_name
-                type: (type) @field_type
-                value: (_)? @field_value
-            ) @field_def
-        )
-    )
-)
 """
 
 CPP_SCM = """
@@ -155,12 +144,14 @@ CSHARP_SCM = """
 ) @struct_def
 
 (method_declaration
+  (modifier_list)? @visibility
   name: (identifier) @name
   parameters: (parameter_list) @params
   type: (_)? @ret
 ) @func_def
 
 (constructor_declaration
+  (modifier_list)? @visibility
   name: (identifier) @name
   parameters: (parameter_list) @params
 ) @func_def
@@ -186,12 +177,14 @@ TYPESCRIPT_SCM = """
 ) @func_def
 
 (method_definition
+  ((accessibility_modifier) @visibility)?
   name: (_) @name
   parameters: (formal_parameters) @params
   return_type: (type_annotation)? @ret
 ) @func_def
 
 (public_field_definition
+  ((accessibility_modifier) @visibility)?
   name: (_) @field_name
   type: (type_annotation)? @field_type
   value: (_)? @field_value
@@ -258,14 +251,17 @@ GO_SCM = """
 
 RUST_SCM = """
 (struct_item
+  (visibility_modifier)? @visibility
   name: (type_identifier) @name
 ) @struct_def
 
 (trait_item
+  (visibility_modifier)? @visibility
   name: (type_identifier) @name
 ) @class_def
 
 (function_item
+  (visibility_modifier)? @visibility
   name: (identifier) @name
   parameters: (parameters) @params
   return_type: (type_identifier)? @ret
@@ -281,37 +277,39 @@ DART_SCM = """
 
 JAVA_SCM = """
 (class_declaration
+  (modifiers)? @visibility
   name: (identifier) @name
 ) @class_def
 
 (interface_declaration
+  (modifiers)? @visibility
   name: (identifier) @name
 ) @class_def
 
 (enum_declaration
-  name: (identifier) @name
-) @class_def
-
-(record_declaration
+  (modifiers)? @visibility
   name: (identifier) @name
 ) @class_def
 
 (method_declaration
-  name: (identifier) @name
-  parameters: (formal_parameters) @params
+  (modifiers)? @visibility
   type: [
     (type_identifier)
     (void_type)
     (generic_type)
   ]? @ret
+  name: (identifier) @name
+  parameters: (formal_parameters) @params
 ) @func_def
 
 (constructor_declaration
+  (modifiers)? @visibility
   name: (identifier) @name
   parameters: (formal_parameters) @params
 ) @func_def
 
 (field_declaration
+  (modifiers)? @visibility
   type: (_) @field_type
   (variable_declarator
     name: (identifier) @field_name

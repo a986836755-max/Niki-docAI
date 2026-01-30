@@ -42,16 +42,34 @@ class Symbol:
     signature: Optional[str] = None # e.g. "(x: int) -> int"
     parent: Optional[str] = None # e.g. "ClassName" for methods/fields
     is_core: bool = False # Whether symbol is marked as @CORE
+    visibility: str = "public" # 'public' | 'private' | 'protected'
+    lang: str = "unknown" # Language key (e.g., 'python', 'go')
 
     @property
     def is_public(self) -> bool:
         """
-        Check if symbol is public (not starting with _).
-        Note: Dunder methods (__init__) are technically internal/magic, 
-        but usually we want to see them if they are top-level (rare) or significant.
-        For now, standard Python convention: _* is private.
+        Check if symbol is public.
+        1. Check visibility attribute (from AST modifiers)
+        2. Check naming convention (Python style _, JS/TS style #, Go style Uppercase)
         """
-        return not self.name.startswith('_')
+        # 1. AST visibility takes precedence
+        v_lower = self.visibility.lower()
+        if 'private' in v_lower or 'protected' in v_lower:
+            return False
+        
+        # 2. Language-specific naming conventions
+        if self.lang == 'go':
+            # Go: Uppercase means public
+            if self.name and self.name[0].isupper():
+                return True
+            return False
+
+        # Fallback naming convention (Python, JS, etc.)
+        # Python: _name, JS/TS: #name
+        if self.name.startswith('_') or self.name.startswith('#'):
+            return False
+            
+        return True
 
 @dataclass
 class FileContext:

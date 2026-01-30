@@ -70,28 +70,37 @@ Niki-docAI provides a suite of tools to automate "Context Ops":
     - *Reference `_RULES.md` for `!IGNORE`, `!INCLUDE`, and special keywords like `@AGGREGATE` and `@CHECK_IGNORE`.*
     - *参阅 `_RULES.md` 了解 `!IGNORE`, `!INCLUDE` 以及 `@AGGREGATE`, `@CHECK_IGNORE` 等特殊关键字。*
 
-2. **Persistence (持久性)**:
+2. **Priority Weighting (优先级加权)**:
+    Use `@CORE` in file headers or docstrings to elevate importance for AI focus.
+    在文件头或文档注释中使用 `@CORE` 提升关键文件的 AI 关注度优先级。
+
+3. **Visibility Awareness (可见性感知)**:
+    Automatically captures `public`/`private`/`protected` modifiers and naming conventions (`_`, `#`, Go Uppercase) to distinguish API boundaries.
+    自动捕捉 `public`/`private`/`protected` 修饰符及命名规范（`_`, `#`, Go 大写），清晰界定 API 边界。
+
+4. **Persistence (持久性)**:
     Respects user edits; never overwrites creative content.
     尊重用户修改；绝不覆盖用户的创作内容。
 
-3. **Automation (自动化)**:
+5. **Automation (自动化)**:
     One-command maintenance (`ndoc all`).
     一键自动化维护 (`ndoc all`)。
 
-4. **Recursive Deep Scan (递归深度扫描)**:
+6. **Recursive Deep Scan (递归深度扫描)**:
     Deep dependency analysis across multi-language manifests and source code.
     跨多语言配置清单与源码的深度依赖分析。
 
-5. **Multi-Language Support (多语言支持)**:
+7. **Multi-Language Support (多语言支持)**:
     Built-in Tree-sitter integration for polyglot codebases.
     内置 Tree-sitter 集成，支持多语言混合代码库。
 
 ### Supported Languages (支持的语言)
-*   **Python** (`.py`) - AST & Imports
+*   **Python** (`.py`) - AST, Imports & Visibility
+*   **Java** (`.java`) - AST, Packages & Visibility (New!)
 *   **C/C++** (`.cpp`, `.c`, `.h`, `.hpp`) - AST & Includes
-*   **JavaScript/TypeScript** (`.js`, `.ts`, `.jsx`, `.tsx`) - AST & Imports
-*   **Go** (`.go`) - AST & Imports
-*   **Rust** (`.rs`) - AST & Imports
+*   **JavaScript/TypeScript** (`.js`, `.ts`, `.jsx`, `.tsx`) - AST, Imports & Private Fields (#)
+*   **Go** (`.go`) - AST, Imports & Exported Symbols
+*   **Rust** (`.rs`) - AST, Imports & Visibility
 *   **Dart** (`.dart`) - AST & Imports (pubspec.yaml)
 *   **C#** (`.cs`, `.csproj`) - AST & Usings (PackageReference)
 *   **CMake** (`.cmake`, `CMakeLists.txt`) - FetchContent & find_package

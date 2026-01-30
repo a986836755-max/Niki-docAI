@@ -491,6 +491,18 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
             if parent_name and name == parent_name and kind in ('function', 'method', 'async_function', 'async_method'):
                 name = f"{name}()"
 
+            # Metadata
+            is_core = False
+            visibility = "public"
+            if docstring and "@CORE" in docstring:
+                is_core = True
+            
+            # Extract visibility from captures if present
+            if 'visibility' in captures:
+                v_nodes = captures['visibility']
+                v_node = v_nodes[0] if isinstance(v_nodes, list) else v_nodes
+                visibility = content_bytes[v_node.start_byte:v_node.end_byte].decode('utf8', 'ignore').strip()
+
             sym = Symbol(
                 name=name,
                 kind=kind,
@@ -498,7 +510,9 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
                 docstring=docstring,
                 signature=signature if signature else None,
                 parent=parent_name,
-                is_core=docstring is not None and "@CORE" in docstring
+                is_core=is_core,
+                visibility=visibility,
+                lang=lang_key
             )
             
             # De-duplication logic

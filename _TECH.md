@@ -1,6 +1,6 @@
 # Tech Stack Snapshot
 > @CONTEXT: Global | _TECH.md | @TAGS: @TECH @DEPS
-> 最后更新 (Last Updated): 2026-01-30 19:04:13
+> 最后更新 (Last Updated): 2026-01-30 19:25:20
 
 ## 1. Languages (语言分布)
 *   **Markdown**: `███████░░░░░░░░░░░░░` 38.3%
@@ -312,26 +312,26 @@
 *   `build_runner (dev)`
 
 ### vendors/tree-sitter-dart/tree_sitter/bin/gen_grammar.dart
-*   `package:args/args.dart`
 *   `package:freezed_annotation/freezed_annotation.dart`
 *   `dart:io`
 *   `dart:convert`
+*   `package:args/args.dart`
 
 ### vendors/tree-sitter-dart/tree_sitter/example/tree_sitter.dart
 *   `package:dylib/dylib.dart`
-*   `dart:io`
 *   `package:tree_sitter/tree_sitter.dart`
+*   `dart:io`
 
 ### vendors/tree-sitter-dart/tree_sitter/lib/tree_sitter.dart
+*   `dart:typed_data`
+*   `package:dylib/dylib.dart`
+*   `package:ffi/ffi.dart`
+*   `src/utils.dart`
 *   `dart:io`
 *   `dart:ffi`
-*   `dart:typed_data`
-*   `dart:convert`
-*   `src/utils.dart`
-*   `package:dylib/dylib.dart`
-*   `package:tree_sitter/tree_sitter.dart`
 *   `src/parser_generated_bindings.dart`
-*   `package:ffi/ffi.dart`
+*   `package:tree_sitter/tree_sitter.dart`
+*   `dart:convert`
 
 ### vendors/tree-sitter-dart/tree_sitter/lib/src/generated_bindings.dart
 *   `dart:ffi`
@@ -340,8 +340,8 @@
 *   `dart:ffi`
 
 ### vendors/tree-sitter-dart/tree_sitter/lib/src/utils.dart
-*   `dart:io`
 *   `dart:ffi`
+*   `dart:io`
 
 ### vendors/tree-sitter-dart/tree_sitter/test/tree_sitter_test.dart
 *   `package:dylib/dylib.dart`
