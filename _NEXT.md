@@ -32,7 +32,23 @@
     *   [ ] 集中展示所有 `@dataclass`, `TypedDict` 和 `Enum` 定义。
     *   [ ] 强化 "Logic as Data" 原则的可视化。
 
-## @HISTORY (Completed)
+## @PLAN: Niki-docAI Evolution (Phase 6)
+> @CONTEXT: Optimization Proposals | @TAGS: @VISION @ARCH @TECH
+
+### 1. @TECH: Deep Semantic Analysis (LSP)
+> **Goal**: `Regex` -> `LSP` => **Deep Context**
+- **Ref**: `Regex` (Current) -> `Symbol Name` (Shallow)
+- **New**: `LSP Server` -> `Signature` + `DocString` + `CallGraph`
+- **Flow**: `Source` -> `LSP` >> `_AI.md` (`@API` Detail)
+- **Value**: `@API` now contains `FUN Name(Args) -> Ret`, minimizing `Context Loss`.
+
+### 2. @ARCH: Architecture Guard (Linter)
+> **Goal**: `Passive Recorder` -> `Active Police`
+- **Ref**: `_DEPS.md` (Current) -> `Visual Graph` (Passive)
+- **New**: `_RULES.md` defines `!RULE` (Constraints)
+- **Syntax**: `Client` !-> `Engine::Core` (Ban Dependency)
+- **Op**: `ndoc verify` ? `Violation` => `[ARCH_ERROR]` Alert
+
 
 ### Phase 2 & 3: Parsing & Foundation
 *   [x] **Testing Strategy**: 建立了 `tests/` 和 `pytest` 体系。

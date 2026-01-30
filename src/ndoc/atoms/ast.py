@@ -41,6 +41,11 @@ try:
 except ImportError:
     tsdart = None
 
+try:
+    import tree_sitter_c_sharp as tscsharp
+except ImportError:
+    tscsharp = None
+
 from tree_sitter import Language, Parser, Tree, Node
 
 from ..models.context import Symbol
@@ -60,7 +65,8 @@ EXT_MAP = {
     '.tsx': 'typescript',
     '.go': 'go',
     '.rs': 'rust',
-    '.dart': 'dart'
+    '.dart': 'dart',
+    '.cs': 'c_sharp'
 }
 
 # Cache languages
@@ -86,8 +92,10 @@ def get_language(lang_key: str) -> Optional[Language]:
     elif lang_key == 'rust' and tsrust:
         lang_obj = Language(tsrust.language())
     elif lang_key == 'dart' and tsdart:
-        lang_obj = Language(tsdart.language())
-        
+        return Language(tsdart.language())
+    if lang_key == 'c_sharp' and tscsharp:
+        return Language(tscsharp.language())
+    
     if lang_obj:
         _LANGUAGES[lang_key] = lang_obj
         
@@ -200,7 +208,8 @@ def _get_parent_name(node: Node, lang_key: str = 'python') -> Optional[str]:
         'javascript': ['class_declaration'],
         'typescript': ['class_declaration', 'interface_declaration'],
         'go': ['type_declaration', 'type_spec'], # Go is tricky, usually type X struct
-        'rust': ['struct_item', 'trait_item', 'impl_item']
+        'rust': ['struct_item', 'trait_item', 'impl_item'],
+        'c_sharp': ['class_declaration', 'struct_declaration', 'interface_declaration', 'record_declaration']
     }
     
     target_types = class_types.get(lang_key, ['class_definition'])
@@ -283,6 +292,9 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
         
     # Get Query SCM
     query_scm = queries.QUERY_MAP.get(lang_key)
+    if lang_key == 'c_sharp':
+        query_scm = queries.CSHARP_SCM
+
     if not query_scm:
         # If no query for this language, return empty
         return []

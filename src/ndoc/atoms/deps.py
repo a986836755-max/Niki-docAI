@@ -49,6 +49,8 @@ LANGUAGE_EXTENSIONS = {
     '.hpp': 'C++ Header',
     '.dart': 'Dart',
     '.cmake': 'CMake',
+    '.cs': 'C#',
+    '.csproj': 'C# Project',
 }
 
 def detect_languages(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, float]:
@@ -272,19 +274,74 @@ def extract_cpp_includes(content: str) -> List[str]:
 
 def extract_dart_imports(content: str) -> List[str]:
     """
-    Extract import statements from Dart code.
-    Returns list of package names or file paths.
+    Extract imports from Dart code.
+    Matches: import 'package:foo/foo.dart'; or import 'file.dart';
     """
     imports = set()
+    # Matches: import "..." or import '...'
+    # Capture group 1: the path
+    pattern = re.compile(r"^\s*import\s+['\"](.*?)['\"]", re.MULTILINE)
+    
+    for match in pattern.finditer(content):
+        path = match.group(1)
+        # Clean up package: prefix if desired, but keeping it is often better for clarity
+        imports.add(path)
+        
+    return list(imports)
+
+def extract_csharp_usings(content: str) -> List[str]:
+    """
+    Extract usings from C# code.
+    Matches: using System; using Foo.Bar;
+    """
+    usings = set()
+    # Matches: using Namespace;
+    pattern = re.compile(r"^\s*using\s+([\w\.]+)\s*;", re.MULTILINE)
+    
+    for match in pattern.finditer(content):
+        usings.add(match.group(1))
+        
+    return list(usings)
+
+def parse_csproj(file_path: Path) -> List[str]:
+    """
+    Parse .csproj files for PackageReference.
+    """
+    deps = set()
     try:
-        # Match import 'package:name/...' or import 'file.dart'
-        matches = re.findall(r"import\s+['\"]([^'\"]+)['\"]", content)
-        for imp in matches:
-            # Filter standard dart: imports if desired, but user asked for imports
-            imports.add(imp)
+        content = file_path.read_text(encoding='utf-8', errors='ignore')
+        # Matches: <PackageReference Include="PackageName" ... />
+        pattern = re.compile(r'<PackageReference\s+Include="([^"]+)"', re.MULTILINE)
+        for match in pattern.finditer(content):
+            deps.add(match.group(1))
     except Exception:
         pass
-    return sorted(list(imports))
+    return list(deps)
+
+# Mapping of file extensions to parser functions
+SOURCE_PARSERS = {
+    '.py': extract_imports,
+    '.dart': extract_dart_imports,
+    '.cpp': extract_cpp_includes,
+    '.h': extract_cpp_includes,
+    '.hpp': extract_cpp_includes,
+    '.c': extract_cpp_includes,
+    '.cc': extract_cpp_includes,
+    '.cs': extract_csharp_usings,
+}
+
+def extract_dependencies(content: str, file_path: Path) -> List[str]:
+    """
+    Generic dependency extractor based on file extension.
+    Dispatch to specific parser based on file suffix.
+    """
+    ext = file_path.suffix.lower()
+    if ext in SOURCE_PARSERS:
+        try:
+            return SOURCE_PARSERS[ext](content)
+        except Exception:
+            return []
+    return []
 
 def get_project_dependencies(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, List[str]]:
     """
@@ -294,26 +351,51 @@ def get_project_dependencies(root_path: Path, ignore_patterns: Set[str] = None) 
     """
     results = {}
     
-    target_files = {
+    # Manifest files
+    manifest_parsers = {
         'requirements.txt': parse_requirements_txt,
         'pyproject.toml': parse_pyproject_toml,
         'package.json': parse_package_json,
         'pubspec.yaml': parse_pubspec_yaml,
         'CMakeLists.txt': parse_cmake_lists,
     }
-    
+
     ignores = list(ignore_patterns or DEFAULT_IGNORE_PATTERNS)
 
     # Walk with pruning
     for path in fs.walk_files(root_path, ignore_patterns=ignores):
-        if path.name in target_files:
-            parser = target_files[path.name]
+        # 1. Check Manifests (Exact Name or Extension)
+        if path.name in manifest_parsers:
+            parser = manifest_parsers[path.name]
             try:
                 deps = parser(path)
                 if deps:
-                    # Use relative path for readability
                     rel_path = fs.get_relative_path(path, root_path)
                     results[rel_path] = deps
+            except Exception:
+                pass
+        elif path.suffix.lower() == '.csproj':
+             try:
+                deps = parse_csproj(path)
+                if deps:
+                    rel_path = fs.get_relative_path(path, root_path)
+                    results[rel_path] = deps
+             except Exception:
+                pass
+
+        # 2. Check Source Code (Extension)
+        if path.suffix.lower() in SOURCE_PARSERS:
+            parser = SOURCE_PARSERS[path.suffix.lower()]
+            try:
+                content = path.read_text(encoding='utf-8', errors='ignore')
+                deps = parser(content)
+                if deps:
+                    rel_path = fs.get_relative_path(path, root_path)
+                    # Merge if both exist (rare but possible if a file matches both)
+                    if rel_path in results:
+                        results[rel_path].extend(deps)
+                    else:
+                        results[rel_path] = deps
             except Exception:
                 pass
                     

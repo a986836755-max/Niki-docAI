@@ -8,6 +8,7 @@
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
 *   **[fixtures/](fixtures/_AI.md)**
+*   **[temp/](temp/_AI.md)**
 *   **[conftest.py](conftest.py)**
 *   **[test_ast.py](test_ast.py)**
     *   `PUB:` FUN **find_member**`(cls_name, name)`

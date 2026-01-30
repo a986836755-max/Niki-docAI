@@ -146,7 +146,7 @@ def format_dependencies(ctx: FileContext) -> str:
     """
     try:
         content = io.read_text(ctx.path)
-        imports = deps.extract_imports(content)
+        imports = deps.extract_dependencies(content, ctx.path)
         if not imports:
             return ""
             

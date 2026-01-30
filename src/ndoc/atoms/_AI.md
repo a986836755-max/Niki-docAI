@@ -24,10 +24,13 @@
 *   **[deps.py](deps.py)**: Atom: Dependency Parser.
     *   `PUB:` FUN **detect_languages**`(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, float]`
     *   `PUB:` FUN **extract_cpp_includes**`(content: str) -> List[str]`
+    *   `PUB:` FUN **extract_csharp_usings**`(content: str) -> List[str]`
     *   `PUB:` FUN **extract_dart_imports**`(content: str) -> List[str]`
+    *   `PUB:` FUN **extract_dependencies**`(content: str, file_path: Path) -> List[str]`
     *   `PUB:` FUN **extract_imports**`(content: str) -> List[str]`
     *   `PUB:` FUN **get_project_dependencies**`(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, List[str]]`
     *   `PUB:` FUN **parse_cmake_lists**`(file_path: Path) -> List[str]`
+    *   `PUB:` FUN **parse_csproj**`(file_path: Path) -> List[str]`
     *   `PUB:` FUN **parse_package_json**`(file_path: Path) -> List[str]`
     *   `PUB:` FUN **parse_pubspec_yaml**`(file_path: Path) -> List[str]`
     *   `PUB:` FUN **parse_pyproject_toml**`(file_path: Path) -> List[str]`

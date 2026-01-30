@@ -78,16 +78,24 @@ Niki-docAI provides a suite of tools to automate "Context Ops":
     One-command maintenance (`ndoc all`).
     一键自动化维护 (`ndoc all`)。
 
-4. **Multi-Language Support (多语言支持)**:
+4. **Recursive Deep Scan (递归深度扫描)**:
+    Deep dependency analysis across multi-language manifests and source code.
+    跨多语言配置清单与源码的深度依赖分析。
+
+5. **Multi-Language Support (多语言支持)**:
     Built-in Tree-sitter integration for polyglot codebases.
     内置 Tree-sitter 集成，支持多语言混合代码库。
 
 ### Supported Languages (支持的语言)
-*   **Python** (`.py`)
-*   **C/C++** (`.cpp`, `.c`, `.h`, `.hpp`)
-*   **JavaScript/TypeScript** (`.js`, `.ts`, `.jsx`, `.tsx`)
-*   **Go** (`.go`)
-*   **Rust** (`.rs`)
+*   **Python** (`.py`) - AST & Imports
+*   **C/C++** (`.cpp`, `.c`, `.h`, `.hpp`) - AST & Includes
+*   **JavaScript/TypeScript** (`.js`, `.ts`, `.jsx`, `.tsx`) - AST & Imports
+*   **Go** (`.go`) - AST & Imports
+*   **Rust** (`.rs`) - AST & Imports
+*   **Dart** (`.dart`) - AST & Imports (pubspec.yaml)
+*   **C#** (`.cs`, `.csproj`) - AST & Usings (PackageReference)
+*   **CMake** (`.cmake`, `CMakeLists.txt`) - FetchContent & find_package
+*   **Manifests**: `requirements.txt`, `pyproject.toml`, `package.json`, `pubspec.yaml`, `CMakeLists.txt`, `.csproj`
 
 ---
 

@@ -53,6 +53,7 @@
     *   **fixtures/**
         *   `_AI.md`
         *   `complex_api.py`
+    *   **temp/**
     *   `_AI.md`
     *   `conftest.py`
     *   `test_ast.py`

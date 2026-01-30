@@ -109,6 +109,35 @@ JAVASCRIPT_SCM = """
 ) @func_def
 """
 
+CSHARP_SCM = """
+(class_declaration
+  name: (identifier) @name
+) @class_def
+
+(struct_declaration
+  name: (identifier) @name
+) @struct_def
+
+(interface_declaration
+  name: (identifier) @name
+) @class_def
+
+(record_declaration
+  name: (identifier) @name
+) @struct_def
+
+(method_declaration
+  name: (identifier) @name
+  parameters: (parameter_list) @params
+  type: (_)? @ret
+) @func_def
+
+(constructor_declaration
+  name: (identifier) @name
+  parameters: (parameter_list) @params
+) @func_def
+"""
+
 TYPESCRIPT_SCM = """
 (class_declaration
   name: (type_identifier) @name
@@ -190,5 +219,6 @@ QUERY_MAP = {
     "typescript": TYPESCRIPT_SCM,
     "go": GO_SCM,
     "rust": RUST_SCM,
-    "dart": DART_SCM
+    "dart": DART_SCM,
+    "c_sharp": CSHARP_SCM
 }
