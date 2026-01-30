@@ -1,21 +1,15 @@
 # Context: tests
 > @CONTEXT: Local | tests | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-01-29 20:01:46
+> 最后更新 (Last Updated): 2026-01-30 18:56:15
 
 ## !RULE
 <!-- Add local rules here -->
 
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
-*   **[fixtures/](fixtures/_AI.md)**
-*   **[temp/](temp/_AI.md)**
-*   **[conftest.py](conftest.py)**
-*   **[test_ast.py](test_ast.py)**
-    *   `PUB:` FUN **find_member**`(cls_name, name)`
-    *   `PUB:` FUN **find_sym**`(name)`
-    *   `PUB:` FUN **test_extract_complex_api**`()`
-    *   `PUB:` FUN **test_extract_symbols_basic**`()`
-*   **[test_scanner.py](test_scanner.py)**
-    *   `PUB:` FUN **test_scan_file_content_mixed**`()`
-    *   `PUB:` FUN **test_scan_file_content_text_only**`()`
+*   **[fixtures/](fixtures/_AI.md#L1)**
+*   **[temp/](temp/_AI.md#L1)**
+*   **[conftest.py](conftest.py#L1)** @DEP: pathlib, sys
+*   **[test_ast.py](test_ast.py#L1)** @DEP: ndoc.atoms.ast, ndoc.atoms.io, ndoc.models.context, pathlib, pytest
+*   **[test_scanner.py](test_scanner.py#L1)** @DEP: ndoc.atoms.scanner, pathlib, pytest
 <!-- NIKI_AUTO_Context_END -->

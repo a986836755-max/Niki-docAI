@@ -99,14 +99,42 @@ JAVASCRIPT_SCM = """
 ) @func_def
 
 (method_definition
-  name: (property_identifier) @name
+  name: (_) @name
   parameters: (formal_parameters) @params
 ) @func_def
 
+(field_definition
+  property: (_) @field_name
+  value: (_)? @field_value
+) @field_def
+
 (variable_declarator
   name: (identifier) @name
-  value: [(arrow_function) (function)]
+  value: [
+    (function_expression
+      parameters: (formal_parameters) @params
+    )
+    (arrow_function
+      parameters: [
+        (formal_parameters)
+        (identifier)
+      ] @params
+    )
+  ]
 ) @func_def
+
+(variable_declarator
+  name: (identifier) @field_name
+  value: [
+    (number)
+    (string)
+    (true)
+    (false)
+    (null)
+    (array)
+    (object)
+  ] @field_value
+) @field_def
 """
 
 CSHARP_SCM = """
@@ -147,6 +175,10 @@ TYPESCRIPT_SCM = """
   name: (type_identifier) @name
 ) @class_def
 
+(enum_declaration
+  name: (identifier) @name
+) @struct_def
+
 (function_declaration
   name: (identifier) @name
   parameters: (formal_parameters) @params
@@ -154,10 +186,46 @@ TYPESCRIPT_SCM = """
 ) @func_def
 
 (method_definition
-  name: (property_identifier) @name
+  name: (_) @name
   parameters: (formal_parameters) @params
   return_type: (type_annotation)? @ret
 ) @func_def
+
+(public_field_definition
+  name: (_) @field_name
+  type: (type_annotation)? @field_type
+  value: (_)? @field_value
+) @field_def
+
+(variable_declarator
+  name: (identifier) @name
+  value: [
+    (function_expression
+      parameters: (formal_parameters) @params
+      return_type: (type_annotation)? @ret
+    )
+    (arrow_function
+      parameters: [
+        (formal_parameters)
+        (identifier)
+      ] @params
+      return_type: (type_annotation)? @ret
+    )
+  ]
+) @func_def
+
+(variable_declarator
+  name: (identifier) @field_name
+  value: [
+    (number)
+    (string)
+    (true)
+    (false)
+    (null)
+    (array)
+    (object)
+  ] @field_value
+) @field_def
 """
 
 GO_SCM = """

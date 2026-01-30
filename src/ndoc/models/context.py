@@ -41,6 +41,7 @@ class Symbol:
     docstring: Optional[str] = None
     signature: Optional[str] = None # e.g. "(x: int) -> int"
     parent: Optional[str] = None # e.g. "ClassName" for methods/fields
+    is_core: bool = False # Whether symbol is marked as @CORE
 
     @property
     def is_public(self) -> bool:
@@ -66,6 +67,7 @@ class FileContext:
     sections: Dict[str, Section] = field(default_factory=dict)
     symbols: List[Symbol] = field(default_factory=list) # Extracted symbols
     docstring: Optional[str] = None
+    is_core: bool = False # Whether file is marked as @CORE
     
     # AST Data (Optional, lazy loaded)
     ast_tree: Any = None # Optional[Tree] from tree-sitter

@@ -206,7 +206,7 @@ def _get_parent_name(node: Node, lang_key: str = 'python') -> Optional[str]:
         'python': ['class_definition'],
         'cpp': ['class_specifier', 'struct_specifier'],
         'javascript': ['class_declaration'],
-        'typescript': ['class_declaration', 'interface_declaration'],
+        'typescript': ['class_declaration', 'interface_declaration', 'enum_declaration'],
         'go': ['type_declaration', 'type_spec'], # Go is tricky, usually type X struct
         'rust': ['struct_item', 'trait_item', 'impl_item'],
         'c_sharp': ['class_declaration', 'struct_declaration', 'interface_declaration', 'record_declaration']
@@ -219,41 +219,78 @@ def _get_parent_name(node: Node, lang_key: str = 'python') -> Optional[str]:
             # Find name node
             name_node = curr.child_by_field_name('name')
             
-            # Special handling for Go type specs
-            if lang_key == 'go' and curr.type == 'type_declaration':
-                 # Go: type Name struct { ... }
-                 # type_declaration -> type_spec -> name
-                 # We might be inside type_spec already if using query
-                 pass
+            # Fallback for some languages where name might be different
+            if not name_node and lang_key == 'cpp':
+                # C++ class_specifier name is often a type_identifier
+                pass
             
             if name_node:
                 return name_node.text.decode('utf8')
-                
-            # Fallback for some languages where name might be different
-            # e.g. C++ class_specifier -> name is type_identifier
         curr = curr.parent
     return None
 
-def _extract_docstring_from_node(node: Node, content_bytes: bytes) -> Optional[str]:
+def _extract_docstring_from_node(node: Node, content_bytes: bytes, lang_key: str = 'python') -> Optional[str]:
     """
     从节点中提取 Docstring (Extract docstring from node).
+    Supports Python internal docstrings and C-style preceding comments.
     """
-    # Look for block -> expression_statement -> string
-    block = node.child_by_field_name('body')
-    if not block:
-        return None
+    if lang_key == 'python':
+        # Python style: internal docstring
+        block = node.child_by_field_name('body')
+        if block:
+            for child in block.children:
+                if child.type == 'expression_statement':
+                    if child.child_count > 0 and child.children[0].type == 'string':
+                        string_node = child.children[0]
+                        raw = string_node.text.decode('utf8')
+                        if raw.startswith('"""') or raw.startswith("'''"):
+                            return raw[3:-3].strip()
+                        elif raw.startswith('"') or raw.startswith("'"):
+                            return raw[1:-1].strip()
+    
+    # Generic style: look for preceding comments (JSDoc, Doxygen, etc.)
+    # Walk backwards from the current node or its parent (if it's a decorator/export)
+    # to find comment nodes.
+    
+    # Some nodes like export_statement or decorated_definition wrap the actual node
+    scan_node = node
+    # Handle JS/TS export wrappers
+    if node.parent and node.parent.type in ('export_statement', 'lexical_declaration', 'variable_declaration'):
+        # In JS, export const x = ...; the comment is before the export statement
+        # In JS, const x = ...; the comment is before the lexical_declaration
+        scan_node = node.parent
+        # Sometimes it's double wrapped: export const x = () => {}
+        if scan_node.parent and scan_node.parent.type == 'export_statement':
+            scan_node = scan_node.parent
+
+    curr = scan_node.prev_sibling
+    # Skip whitespace/newlines if tree-sitter includes them as nodes
+    while curr and curr.type in ('\n', ' '):
+        curr = curr.prev_sibling
+
+    comments = []
+    while curr and curr.type in ('comment', 'line_comment', 'block_comment'):
+        text = curr.text.decode('utf8').strip()
+        # Clean JSDoc style
+        if text.startswith('/**'):
+            # Block comment
+            lines = text[3:-2].split('\n')
+            cleaned = [line.strip().lstrip('*').strip() for line in lines]
+            comments.insert(0, "\n".join(cleaned).strip())
+        elif text.startswith('/*'):
+            comments.insert(0, text[2:-2].strip())
+        elif text.startswith('///'):
+            comments.insert(0, text[3:].strip())
+        elif text.startswith('//'):
+            comments.insert(0, text[2:].strip())
         
-    for child in block.children:
-        if child.type == 'expression_statement':
-            # Check if it contains a string
-            if child.child_count > 0 and child.children[0].type == 'string':
-                string_node = child.children[0]
-                # Remove quotes
-                raw = string_node.text.decode('utf8')
-                if raw.startswith('"""') or raw.startswith("'''"):
-                    return raw[3:-3]
-                elif raw.startswith('"') or raw.startswith("'"):
-                    return raw[1:-1]
+        curr = curr.prev_sibling
+        while curr and curr.type in ('\n', ' '):
+            curr = curr.prev_sibling
+        
+    if comments:
+        return "\n".join(comments).strip()
+        
     return None
 
 def _is_async_function(node: Node, lang_key: str = 'python') -> bool:
@@ -375,8 +412,12 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
                 signature = p_text
             
             if ret_node:
-                r_text = ret_node.text.decode('utf8')
-                signature += f" -> {r_text}"
+                r_text = ret_node.text.decode('utf8').strip()
+                # JS/TS return_type often includes the leading colon
+                if r_text.startswith(':'):
+                    signature += f" {r_text}"
+                else:
+                    signature += f" -> {r_text}"
             
             # Go specific: func (r Receiver) Name()
             # We might need better query to capture receiver as parent, but for now logic is simple
@@ -395,18 +436,30 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
             type_text = ""
             value_text = ""
             
+            type_node = None
+            val_node = None
             if 'field_type' in captures:
                 type_node = captures['field_type'][0] if isinstance(captures['field_type'], list) else captures['field_type']
-                type_text = type_node.text.decode('utf8')
-            
             if 'field_value' in captures:
                 val_node = captures['field_value'][0] if isinstance(captures['field_value'], list) else captures['field_value']
-                value_text = val_node.text.decode('utf8')
+
+            if type_node:
+                type_text = type_node.text.decode('utf8').strip()
+            
+            if val_node:
+                value_text = val_node.text.decode('utf8').strip()
             
             if type_text and value_text:
-                signature = f": {type_text} = {value_text}"
+                # If type_text already has ':', don't add another
+                if type_text.startswith(':'):
+                    signature = f"{type_text} = {value_text}"
+                else:
+                    signature = f": {type_text} = {value_text}"
             elif type_text:
-                signature = f": {type_text}"
+                if type_text.startswith(':'):
+                    signature = type_text
+                else:
+                    signature = f": {type_text}"
             elif value_text:
                 signature = f" = {value_text}"
                 
@@ -414,8 +467,8 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
 
         if node and name:
             # Extract docstring if not already done (for classes/functions)
-            if kind in ('class', 'struct', 'function', 'async_function', 'method', 'classmethod', 'staticmethod', 'property'):
-                docstring = _extract_docstring_from_node(node, content_bytes)
+            if kind in ('class', 'struct', 'function', 'async_function', 'method', 'classmethod', 'staticmethod', 'property', 'variable'):
+                docstring = _extract_docstring_from_node(node, content_bytes, lang_key)
             
             # Determine effective kind (method vs function)
             if parent_name and kind == 'function':
@@ -435,7 +488,8 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
                 line=node.start_point[0] + 1,
                 docstring=docstring,
                 signature=signature if signature else None,
-                parent=parent_name
+                parent=parent_name,
+                is_core=docstring is not None and "@CORE" in docstring
             )
             
             # De-duplication logic

@@ -36,6 +36,7 @@ class ScanResult:
     docstring: str = ""
     summary: str = ""
     todos: List[dict] = field(default_factory=list)  # New: Captured TODOs
+    is_core: bool = False # Whether file is marked as @CORE
 
 
 # --- Core Logic ---
@@ -71,12 +72,29 @@ def extract_todos(content: str) -> List[dict]:
 def extract_docstring(content: str) -> str:
     """
     提取文件顶部的 Docstring.
+    Supports Python (\"\"\"), JS/C (/** ... */ or /* ... */).
     """
-    subset = content[:2000]  # Optimization: only check header
+    subset = content[:2000].strip()  # Optimization: only check header
+    
+    # 1. Python style
     for pattern in DOCSTRING_PATTERNS:
         match = pattern.search(subset)
         if match:
             return match.group(1).strip()
+    
+    # 2. JS/C-style Block Comment (JSDoc)
+    if subset.startswith('/**') or subset.startswith('/*'):
+        end_idx = subset.find('*/')
+        if end_idx != -1:
+            raw = subset[:end_idx+2]
+            # Clean JSDoc
+            if raw.startswith('/**'):
+                lines = raw[3:-2].split('\n')
+                cleaned = [line.strip().lstrip('*').strip() for line in lines]
+                return "\n".join(cleaned).strip()
+            else:
+                return raw[2:-2].strip()
+
     return ""
 
 
@@ -246,6 +264,14 @@ def scan_file_content(content: str, file_path: Optional[Path] = None) -> ScanRes
             if ext in ('.dart', '.fbs'):
                 symbols = regex_scan(content, ext)
 
+    # 3. Finalize
+    is_core = any(t.name == "@CORE" for t in tags) or "@CORE" in docstring
+    
+    # Mark symbols as core if they have @CORE in their docstring
+    for sym in symbols:
+        if sym.docstring and "@CORE" in sym.docstring:
+            sym.is_core = True
+
     return ScanResult(
         tags=tags,
         sections=sections,
@@ -253,4 +279,5 @@ def scan_file_content(content: str, file_path: Optional[Path] = None) -> ScanRes
         docstring=docstring,
         summary=summary,
         todos=todos,
+        is_core=is_core
     )
