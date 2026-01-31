@@ -6,7 +6,8 @@ import os
 import re
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Iterator, List, Set, Pattern, Callable
+from typing import Iterator, List, Set, Pattern, Callable, Optional
+import pathspec
 
 # --- Data Structures (Logic as Data) ---
 
@@ -17,42 +18,62 @@ class FileFilter:
     """
     ignore_patterns: Set[str] = field(default_factory=set)
     allow_extensions: Set[str] = field(default_factory=set)
-    # 预编译的正则列表，用于更复杂的忽略规则 (Pre-compiled regex for complex ignores)
-    # 暂时保留扩展性，目前使用精确匹配
-    
+    spec: Optional[pathspec.PathSpec] = None
+
     @property
     def has_extension_filter(self) -> bool:
         return bool(self.allow_extensions)
 
 # --- Engine (Pipeline) ---
 
-def should_ignore(name: str, filter_config: FileFilter) -> bool:
+def load_gitignore(root: Path) -> Optional[pathspec.PathSpec]:
+    """Load .gitignore from root directory."""
+    gitignore_path = root / ".gitignore"
+    if gitignore_path.exists():
+        try:
+            with open(gitignore_path, 'r', encoding='utf-8') as f:
+                return pathspec.PathSpec.from_lines('gitwildmatch', f)
+        except Exception:
+            pass
+    return None
+
+def should_ignore(path: Path, filter_config: FileFilter, root: Path = None) -> bool:
     """
     检查是否应该忽略 (Check if should ignore).
-    Implementation: Table lookup (Set).
-    
-    Args:
-        name: 文件名
-        filter_config: 过滤配置
-        
-    Returns:
-        bool: True if ignored
+    Implementation: Table lookup (Set) + Gitignore (PathSpec).
     """
+    name = path.name
+    
     # 1. Hidden file check (Rule)
     if name.startswith('.') and name != '.':
         return True
         
     # 2. Ignore list lookup (Data)
-    return name in filter_config.ignore_patterns
+    if name in filter_config.ignore_patterns:
+        return True
 
+    # 3. .gitignore check (Logic as Data)
+    if filter_config.spec and root:
+        try:
+            rel_path = path.relative_to(root).as_posix()
+            if filter_config.spec.match_file(rel_path):
+                return True
+        except ValueError:
+            pass
+            
+    return False
 
-def list_dir(path: Path, filter_config: FileFilter) -> List[Path]:
+def list_dir(path: Path, filter_config: FileFilter, root: Path = None) -> List[Path]:
     """
     列出目录内容并应用过滤 (List directory contents with filtering).
     Returns sorted list: Directories first, then files.
     """
     if not path.is_dir():
         return []
+
+    # Auto-load gitignore if not provided and we are at root
+    if not filter_config.spec and root and path == root:
+        filter_config.spec = load_gitignore(root)
 
     try:
         entries = path.iterdir()
@@ -61,8 +82,8 @@ def list_dir(path: Path, filter_config: FileFilter) -> List[Path]:
 
     filtered_entries = []
     for entry in entries:
-        # Check ignore patterns (common for files and dirs)
-        if should_ignore(entry.name, filter_config):
+        # Check ignore patterns
+        if should_ignore(entry, filter_config, root):
             continue
             
         # Check extensions (files only)
@@ -98,31 +119,35 @@ def walk_files(root: Path, ignore_patterns: List[str], extensions: List[str] = N
     )
 
     # 2. Execute Pipeline (Walk -> Filter -> Yield)
+    # Load gitignore if available
+    config.spec = load_gitignore(root)
+
     for entry in os.walk(root):
         dirpath, dirnames, filenames = entry
+        curr_dir = Path(dirpath)
         
-        # Prune directories (Mutation required by os.walk)
-        # Filter logic delegated to engine function
-        # Using list comprehension for filtering implies creating new list, 
-        # but os.walk requires modifying 'dirnames' in place to prune recursion.
-        # We find items to remove first (Query), then remove (Command).
-        to_remove = [d for d in dirnames if should_ignore(d, config)]
+        # Prune directories
+        to_remove = []
+        for d in dirnames:
+            d_path = curr_dir / d
+            if should_ignore(d_path, config, root):
+                to_remove.append(d)
+        
         for d in to_remove:
             dirnames.remove(d)
         
         # Filter files
         for f in filenames:
-            if should_ignore(f, config):
+            f_path = curr_dir / f
+            if should_ignore(f_path, config, root):
                 continue
                 
-            path = Path(dirpath) / f
-            
             # Extension check (Data Lookup)
             if config.has_extension_filter:
-                if path.suffix.lower() not in config.allow_extensions:
+                if f_path.suffix.lower() not in config.allow_extensions:
                     continue
             
-            yield path
+            yield f_path
 
 def get_relative_path(path: Path, root: Path) -> str:
     """

@@ -9,6 +9,7 @@ from typing import List, Optional, Pattern, Dict, Any, Iterator
 from pathlib import Path
 from ..models.context import Tag, Section, Symbol
 from ..atoms.ast import parse_code, extract_symbols
+from ..atoms import cache
 
 # --- Data Structures (Logic as Data) ---
 
@@ -39,22 +40,83 @@ class ScanResult:
     is_core: bool = False # Whether file is marked as @CORE
 
 
+# --- Global Cache ---
+_CACHE: Optional[cache.FileCache] = None
+
+def get_cache(root: Path) -> cache.FileCache:
+    global _CACHE
+    if _CACHE is None:
+        cache_dir = root / ".ndoc" / "cache"
+        _CACHE = cache.FileCache(cache_dir)
+    return _CACHE
+
 # --- Core Logic ---
+
+def scan_file(file_path: Path, root: Path) -> ScanResult:
+    """
+    扫描单个文件，支持缓存 (Scan single file with cache support).
+    """
+    c = get_cache(root)
+    if not c.is_changed(file_path):
+        cached_data = c.get(file_path)
+        if cached_data:
+            # Reconstruct ScanResult from dict
+            # This is a bit tedious with nested objects, 
+            # for now let's just return a fresh scan if cache fails to deserialize perfectly
+            try:
+                # Basic reconstruction for tags and symbols
+                tags = [Tag(**t) for t in cached_data.get('tags', [])]
+                symbols = [Symbol(**s) for s in cached_data.get('symbols', [])]
+                sections = {k: Section(**v) for k, v in cached_data.get('sections', {}).items()}
+                
+                return ScanResult(
+                    tags=tags,
+                    sections=sections,
+                    symbols=symbols,
+                    docstring=cached_data.get('docstring', ""),
+                    summary=cached_data.get('summary', ""),
+                    todos=cached_data.get('todos', []),
+                    is_core=cached_data.get('is_core', False)
+                )
+            except Exception:
+                pass
+
+    # Perform fresh scan
+    from ..atoms import io
+    content = io.read_text(file_path)
+    if content is None:
+        return ScanResult()
+        
+    result = scan_file_content(content, file_path)
+    
+    # Save to cache
+    # Convert result to dict for JSON serialization
+    cache_data = {
+        'tags': [vars(t) for t in result.tags],
+        'sections': {k: vars(v) for k, v in result.sections.items()},
+        'symbols': [vars(s) for s in result.symbols],
+        'docstring': result.docstring,
+        'summary': result.summary,
+        'todos': result.todos,
+        'is_core': result.is_core
+    }
+    c.update(file_path, cache_data)
+    c.save()
+    
+    return result
 
 
 def extract_todos(content: str) -> List[dict]:
     """
     提取 TODO/FIXME 等标记.
-    Capture groups: (Marker, Priority/Content)
-    Returns: List of dict(line, type, content)
+    Capture groups: (Marker, TaskID?, Priority/Content)
+    Returns: List of dict(line, type, task_id, content)
     """
     todos = []
-    # Pattern: (comment_char) (whitespace) (MARKER) (colon?) (whitespace) (content)
-    # Markers: TODO, FIXME, XXX, HACK, NOTE
-    # Case-insensitive for markers? Let's stick to upper case for convention, or loose.
-    # Let's use strict upper case to avoid false positives in normal text.
+    # Pattern: (comment_char) (whitespace) (MARKER) ( (task_id)? ) (colon?) (whitespace) (content)
+    # Example: // TODO(#task-123): fix this
     pattern = re.compile(
-        r"^\s*(?:#|//|<!--)\s*(TODO|FIXME|XXX|HACK|NOTE)\b:?\s*(.*)$", re.MULTILINE
+        r"^\s*(?:#|//|<!--)\s*(TODO|FIXME|XXX|HACK|NOTE|DONE)\b(?:\(#([\w-]+)\))?:?\s*(.*)$", re.MULTILINE
     )
 
     for match in pattern.finditer(content):
@@ -63,16 +125,22 @@ def extract_todos(content: str) -> List[dict]:
         line_num = content.count("\n", 0, start_index) + 1
 
         marker = match.group(1)
-        text = match.group(2).strip()
+        task_id = match.group(2)
+        text = match.group(3).strip()
 
-        todos.append({"line": line_num, "type": marker, "content": text})
+        todos.append({
+            "line": line_num, 
+            "type": marker, 
+            "task_id": task_id,
+            "content": text
+        })
     return todos
 
 
 def extract_docstring(content: str) -> str:
     """
     提取文件顶部的 Docstring.
-    Supports Python (\"\"\"), JS/C (/** ... */ or /* ... */).
+    Supports Python (\"\"\" or \'\'\'), JS/C (/** ... */ or /* ... */), and C++ (///).
     """
     subset = content[:2000].strip()  # Optimization: only check header
     
@@ -82,18 +150,31 @@ def extract_docstring(content: str) -> str:
         if match:
             return match.group(1).strip()
     
-    # 2. JS/C-style Block Comment (JSDoc)
+    # 2. JS/C-style Block Comment (JSDoc / Doxygen)
     if subset.startswith('/**') or subset.startswith('/*'):
         end_idx = subset.find('*/')
         if end_idx != -1:
             raw = subset[:end_idx+2]
-            # Clean JSDoc
+            # Clean JSDoc / Doxygen
             if raw.startswith('/**'):
                 lines = raw[3:-2].split('\n')
                 cleaned = [line.strip().lstrip('*').strip() for line in lines]
                 return "\n".join(cleaned).strip()
             else:
                 return raw[2:-2].strip()
+
+    # 3. C++ style Triple-Slash (Doxygen)
+    if subset.startswith('///'):
+        lines = []
+        for line in subset.split('\n'):
+            line = line.strip()
+            if line.startswith('///'):
+                lines.append(line[3:].strip())
+            elif not line:
+                continue
+            else:
+                break
+        return "\n".join(lines).strip()
 
     return ""
 
@@ -194,30 +275,12 @@ def extract_summary(content: str, docstring: str) -> str:
 
 def regex_scan(content: str, ext: str) -> List[Symbol]:
     """
-    Fallback regex scanner for unsupported languages (Dart, FlatBuffers).
+    Fallback regex scanner for unsupported languages (FlatBuffers).
+    AST based languages are handled in scan_file_content.
     """
     symbols = []
     
-    if ext == '.dart':
-        # Class/Mixin/Enum
-        for m in re.finditer(r'^\s*(class|mixin|enum)\s+(\w+)', content, re.MULTILINE):
-            kind = m.group(1)
-            name = m.group(2)
-            line = content[:m.start()].count('\n') + 1
-            symbols.append(Symbol(name=name, kind=kind, line=line))
-            
-        # Function/Method (Simplified: Type name(params))
-        # Matches: Future<void> main() or void main() or String getName()
-        # Avoid control flow keywords
-        for m in re.finditer(r'^\s*([a-zA-Z0-9_<>]+)\s+([a-zA-Z0-9_]+)\s*\(', content, re.MULTILINE):
-             ret_type = m.group(1)
-             name = m.group(2)
-             if ret_type in ('if', 'for', 'while', 'switch', 'catch', 'return'): 
-                 continue
-             line = content[:m.start()].count('\n') + 1
-             symbols.append(Symbol(name=name, kind='function', line=line, signature=ret_type))
-
-    elif ext == '.fbs':
+    if ext == '.fbs':
         # table/struct/enum Name
         for m in re.finditer(r'^\s*(table|struct|enum)\s+(\w+)', content, re.MULTILINE):
             kind = m.group(1)

@@ -23,6 +23,20 @@ RULES_TEMPLATE = """# Project Rules
 > 定义生成的文档样式。
 
 - `!LANG`: Chinese (zh-CN)
+
+## ALM & Memory Rules (ALM与记忆规则)
+> 定义项目生命周期与自动归档规则。
+
+- `MEMORY文档对齐`: 定期更新_MEMORY.md，每当_NEXT.md中一项功能/模块完成，将其归档入_MEMORY.md。
+- `交付即更新`: 在完成代码修改后，习惯性运行 `ndoc all`，确保改动被即时索引。
+- `语义化文档补完`: 在开发完成后，主动编辑 `_AI.md` 填充设计意图与调用约束，确保文档具有“人类可读的语义”。
+- `标签与元数据对齐`: 根据模块引入的新技术栈，动态更新 `_AI.md` 顶部的 `@TAGS`。
+
+## Special Keywords (特殊关键字)
+> 用于控制特定目录的文档生成行为。
+
+- `@AGGREGATE`: **Recursive Aggregation**. 当目录包含此标记时，不为子目录生成单独的 `_AI.md`，而是将其内容递归聚合到父级 `_AI.md` 中。
+- `@CHECK_IGNORE`: **Audit Ignore**. 当目录包含此标记时，完全跳过该目录及其子目录的 `_AI.md` 生成。
 """
 
 def load_project_config(root_path: Path) -> ProjectConfig:

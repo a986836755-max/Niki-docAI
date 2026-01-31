@@ -1,6 +1,6 @@
 # Context: vendors
-> @CONTEXT: Local | vendors | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-01-30 19:25:20
+> @CONTEXT: Local | vendors | @TAGS: @LOCAL @CHECK_IGNORE
+> 最后更新 (Last Updated): 2026-01-30 23:27:45
 
 ## !RULE
 <!-- Add local rules here -->

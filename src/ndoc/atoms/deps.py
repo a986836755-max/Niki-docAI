@@ -98,9 +98,22 @@ def extract_imports(content: str) -> List[str]:
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
                     imports.add(node.module)
+                    # Also add the full module if it's from a package
+                    # e.g., "from ndoc.flows import map_flow" -> "ndoc.flows.map_flow"
+                    for alias in node.names:
+                        imports.add(f"{node.module}.{alias.name}")
+    except SyntaxError:
+        # Fallback to regex if AST fails (e.g. invalid syntax in some files)
+        # import x, y
+        for match in re.finditer(r"^\s*import\s+([\w.,\s]+)", content, re.MULTILINE):
+            for part in match.group(1).split(','):
+                imports.add(part.strip())
+        # from x import y
+        for match in re.finditer(r"^\s*from\s+([\w.]+)\s+import\s+", content, re.MULTILINE):
+            imports.add(match.group(1))
     except Exception:
         pass
-    return sorted(list(imports))
+    return list(imports)
 
 def parse_requirements_txt(file_path: Path) -> List[str]:
     """Parse requirements.txt"""

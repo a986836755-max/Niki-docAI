@@ -1,21 +1,21 @@
 # Tech Stack Snapshot
 > @CONTEXT: Global | _TECH.md | @TAGS: @TECH @DEPS
-> 最后更新 (Last Updated): 2026-01-30 19:25:20
+> 最后更新 (Last Updated): 2026-01-31 02:25:59
 
 ## 1. Languages (语言分布)
-*   **Markdown**: `███████░░░░░░░░░░░░░` 38.3%
-*   **Python**: `█████░░░░░░░░░░░░░░░` 25.6%
-*   **Dart**: `██░░░░░░░░░░░░░░░░░░` 14.3%
-*   **YAML**: `░░░░░░░░░░░░░░░░░░░░` 4.5%
-*   **C/C++ Header**: `░░░░░░░░░░░░░░░░░░░░` 3.8%
-*   **JavaScript**: `░░░░░░░░░░░░░░░░░░░░` 3.0%
-*   **JSON**: `░░░░░░░░░░░░░░░░░░░░` 3.0%
-*   **C**: `░░░░░░░░░░░░░░░░░░░░` 2.3%
-*   **Go**: `░░░░░░░░░░░░░░░░░░░░` 1.5%
-*   **Rust**: `░░░░░░░░░░░░░░░░░░░░` 1.5%
-*   **HTML**: `░░░░░░░░░░░░░░░░░░░░` 0.8%
-*   **Shell**: `░░░░░░░░░░░░░░░░░░░░` 0.8%
-*   **TypeScript**: `░░░░░░░░░░░░░░░░░░░░` 0.8%
+*   **Markdown**: `███████░░░░░░░░░░░░░` 35.5%
+*   **Python**: `██████░░░░░░░░░░░░░░` 32.9%
+*   **Dart**: `██░░░░░░░░░░░░░░░░░░` 12.5%
+*   **YAML**: `░░░░░░░░░░░░░░░░░░░░` 3.9%
+*   **C/C++ Header**: `░░░░░░░░░░░░░░░░░░░░` 3.3%
+*   **JavaScript**: `░░░░░░░░░░░░░░░░░░░░` 2.6%
+*   **JSON**: `░░░░░░░░░░░░░░░░░░░░` 2.6%
+*   **C**: `░░░░░░░░░░░░░░░░░░░░` 2.0%
+*   **Go**: `░░░░░░░░░░░░░░░░░░░░` 1.3%
+*   **Rust**: `░░░░░░░░░░░░░░░░░░░░` 1.3%
+*   **HTML**: `░░░░░░░░░░░░░░░░░░░░` 0.7%
+*   **Shell**: `░░░░░░░░░░░░░░░░░░░░` 0.7%
+*   **TypeScript**: `░░░░░░░░░░░░░░░░░░░░` 0.7%
 
 ## 2. Dependencies (依赖库)
 ### requirements.txt
@@ -35,6 +35,12 @@
 
 ### setup.py
 *   `setuptools`
+
+### test_python_fix.py
+*   `ndoc.atoms`
+*   `os`
+*   `pathlib`
+*   `sys`
 
 ### src/ndoc/daemon.py
 *   `ndoc.flows`
@@ -71,6 +77,12 @@
 *   `tree_sitter_typescript`
 *   `typing`
 
+### src/ndoc/atoms/cache.py
+*   `hashlib`
+*   `json`
+*   `pathlib`
+*   `typing`
+
 ### src/ndoc/atoms/deps.py
 *   `ast`
 *   `configparser`
@@ -83,6 +95,7 @@
 *   `dataclasses`
 *   `os`
 *   `pathlib`
+*   `pathspec`
 *   `re`
 *   `typing`
 
@@ -94,13 +107,38 @@
 *   `re`
 *   `typing`
 
+### src/ndoc/atoms/llm.py
+*   `json`
+*   `os`
+*   `typing`
+*   `urllib.request`
+
 ### src/ndoc/atoms/scanner.py
+*   `atoms`
 *   `atoms.ast`
 *   `dataclasses`
 *   `models.context`
 *   `pathlib`
 *   `re`
 *   `typing`
+
+### src/ndoc/atoms/langs/python.py
+*   `tree_sitter`
+*   `typing`
+
+### src/ndoc/atoms/langs/__init__.py
+*   `importlib`
+*   `pathlib`
+*   `pkgutil`
+*   `tree_sitter`
+*   `typing`
+
+### src/ndoc/flows/archive_flow.py
+*   `atoms`
+*   `datetime`
+*   `models.config`
+*   `pathlib`
+*   `re`
 
 ### src/ndoc/flows/clean_flow.py
 *   `ndoc.models.config`
@@ -123,6 +161,15 @@
 *   `models.context`
 *   `pathlib`
 *   `re`
+*   `typing`
+
+### src/ndoc/flows/data_flow.py
+*   `atoms`
+*   `dataclasses`
+*   `datetime`
+*   `models.config`
+*   `models.context`
+*   `pathlib`
 *   `typing`
 
 ### src/ndoc/flows/deps_flow.py
@@ -150,11 +197,18 @@
 
 ### src/ndoc/flows/map_flow.py
 *   `atoms`
+*   `concurrent.futures`
 *   `dataclasses`
 *   `datetime`
 *   `models.config`
 *   `pathlib`
 *   `typing`
+
+### src/ndoc/flows/plan_flow.py
+*   `atoms`
+*   `datetime`
+*   `models.config`
+*   `pathlib`
 
 ### src/ndoc/flows/stats_flow.py
 *   `datetime`
@@ -164,6 +218,15 @@
 *   `pathlib`
 *   `re`
 *   `time`
+
+### src/ndoc/flows/symbols_flow.py
+*   `atoms`
+*   `collections`
+*   `datetime`
+*   `models.config`
+*   `models.context`
+*   `pathlib`
+*   `typing`
 
 ### src/ndoc/flows/syntax_flow.py
 *   `ndoc.atoms`
@@ -182,6 +245,7 @@
 *   `datetime`
 *   `models.config`
 *   `pathlib`
+*   `re`
 *   `typing`
 
 ### src/ndoc/flows/update_flow.py
@@ -312,26 +376,26 @@
 *   `build_runner (dev)`
 
 ### vendors/tree-sitter-dart/tree_sitter/bin/gen_grammar.dart
+*   `package:args/args.dart`
 *   `package:freezed_annotation/freezed_annotation.dart`
 *   `dart:io`
 *   `dart:convert`
-*   `package:args/args.dart`
 
 ### vendors/tree-sitter-dart/tree_sitter/example/tree_sitter.dart
 *   `package:dylib/dylib.dart`
-*   `package:tree_sitter/tree_sitter.dart`
 *   `dart:io`
+*   `package:tree_sitter/tree_sitter.dart`
 
 ### vendors/tree-sitter-dart/tree_sitter/lib/tree_sitter.dart
-*   `dart:typed_data`
-*   `package:dylib/dylib.dart`
-*   `package:ffi/ffi.dart`
-*   `src/utils.dart`
 *   `dart:io`
 *   `dart:ffi`
-*   `src/parser_generated_bindings.dart`
-*   `package:tree_sitter/tree_sitter.dart`
+*   `dart:typed_data`
 *   `dart:convert`
+*   `src/utils.dart`
+*   `package:dylib/dylib.dart`
+*   `package:tree_sitter/tree_sitter.dart`
+*   `src/parser_generated_bindings.dart`
+*   `package:ffi/ffi.dart`
 
 ### vendors/tree-sitter-dart/tree_sitter/lib/src/generated_bindings.dart
 *   `dart:ffi`
@@ -340,8 +404,8 @@
 *   `dart:ffi`
 
 ### vendors/tree-sitter-dart/tree_sitter/lib/src/utils.dart
-*   `dart:ffi`
 *   `dart:io`
+*   `dart:ffi`
 
 ### vendors/tree-sitter-dart/tree_sitter/test/tree_sitter_test.dart
 *   `package:dylib/dylib.dart`

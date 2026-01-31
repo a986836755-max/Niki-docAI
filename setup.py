@@ -11,7 +11,16 @@ setup(
         "watchdog>=6.0.0",
         "tree-sitter>=0.23.2",
         "tree-sitter-python>=0.23.6",
+        "tree-sitter-cpp>=0.23.4",
+        "tree-sitter-javascript>=0.23.1",
+        "tree-sitter-typescript>=0.23.2",
+        "tree-sitter-go>=0.23.4",
+        "tree-sitter-rust>=0.23.2",
+        "tree-sitter-dart>=0.23.2",
+        "tree-sitter-c-sharp>=0.23.1",
+        "tree-sitter-java>=0.23.5",
         "colorama>=0.4.6",
+        "pathspec>=0.12.1",
     ],
     entry_points={
         "console_scripts": [

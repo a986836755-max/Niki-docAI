@@ -272,7 +272,7 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
     # 2. Classify & Scan
     for entry in all_entries:
         # Check Ignore Rules
-        if fs.should_ignore(entry.name, filter_config):
+        if fs.should_ignore(entry, filter_config, root=config.scan.root_path):
             # CLEANUP: If it's a directory, ensure no _AI.md exists
             if entry.is_dir():
                 ignored_ai = entry / "_AI.md"
@@ -309,11 +309,8 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
             if is_check_ignore:
                 continue
 
-            content = io.read_text(entry)
-            if content is None:
-                continue
-                
-            scan_result = scanner.scan_file_content(content, entry)
+            # Use cached scanner
+            scan_result = scanner.scan_file(entry, config.scan.root_path)
             
             f_ctx = FileContext(
                 path=entry,

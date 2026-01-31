@@ -1,6 +1,6 @@
 # Context: models
 > @CONTEXT: Local | models | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-01-30 19:25:16
+> 最后更新 (Last Updated): 2026-01-31 02:47:30
 
 ## !RULE
 <!-- Add local rules here -->
@@ -8,7 +8,7 @@
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
 *   **[__init__.py](__init__.py#L1)**: Models: Data Definitions.
-*   **[config.py](config.py#L1)**: Models: Configuration definitions. @DEP: dataclasses, pathlib, typing
+*   **[config.py](config.py#L1)**: Models: Configuration definitions. @DEP: dataclasses, typing.Optional, dataclasses.dataclass, typing, typing.List, pathlib.Path, dataclasses.field, pathlib
     *   `@API`
         *   `PUB:` CLS **ScanConfig**
             *   `VAL->` VAR **root_path**`: Path`
@@ -29,7 +29,7 @@
             *   `VAL->` VAR **scan**`: ScanConfig`
             *   `VAL->` VAR **name**`: str = "Project"`
             *   `VAL->` VAR **version**`: str = "0.1.0"`
-*   **[context.py](context.py#L1)**: Models: Context Models. @DEP: dataclasses, pathlib, typing
+*   **[context.py](context.py#L1)**: Models: Context Models. @DEP: dataclasses, typing.Optional, typing.Dict, dataclasses.dataclass, typing, typing.List, pathlib.Path, dataclasses.field, pathlib, typing.Any
     *   `@API`
         *   `PUB:` CLS **Tag**
             *   `VAL->` VAR **name**`: str`
@@ -52,6 +52,9 @@
             *   `VAL->` VAR **is_core**`: bool = False`
             *   `VAL->` VAR **visibility**`: str = "public"`
             *   `VAL->` VAR **lang**`: str = "unknown"`
+            *   `VAL->` VAR **decorators**`: List[str] = field(default_factory=list)`
+            *   `VAL->` VAR **bases**`: List[str] = field(default_factory=list)`
+            *   `VAL->` VAR **full_content**`: str = ""`
             *   `GET->` PRP **is_public**`(self) -> bool`
         *   `PUB:` CLS **FileContext**
             *   `VAL->` VAR **path**`: Path`

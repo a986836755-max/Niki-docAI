@@ -5,7 +5,7 @@ Atoms: Input/Output Operations.
 import os
 import re
 from pathlib import Path
-from typing import List, Optional, Callable, Any
+from typing import List, Optional, Callable, Any, Union
 from datetime import datetime
 import difflib
 
@@ -13,7 +13,7 @@ import difflib
 # This is a simple state injection for cross-cutting concern
 _DRY_RUN_MODE = False
 
-def set_dry_run(enabled: bool):
+def set_dry_run(enabled: bool) -> None:
     """
     Set Dry Run mode globally.
     """
@@ -28,7 +28,7 @@ def set_dry_run(enabled: bool):
 
 # --- Engine (Safe Execution Pipeline) ---
 
-def safe_io(operation: Callable[..., Any], error_msg: str, *args, **kwargs) -> Any:
+def safe_io(operation: Callable[..., Any], error_msg: str, *args: Any, **kwargs: Any) -> Any:
     """
     通用 IO 错误处理包装器 (Generic IO error handling wrapper).
     
@@ -65,6 +65,21 @@ def read_text(path: Path) -> Optional[str]:
         return path.read_text(encoding='utf-8', errors='ignore')
         
     return safe_io(_read, f"Error reading {path}: {{e}}")
+
+def read_head(path: Path, n_bytes: int = 2048) -> Optional[str]:
+    """
+    读取文件头部内容 (Read file head content).
+    Useful for quick scanning without loading huge files.
+    """
+    if not path.exists():
+        return None
+        
+    def _read():
+        with open(path, 'rb') as f:
+            chunk = f.read(n_bytes)
+            return chunk.decode('utf-8', errors='ignore')
+            
+    return safe_io(_read, f"Error reading head of {path}: {{e}}")
 
 def write_text(path: Path, content: str) -> bool:
     """
@@ -177,7 +192,9 @@ def update_section(path: Path, start_marker: str, end_marker: str, new_content: 
         print(f"⚠️  Markers not found in {path.name}")
         return False
         
-    updated_content = pattern.sub(f"\\1\n{new_content}\n\\3", content)
+    # Escape backslashes in new_content for re.sub template
+    safe_new_content = new_content.replace("\\", "\\\\")
+    updated_content = pattern.sub(f"\\1\n{safe_new_content}\n\\3", content)
     
     return write_text(path, updated_content)
 

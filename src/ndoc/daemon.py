@@ -12,7 +12,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 from ndoc.models.config import ProjectConfig
-from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow
+from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, symbols_flow, data_flow
 
 class DocChangeHandler(FileSystemEventHandler):
     """

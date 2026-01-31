@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ndoc.models.config import ProjectConfig, ScanConfig
-from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow, config_flow, syntax_flow, doctor_flow, init_flow, verify_flow, clean_flow, stats_flow, update_flow
+from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow, config_flow, syntax_flow, doctor_flow, init_flow, verify_flow, clean_flow, stats_flow, update_flow, symbols_flow, plan_flow, archive_flow, data_flow
 from ndoc.daemon import start_watch_mode
 from ndoc.atoms import io
 
@@ -40,6 +40,11 @@ Diagnostics (诊断与维护):
   verify    : Verify documentation artifacts.
   doctor    : Diagnose environment and configuration health.
   stats     : Show project statistics.
+  
+  plan      : Plan and split an objective into tasks (LLM required).
+              Usage: ndoc plan "Your Objective"
+  
+  archive   : Archive completed tasks and extract memory.
 
 Granular Updates (单独更新):
   map       : Update Project Structure Map (_MAP.md).
@@ -47,12 +52,14 @@ Granular Updates (单独更新):
   tech      : Update Tech Stack Snapshot (_TECH.md).
   todo      : Scan and aggregate Todos (_NEXT.md).
   deps      : Update Dependency Graph (_DEPS.md).
+  symbols   : Generate Global Symbol Index (_SYMBOLS.md).
+  data      : Generate Data Registry (_DATA.md).
 """
     parser = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "help"], help="Command to execute")
+    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "symbols", "data", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "plan", "archive", "help"], help="Command to execute")
     parser.add_argument("target", nargs="?", help="Target file or directory (for clean command)")
     parser.add_argument("--root", default=".", help="Project root directory (Default: current dir)")
     parser.add_argument("--force", action="store_true", help="⚠️ Force execution (DANGER: Overwrite configs in init, Delete without confirm in clean)")
@@ -94,6 +101,15 @@ Granular Updates (单独更新):
     
     if args.command == "init":
         if init_flow.run(config, force=args.force):
+            sys.exit(0)
+        else:
+            sys.exit(1)
+
+    if args.command == "plan":
+        if not args.target:
+            print("❌ Error: 'plan' command requires an objective. Usage: ndoc plan \"Objective\"")
+            sys.exit(1)
+        if plan_flow.run(config, args.target):
             sys.exit(0)
         else:
             sys.exit(1)
@@ -155,12 +171,40 @@ Granular Updates (单独更新):
             print("❌ Todo update failed.")
             success = False
 
+    if args.command in ["archive", "all"]:
+        # Archive is part of 'all' to maintain _MEMORY.md automatically
+        print("Running Archive Flow...")
+        if archive_flow.run(config):
+            print("✅ Archive completed successfully.")
+        else:
+            if args.command == "archive": # Only fail if explicitly requested
+                print("❌ Archive failed.")
+                success = False
+            else:
+                print("ℹ️ Archive skipped or failed (non-critical for 'all').")
+
     if args.command in ["deps", "all"]:
         print("Running Deps Flow...")
         if deps_flow.run(config):
             print("✅ Dependency Graph updated successfully.")
         else:
             print("❌ Dependency Graph update failed.")
+            success = False
+
+    if args.command in ["symbols", "all"]:
+        print("Running Symbols Flow...")
+        if symbols_flow.run(config):
+            print("✅ Symbol Index updated successfully.")
+        else:
+            print("❌ Symbol Index update failed.")
+            success = False
+
+    if args.command in ["data", "all"]:
+        print("Running Data Flow...")
+        if data_flow.run(config):
+            print("✅ Data Registry updated successfully.")
+        else:
+            print("❌ Data Registry update failed.")
             success = False
 
     if args.command in ["stats", "all"]:

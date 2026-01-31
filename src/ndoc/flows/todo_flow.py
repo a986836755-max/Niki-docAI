@@ -2,10 +2,11 @@
 Flow: Todo Aggregation.
 业务流：聚合代码中的 TODO/FIXME 标记到 _NEXT.md。
 """
+import re
 from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from ..atoms import fs, io, scanner
 from ..models.config import ProjectConfig
@@ -18,6 +19,7 @@ class TodoItem:
     line: int
     type: str  # TODO, FIXME, etc.
     content: str
+    task_id: Optional[str] = None
     
     @property
     def priority_icon(self) -> str:
@@ -56,20 +58,16 @@ def collect_todos(root: Path, ignore_patterns: List[str]) -> List[TodoItem]:
             continue
             
         try:
-            content = io.read_text(file_path)
-            if not content:
-                continue
-                
-            # Use scanner
-            # Optimization: maybe just use extract_todos directly without full scan?
-            # Yes, scanner.extract_todos is static-ish
-            raw_todos = scanner.extract_todos(content)
+            # Use cached scanner
+            scan_result = scanner.scan_file(file_path, root)
+            raw_todos = scan_result.todos
             
             for t in raw_todos:
                 todos.append(TodoItem(
                     file_path=file_path,
                     line=t['line'],
                     type=t['type'],
+                    task_id=t.get('task_id'),
                     content=t['content']
                 ))
         except Exception as e:
@@ -102,6 +100,59 @@ def format_todo_lines(todos: List[TodoItem], root: Path) -> str:
         
     return "\n".join(lines)
 
+def sync_tasks(config: ProjectConfig, todos: List[TodoItem]) -> bool:
+    """
+    Sync tasks in _NEXT.md with code TODOs.
+    If a task ID in _NEXT.md is [ ] but the code has DONE(#ID) or no more TODO(#ID),
+    mark it as [x].
+    """
+    next_file = config.scan.root_path / "_NEXT.md"
+    if not next_file.exists():
+        return False
+
+    content = io.read_text(next_file)
+    if not content:
+        return False
+
+    # 1. Collect all IDs found in code that are still "active" (TODO, FIXME, etc.)
+    active_ids = {t.task_id for t in todos if t.task_id and t.type != "DONE"}
+    # 2. Collect all IDs found in code that are marked as "DONE"
+    done_ids = {t.task_id for t in todos if t.task_id and t.type == "DONE"}
+
+    lines = content.splitlines()
+    new_lines = []
+    modified = False
+
+    # Regex to find tasks with IDs: * [ ] #task-id: description
+    task_pattern = re.compile(r"^(\s*\*\s*\[\s*\]\s*)#([\w-]+)(.*)$")
+
+    for line in lines:
+        match = task_pattern.match(line)
+        if match:
+            prefix, task_id, suffix = match.groups()
+            
+            should_complete = False
+            if task_id in done_ids:
+                should_complete = True
+            elif task_id not in active_ids and len(active_ids | done_ids) > 0:
+                # If it's not active anymore, and we did find SOME IDs in the project
+                # (meaning the scan worked), we can assume it's completed or removed.
+                should_complete = True
+            
+            if should_complete:
+                # Replace [ ] with [x]
+                new_line = line.replace("[ ]", "[x]")
+                new_lines.append(new_line)
+                modified = True
+                print(f"  Auto-completing task #{task_id} in _NEXT.md")
+                continue
+        
+        new_lines.append(line)
+
+    if modified:
+        return io.write_text(next_file, "\n".join(new_lines))
+    return True
+
 # --- Entry Point ---
 
 def run(config: ProjectConfig) -> bool:
@@ -113,14 +164,21 @@ def run(config: ProjectConfig) -> bool:
     # 1. Collect
     todos = collect_todos(config.scan.root_path, config.scan.ignore_patterns)
     
-    # 2. Format
-    content = format_todo_lines(todos, config.scan.root_path)
+    # 2. Sync tasks in _NEXT.md (Update checkboxes)
+    print("Syncing tasks with code status...")
+    sync_tasks(config, todos)
     
-    # 3. Inject
+    # 3. Filter out DONE from the list that gets appended to _NEXT.md
+    active_todos = [t for t in todos if t.type != "DONE"]
+    
+    # 4. Format
+    content = format_todo_lines(active_todos, config.scan.root_path)
+    
+    # 5. Inject
     start_marker = "<!-- NIKI_TODO_START -->"
     end_marker = "<!-- NIKI_TODO_END -->"
     
-    print(f"Updating TODOS in {next_file} ({len(todos)} found)...")
+    print(f"Updating TODOS in {next_file} ({len(active_todos)} active found)...")
     
     if not next_file.exists():
         # Create if missing

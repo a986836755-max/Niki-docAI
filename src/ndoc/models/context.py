@@ -44,6 +44,9 @@ class Symbol:
     is_core: bool = False # Whether symbol is marked as @CORE
     visibility: str = "public" # 'public' | 'private' | 'protected'
     lang: str = "unknown" # Language key (e.g., 'python', 'go')
+    decorators: List[str] = field(default_factory=list)
+    bases: List[str] = field(default_factory=list)
+    full_content: str = "" # Full source of the symbol
 
     @property
     def is_public(self) -> bool:
