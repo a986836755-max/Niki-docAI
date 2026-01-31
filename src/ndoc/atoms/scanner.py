@@ -10,6 +10,7 @@ from pathlib import Path
 from ..models.context import Tag, Section, Symbol
 from ..atoms.ast import parse_code, extract_symbols
 from ..atoms import cache
+from .text_utils import clean_docstring, extract_tags_from_text, TAG_REGEX
 
 # --- Data Structures (Logic as Data) ---
 
@@ -36,7 +37,9 @@ class ScanResult:
     symbols: List[Symbol] = field(default_factory=list)
     docstring: str = ""
     summary: str = ""
-    todos: List[dict] = field(default_factory=list)  # New: Captured TODOs
+    todos: List[dict] = field(default_factory=list)  # Captured TODOs
+    calls: List[str] = field(default_factory=list)  # Captured calls
+    imports: List[str] = field(default_factory=list)  # Captured imports
     is_core: bool = False # Whether file is marked as @CORE
 
 
@@ -52,12 +55,12 @@ def get_cache(root: Path) -> cache.FileCache:
 
 # --- Core Logic ---
 
-def scan_file(file_path: Path, root: Path) -> ScanResult:
+def scan_file(file_path: Path, root: Path, force: bool = False) -> ScanResult:
     """
     扫描单个文件，支持缓存 (Scan single file with cache support).
     """
     c = get_cache(root)
-    if not c.is_changed(file_path):
+    if not force and not c.is_changed(file_path):
         cached_data = c.get(file_path)
         if cached_data:
             # Reconstruct ScanResult from dict
@@ -65,9 +68,15 @@ def scan_file(file_path: Path, root: Path) -> ScanResult:
             # for now let's just return a fresh scan if cache fails to deserialize perfectly
             try:
                 # Basic reconstruction for tags and symbols
-                tags = [Tag(**t) for t in cached_data.get('tags', [])]
-                symbols = [Symbol(**s) for s in cached_data.get('symbols', [])]
-                sections = {k: Section(**v) for k, v in cached_data.get('sections', {}).items()}
+                tags = [Tag(**t) for t in cached_data.get('tags', []) if isinstance(t, dict)]
+                symbols = []
+                for s in cached_data.get('symbols', []):
+                    if isinstance(s, dict):
+                        # Ensure path is set even if not in cache
+                        if 'path' not in s or not s['path']:
+                            s['path'] = str(file_path)
+                        symbols.append(Symbol(**s))
+                sections = {k: Section(**v) for k, v in cached_data.get('sections', {}).items() if isinstance(v, dict)}
                 
                 return ScanResult(
                     tags=tags,
@@ -76,6 +85,8 @@ def scan_file(file_path: Path, root: Path) -> ScanResult:
                     docstring=cached_data.get('docstring', ""),
                     summary=cached_data.get('summary', ""),
                     todos=cached_data.get('todos', []),
+                    calls=cached_data.get('calls', []),
+                    imports=cached_data.get('imports', []),
                     is_core=cached_data.get('is_core', False)
                 )
             except Exception:
@@ -98,6 +109,8 @@ def scan_file(file_path: Path, root: Path) -> ScanResult:
         'docstring': result.docstring,
         'summary': result.summary,
         'todos': result.todos,
+        'calls': result.calls,
+        'imports': result.imports,
         'is_core': result.is_core
     }
     c.update(file_path, cache_data)
@@ -139,52 +152,63 @@ def extract_todos(content: str) -> List[dict]:
 
 def extract_docstring(content: str) -> str:
     """
-    提取文件顶部的 Docstring.
-    Supports Python (\"\"\" or \'\'\'), JS/C (/** ... */ or /* ... */), and C++ (///).
+    提取文件顶部的 Docstring (Extract file-level docstring).
+    Supports:
+    - Python/Ruby/Shell (# comments)
+    - Python/JS/Dart (Block comments or Triple quotes)
+    - C++/Dart/Rust (/// or // comments)
     """
     subset = content[:2000].strip()  # Optimization: only check header
-    
-    # 1. Python style
+    if not subset:
+        return ""
+
+    # 1. Check for Triple Quotes (Python/JS/Dart)
     for pattern in DOCSTRING_PATTERNS:
         match = pattern.search(subset)
         if match:
-            return match.group(1).strip()
-    
-    # 2. JS/C-style Block Comment (JSDoc / Doxygen)
-    if subset.startswith('/**') or subset.startswith('/*'):
+            return clean_docstring(match.group(0))
+
+    # 2. Check for Block Comments (/** ... */ or /* ... */)
+    if subset.startswith('/*'):
         end_idx = subset.find('*/')
         if end_idx != -1:
-            raw = subset[:end_idx+2]
-            # Clean JSDoc / Doxygen
-            if raw.startswith('/**'):
-                lines = raw[3:-2].split('\n')
-                cleaned = [line.strip().lstrip('*').strip() for line in lines]
-                return "\n".join(cleaned).strip()
-            else:
-                return raw[2:-2].strip()
+            return clean_docstring(subset[:end_idx+2])
 
-    # 3. C++ style Triple-Slash (Doxygen)
-    if subset.startswith('///'):
-        lines = []
-        for line in subset.split('\n'):
+    # 3. Check for Line Comments (///, //, or #)
+    lines = subset.split('\n')
+    doc_lines = []
+    
+    # Identify the comment style of the first line
+    first_line = lines[0].strip()
+    comment_prefix = None
+    if first_line.startswith('///'):
+        comment_prefix = '///'
+    elif first_line.startswith('//'):
+        comment_prefix = '//'
+    elif first_line.startswith('#'):
+        # Skip shebang
+        if first_line.startswith('#!'):
+            if len(lines) > 1:
+                lines = lines[1:]
+                first_line = lines[0].strip()
+                if first_line.startswith('#'):
+                    comment_prefix = '#'
+        else:
+            comment_prefix = '#'
+            
+    if comment_prefix:
+        for line in lines:
             line = line.strip()
-            if line.startswith('///'):
-                lines.append(line[3:].strip())
+            if line.startswith(comment_prefix):
+                doc_lines.append(line[len(comment_prefix):].strip())
             elif not line:
                 continue
             else:
                 break
-        return "\n".join(lines).strip()
+        return "\n".join(doc_lines).strip()
 
     return ""
 
-
-# 1. Tags: @TAG or !TAG
-# Matches: # @TAG args, // @TAG args, <!-- @TAG args -->, > @TAG args
-TAG_REGEX = re.compile(
-    r"^\s*(?:#+|//|<!--|>)?\s*([@!][A-Z_]+)(?:\s+(.*?))?(?:\s*(?:-->))?\s*$",
-    re.MULTILINE,
-)
 
 # 2. Sections: <!-- NIKI_NAME_START --> ... <!-- NIKI_NAME_END -->
 # Group 1: Name (e.g. MAP)
@@ -205,27 +229,9 @@ DOCSTRING_PATTERNS = [
 def parse_tags(content: str) -> List[Tag]:
     """
     从内容中提取标签 (Extract tags from content).
-    Implementation: Generator Pipeline.
+    Uses utility function for consistency.
     """
-
-    def _extract_args(args_str: Optional[str]) -> List[str]:
-        if not args_str:
-            return []
-        return [a.strip() for a in args_str.split() if a.strip()]
-
-    tags = []
-    for match in TAG_REGEX.finditer(content):
-        name = match.group(1)
-        args_str = match.group(2)
-        raw = match.group(0).strip()
-
-        # Calculate line number (Performance note: this is O(N) per match, acceptable for small files)
-        line_number = content.count("\n", 0, match.start()) + 1
-
-        tags.append(
-            Tag(name=name, args=_extract_args(args_str), line=line_number, raw=raw)
-        )
-    return tags
+    return extract_tags_from_text(content)
 
 
 def parse_sections(content: str) -> Dict[str, Section]:
@@ -286,7 +292,7 @@ def regex_scan(content: str, ext: str) -> List[Symbol]:
             kind = m.group(1)
             name = m.group(2)
             line = content[:m.start()].count('\n') + 1
-            symbols.append(Symbol(name=name, kind=kind, line=line))
+            symbols.append(Symbol(name=name, kind=kind, line=line, path=str(file_path) if file_path else None))
             
     return symbols
 
@@ -305,20 +311,29 @@ def scan_file_content(content: str, file_path: Optional[Path] = None) -> ScanRes
     
     # 2. Structural Analysis (AST) - Optional
     symbols = []
+    calls = []
+    imports = []
     # Now supports multiple languages, let ast.py decide based on extension
     if file_path:
         tree = None
+        lang_key = None
         try:
+            from .ast import get_lang_key
+            lang_key = get_lang_key(file_path)
             tree = parse_code(content, file_path)
         except Exception as e:
-            print(f"AST Parse Error in {file_path}: {e}")
+            # print(f"AST Parse Error in {file_path}: {e}")
             pass
             
         if tree:
             try:
                 symbols = extract_symbols(tree, content.encode("utf-8"), file_path)
+                if lang_key:
+                    from .ast import find_calls, find_imports
+                    calls = find_calls(tree, lang_key)
+                    imports = find_imports(tree, lang_key)
             except Exception as e:
-                print(f"AST Extraction Error in {file_path}: {e}")
+                # print(f"AST Extraction Error in {file_path}: {e}")
                 pass
         
         # Fallback to Regex if AST failed or returned nothing (and it's a target language)
@@ -327,8 +342,21 @@ def scan_file_content(content: str, file_path: Optional[Path] = None) -> ScanRes
             if ext in ('.dart', '.fbs'):
                 symbols = regex_scan(content, ext)
 
+    # Force path for all symbols if file_path is available
+    if file_path:
+        for sym in symbols:
+            if not sym.path:
+                sym.path = str(file_path)
+
     # 3. Finalize
-    is_core = any(t.name == "@CORE" for t in tags) or "@CORE" in docstring
+    # Collect all tags (file level + symbol level)
+    all_tags = list(tags)
+    for sym in symbols:
+        for t in sym.tags:
+            if not any(et.name == t.name for et in all_tags):
+                all_tags.append(t)
+    
+    is_core = any(t.name == "@CORE" for t in all_tags) or "@CORE" in docstring
     
     # Mark symbols as core if they have @CORE in their docstring
     for sym in symbols:
@@ -336,11 +364,13 @@ def scan_file_content(content: str, file_path: Optional[Path] = None) -> ScanRes
             sym.is_core = True
 
     return ScanResult(
-        tags=tags,
+        tags=all_tags,
         sections=sections,
         symbols=symbols,
         docstring=docstring,
         summary=summary,
         todos=todos,
+        calls=calls,
+        imports=imports,
         is_core=is_core
     )

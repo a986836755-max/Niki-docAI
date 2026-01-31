@@ -14,6 +14,8 @@ class LanguageDefinition:
     ID: str = ""
     EXTENSIONS: List[str] = []
     SCM_QUERY: str = ""
+    CALL_QUERY: str = ""
+    SCM_IMPORTS: str = ""
     CLASS_TYPES: List[str] = []  # AST node types that define a class/struct/interface
     ASYNC_KEYWORDS: List[str] = ["async"] # Keywords that indicate an async function
 
@@ -44,45 +46,47 @@ class LanguageDefinition:
     @staticmethod
     def extract_docstring(node: Any, content_bytes: bytes) -> Optional[str]:
         """
-        Extract docstring from node. Default implementation handles standard comments.
+        Extract docstring from node. Improved implementation with multi-line merging.
         """
-        # Default implementation for most languages (JS, TS, C++, Rust, etc.)
         from tree_sitter import Node
         if not isinstance(node, Node):
             return None
 
         scan_node = node
-        # Handle export/declaration wrappers
+        # Handle export/declaration wrappers (JS/TS)
         if node.parent and node.parent.type in ('export_statement', 'lexical_declaration', 'variable_declaration'):
             scan_node = node.parent
             if scan_node.parent and scan_node.parent.type == 'export_statement':
                 scan_node = scan_node.parent
 
         curr = scan_node.prev_sibling
-        while curr and curr.type in ('\n', ' '):
+        while curr and curr.type in ('\n', ' ', ';'):
             curr = curr.prev_sibling
 
-        comments = []
+        comment_nodes = []
         while curr and curr.type in ('comment', 'line_comment', 'block_comment'):
-            text = curr.text.decode('utf8').strip()
-            if text.startswith('/**'):
-                lines = text[3:-2].split('\n')
-                cleaned = [line.strip().lstrip('*').strip() for line in lines]
-                comments.insert(0, "\n".join(cleaned).strip())
-            elif text.startswith('/*'):
-                comments.insert(0, text[2:-2].strip())
-            elif text.startswith('///'):
-                comments.insert(0, text[3:].strip())
-            elif text.startswith('//'):
-                comments.insert(0, text[2:].strip())
+            comment_nodes.insert(0, curr)
             
-            curr = curr.prev_sibling
-            while curr and curr.type in ('\n', ' '):
-                curr = curr.prev_sibling
+            # Look for previous sibling, but don't jump too far (max 1-2 lines)
+            prev = curr.prev_sibling
+            gap_lines = 0
+            while prev and prev.type in ('\n', ' '):
+                if prev.type == '\n':
+                    gap_lines += 1
+                prev = prev.prev_sibling
             
-        if comments:
-            return "\n".join(comments).strip()
-        return None
+            if prev and prev.type in ('comment', 'line_comment', 'block_comment') and gap_lines <= 1:
+                curr = prev
+            else:
+                break
+        
+        if not comment_nodes:
+            return None
+
+        # Process comment nodes
+        from ..text_utils import clean_docstring
+        full_raw = "\n".join([n.text.decode('utf8') for n in comment_nodes])
+        return clean_docstring(full_raw)
 
     @staticmethod
     def format_signature(params_text: Optional[str], return_text: Optional[str]) -> str:

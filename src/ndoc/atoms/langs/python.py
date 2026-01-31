@@ -51,6 +51,16 @@ class PythonDefinition(LanguageDefinition):
 ) @field_def
 """
 
+    CALL_QUERY = """
+(call
+  function: [(identifier) (attribute)] @call_name
+)
+"""
+    SCM_IMPORTS = """
+(import_statement) @import
+(import_from_statement) @import
+"""
+
     @staticmethod
     def is_public(name: str, visibility: str) -> bool:
         return not name.startswith('_')
@@ -58,12 +68,22 @@ class PythonDefinition(LanguageDefinition):
     @staticmethod
     def extract_docstring(node: Any, content_bytes: bytes) -> Optional[str]:
         """
-        Extract Python docstring.
+        Extract Python docstring (Both comments above and inner string literal).
         """
         from tree_sitter import Node
         if not isinstance(node, Node):
             return None
 
+        doc_parts = []
+        
+        # 1. Check comments above (Using base class logic)
+        # We need to call the base class static method explicitly
+        base_doc = LanguageDefinition.extract_docstring(node, content_bytes)
+        if base_doc:
+            doc_parts.append(base_doc)
+
+        # 2. Check inner string literal
+        inner_doc = None
         block = node.child_by_field_name('body')
         if block:
             for child in block.children:
@@ -72,10 +92,15 @@ class PythonDefinition(LanguageDefinition):
                         string_node = child.children[0]
                         raw = string_node.text.decode('utf8')
                         if raw.startswith('"""') or raw.startswith("'''"):
-                            return raw[3:-3].strip()
+                            inner_doc = raw[3:-3].strip()
                         elif raw.startswith('"') or raw.startswith("'"):
-                            return raw[1:-1].strip()
-        return None
+                            inner_doc = raw[1:-1].strip()
+                        break
+        
+        if inner_doc:
+            doc_parts.append(inner_doc)
+            
+        return "\n\n".join(doc_parts) if doc_parts else None
 
     @staticmethod
     def format_signature(params_text: Optional[str], return_text: Optional[str]) -> str:

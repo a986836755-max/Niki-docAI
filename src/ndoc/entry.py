@@ -54,12 +54,15 @@ Granular Updates (单独更新):
   deps      : Update Dependency Graph (_DEPS.md).
   symbols   : Generate Global Symbol Index (_SYMBOLS.md).
   data      : Generate Data Registry (_DATA.md).
+  
+  lsp       : Query symbol definitions and references.
+              Usage: ndoc lsp <symbol_name>
 """
     parser = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "symbols", "data", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "plan", "archive", "help"], help="Command to execute")
+    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "symbols", "data", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "plan", "archive", "lsp", "help"], help="Command to execute")
     parser.add_argument("target", nargs="?", help="Target file or directory (for clean command)")
     parser.add_argument("--root", default=".", help="Project root directory (Default: current dir)")
     parser.add_argument("--force", action="store_true", help="⚠️ Force execution (DANGER: Overwrite configs in init, Delete without confirm in clean)")
@@ -137,8 +140,35 @@ Granular Updates (单独更新):
             sys.exit(0)
         else:
             sys.exit(1)
+
+    if args.command == "lsp":
+        if not args.target:
+            print("❌ Error: Missing symbol name. Usage: ndoc lsp <symbol_name>")
+            sys.exit(1)
+        
+        from ndoc.atoms import lsp, fs
+        print(f"🔍 Searching for symbol: {args.target}")
+        lsp_service = lsp.get_service(root_path)
+        files = fs.walk_files(root_path, config.scan.ignore_patterns)
+        lsp_service.index_project(files)
+        
+        # Find Definitions
+        defs = lsp_service.find_definitions(args.target)
+        print(f"\n📍 Definitions ({len(defs)}):")
+        for d in defs:
+            # d is a Symbol object
+            rel = Path(d.path).relative_to(root_path)
+            print(f"  - {rel}:{d.line}  -> {d.signature or d.name}")
+            
+        # Find References
+        refs = lsp_service.find_references(args.target)
+        print(f"\n🔗 References ({len(refs)}):")
+        for r in refs:
+            rel = Path(r['path']).relative_to(root_path)
+            print(f"  - {rel}:{r['line']}  -> {r['content']}")
+        sys.exit(0)
     
-    if args.command in ["map", "all"]:
+    if args.command in ["map", "all"]: 
         print("Running Map Flow...")
         # Update: Use 'run' instead of 'update_map_doc' to match DOD convention
         if map_flow.run(config):

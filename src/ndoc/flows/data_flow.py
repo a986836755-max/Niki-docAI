@@ -29,57 +29,72 @@ def run(config: ProjectConfig) -> bool:
     
     print(f"Generating Data Registry in {root_path}...")
     
-    # 1. Collect all Python files
+    # 1. Collect all relevant source files
+    extensions = set(config.scan.extensions) if config.scan.extensions else {'.py', '.cs', '.ts', '.js', '.go', '.rs'}
     ignore = set(config.scan.ignore_patterns) | {'.git', '__pycache__', 'venv', 'tests'}
-    py_files = list(fs.walk_files(root_path, ignore_patterns=list(ignore), extensions={'.py'}))
+    source_files = list(fs.walk_files(root_path, ignore_patterns=list(ignore), extensions=extensions))
     
     definitions: List[DataDefinition] = []
     
-    for file_path in py_files:
+    for file_path in source_files:
         try:
+            rel_path = file_path.relative_to(root_path).as_posix()
             # Use cached scanner
             scan_result = scanner.scan_file(file_path, root_path)
             
-            rel_path = file_path.relative_to(root_path).as_posix()
-            
+            ext = file_path.suffix.lower()
             for sym in scan_result.symbols:
-                if sym.kind == 'class':
-                    # Heuristics for data structures:
-                    # 1. Has @dataclass decorator
-                    # 2. Inherits from Enum or TypedDict
-                    is_data = False
-                    data_type = "class"
-                    
-                    if any('dataclass' in d for d in sym.decorators):
-                        is_data = True
-                        data_type = "dataclass"
-                    elif any(base in ['Enum', 'IntEnum', 'StrEnum'] for base in sym.bases):
+                is_data = False
+                data_type = sym.kind
+                
+                if ext == '.py':
+                    if sym.kind == 'class':
+                        if any('dataclass' in d for d in sym.decorators):
+                            is_data = True
+                            data_type = "dataclass"
+                        elif any(base in ['Enum', 'IntEnum', 'StrEnum'] for base in sym.bases):
+                            is_data = True
+                            data_type = "enum"
+                        elif 'TypedDict' in sym.bases:
+                            is_data = True
+                            data_type = "typeddict"
+                    elif sym.kind == 'enum': # In case we capture it as enum directly
                         is_data = True
                         data_type = "enum"
-                    elif 'TypedDict' in sym.bases:
+                
+                elif ext == '.cs':
+                    # C# Data structures: struct, enum, record (if kind is record)
+                    if sym.kind in ['struct', 'enum', 'record']:
                         is_data = True
-                        data_type = "typeddict"
+                        data_type = sym.kind
+                    elif sym.kind == 'class':
+                        # Heuristic: if it has no methods but only properties?
+                        # Or if it inherits from something?
+                        # For now, let's just stick to struct/enum/record for C#
+                        pass
+
+                if is_data:
+                    # Extract fields from body if possible
+                    fields = []
+                    lines = sym.full_content.split('\n')
+                    for line in lines:
+                        line = line.strip()
+                        if not line or line.startswith('@') or line.startswith('class') or \
+                           line.startswith('def') or line.startswith('"""') or \
+                           line.startswith('[') or line.startswith('using') or \
+                           line.startswith('namespace') or line.startswith('{') or line.startswith('}'):
+                            continue
+                        # Python fields (x: int = 1) or C# fields (public int X { get; set; }) or Enum members
+                        if ':' in line or '=' in line or '{ get; set; }' in line or ';' in line or (data_type == 'enum' and (',' in line or line.strip())):
+                            fields.append(line)
                     
-                    if is_data:
-                        # Extract fields from body if possible
-                        # This is a simplification; a full AST visitor would be better
-                        fields = []
-                        # Basic line-based field extraction for simple dataclasses/enums
-                        lines = sym.full_content.split('\n')
-                        for line in lines:
-                            line = line.strip()
-                            if not line or line.startswith('@') or line.startswith('class') or line.startswith('def') or line.startswith('"""'):
-                                continue
-                            if ':' in line or '=' in line:
-                                fields.append(line)
-                        
-                        definitions.append(DataDefinition(
-                            name=sym.name,
-                            type=data_type,
-                            path=rel_path,
-                            docstring=sym.docstring,
-                            fields=fields[:10] # Limit to 10 fields for summary
-                        ))
+                    definitions.append(DataDefinition(
+                        name=sym.name,
+                        type=data_type,
+                        path=rel_path,
+                        docstring=sym.docstring,
+                        fields=fields[:10]
+                    ))
         except Exception as e:
             print(f"Error scanning {file_path} for data: {e}")
 
@@ -95,16 +110,22 @@ def run(config: ProjectConfig) -> bool:
     ]
     
     # Group by type
-    by_type = {"dataclass": [], "enum": [], "typeddict": []}
+    by_type = {}
     for d in definitions:
-        if d.type in by_type:
-            by_type[d.type].append(d)
+        if d.type not in by_type:
+            by_type[d.type] = []
+        by_type[d.type].append(d)
     
+    def get_plural(name: str) -> str:
+        if name.endswith('ss'): return name + "es"
+        if name.endswith('s'): return name
+        return name + "s"
+
     for dtype, items in by_type.items():
         if not items:
             continue
         
-        lines.append(f"## {dtype.capitalize()}s")
+        lines.append(f"## {get_plural(dtype.capitalize())}")
         for item in sorted(items, key=lambda x: x.name):
             first_line = item.docstring.split('\n')[0] if item.docstring else ""
             doc = f" - *{first_line}*" if first_line else ""

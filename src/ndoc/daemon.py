@@ -12,7 +12,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 from ndoc.models.config import ProjectConfig
-from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, symbols_flow, data_flow
+from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, symbols_flow, data_flow, deps_flow, archive_flow
 
 class DocChangeHandler(FileSystemEventHandler):
     """
@@ -81,59 +81,45 @@ class DocChangeHandler(FileSystemEventHandler):
         self.needs_structure_update = False
         
         try:
-            # 1. Structure Update (Map Flow)
+            # 1. Map Flow (Structure)
             if structure_update:
                 print("[Watch] Structure changed, updating Map...")
                 map_flow.run(self.config)
-                # Tech flow might need update if new file types introduced
-                tech_flow.run(self.config)
-                
-            # Always run Todo Flow on any code change
-            # Optimization: could be smarter, but fast enough for now
-            print("[Watch] Updating Todos...")
-            todo_flow.run(self.config)
             
-            # 2. Content Update (Context Flow)
-            # We determine which directories need update
+            # 2. Context Flow (Incremental AI Docs)
             dirty_dirs = set()
             for p in current_dirty_paths:
-                if p.exists(): # Might be deleted
+                if p.exists():
                     dirty_dirs.add(p.parent)
                 else:
-                    # If deleted, parent needs update (already covered by structure update usually, 
-                    # but context doc also lists files)
+                    # If deleted, parent needs update
                     dirty_dirs.add(p.parent)
             
-            if structure_update and not dirty_dirs:
-                # If only structure changed (e.g. empty dir added), context might not need update 
-                # unless we want to generate _AI.md for new dir.
-                # For safety, if structure changed, we might want to run full context or smart scan.
-                # Let's keep it simple: Structure change -> usually implies file added/deleted -> dirty_dirs will be populated.
-                pass
+            if dirty_dirs:
+                print(f"[Watch] Updating Context for {len(dirty_dirs)} directories...")
+                for d in dirty_dirs:
+                    if self.config.scan.root_path in d.parents or d == self.config.scan.root_path:
+                        print(f"  -> {d.relative_to(self.config.scan.root_path)}")
+                        context_flow.update_directory(d, self.config)
 
-            if not dirty_dirs and not structure_update:
-                # Check if dependency files changed
-                dep_files = {'requirements.txt', 'pyproject.toml', 'package.json'}
-                dep_changed = any(p.name in dep_files for p in current_dirty_paths)
-                
-                if dep_changed:
-                    print("[Watch] Dependency file changed, updating Tech Snapshot...")
-                    tech_flow.run(self.config)
-                    return
+            # 3. Todo Flow & Archive Flow
+            print("[Watch] Syncing Todos and checking for Archive...")
+            todo_flow.run(self.config)
+            # Always run archive flow to handle [x] tasks in _NEXT.md
+            archive_flow.run(self.config)
 
-                print("[Watch] No relevant changes found.")
-                return
-
-            print(f"[Watch] Updating Context for {len(dirty_dirs)} directories...")
-            for d in dirty_dirs:
-                # Only update if it's within project root
-                if self.config.scan.root_path in d.parents or d == self.config.scan.root_path:
-                    print(f"  -> {d.relative_to(self.config.scan.root_path)}")
-                    context_flow.update_directory(d, self.config)
+            # 4. Global Metadata Flows (Cached)
+            print("[Watch] Updating Tech Stack, Dependencies, Symbol Index and Data Registry...")
+            tech_flow.run(self.config)
+            deps_flow.run(self.config)
+            symbols_flow.run(self.config)
+            data_flow.run(self.config)
             
             print(f"[Watch] ✅ Update complete. Waiting for changes...\n")
         except Exception as e:
             print(f"[Watch] ❌ Update failed: {e}\n")
+            import traceback
+            traceback.print_exc()
 
 def start_watch_mode(config: ProjectConfig):
     """

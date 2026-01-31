@@ -47,6 +47,8 @@ class Symbol:
     decorators: List[str] = field(default_factory=list)
     bases: List[str] = field(default_factory=list)
     full_content: str = "" # Full source of the symbol
+    path: Optional[str] = None # File path of the symbol
+    tags: List[Tag] = field(default_factory=list) # Extracted @TAGS
 
     @property
     def is_public(self) -> bool:

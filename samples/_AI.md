@@ -1,5 +1,5 @@
-# Context: tools
-> @CONTEXT: Local | tools | @TAGS: @LOCAL
+# Context: samples
+> @CONTEXT: Local | samples | @TAGS: @LOCAL
 > 最后更新 (Last Updated): 2026-01-31 16:47:54
 
 ## !RULE
@@ -7,5 +7,5 @@
 
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
-*   **[doxygen.exe](doxygen.exe#L1)**
+*   **[sample_csharp.cs](sample_csharp.cs#L1)** @DEP: System
 <!-- NIKI_AUTO_Context_END -->

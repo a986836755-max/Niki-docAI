@@ -47,6 +47,18 @@ class CppDefinition(LanguageDefinition):
   declarator: (field_identifier) @field_name
 ) @field_def
 """
+    CALL_QUERY = """
+(call_expression
+  function: [
+    (identifier) @call_name
+    (field_expression) @call_name
+    (scoped_identifier) @call_name
+  ]
+)
+"""
+    SCM_IMPORTS = """
+(preproc_include) @import
+"""
 
     @staticmethod
     def is_public(name: str, visibility: str) -> bool:

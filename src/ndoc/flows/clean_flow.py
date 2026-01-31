@@ -14,6 +14,10 @@ GENERATED_FILES = [
     "_TECH.md",
     "_DEPS.md",
     "_NEXT.md",
+    "_SYMBOLS.md",
+    "_DATA.md",
+    "_STATS.md",
+    "_SYNTAX.md",
     # _ARCH.md is typically manual or hybrid, avoiding delete for safety unless confirmed
 ]
 

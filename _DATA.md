@@ -1,17 +1,17 @@
 # Data Registry
 > @CONTEXT: Global | _DATA.md | @TAGS: @DATA @MODELS
-> 最后更新 (Last Updated): 2026-01-30 23:27:48
+> 最后更新 (Last Updated): 2026-01-31 16:47:56
 
 > **Goal**: 集中展示项目中的核心数据结构 (Dataclasses, Enums, TypedDicts)。强化 "Logic as Data" 原则。
 
-## Dataclasss
-*   **AstNode** ([src/ndoc/atoms/ast.py](src/ndoc/atoms/ast.py)) - *通用 AST 节点数据结构 (Generic AST Node Data).*
+## Dataclasses
+*   **AstNode** ([src/ndoc/atoms/ast/base.py](src/ndoc/atoms/ast/base.py)) - *通用 AST 节点数据结构 (Generic AST Node Data).*
     ```python
     type: str
     text: str
     start_point: tuple[int, int]  # (row, col)
     end_point: tuple[int, int]
-    children: List['AstNode'] = field(default_factory=list)
+    children: list['AstNode'] = field(default_factory=list)
     ```
 *   **DataDefinition** ([src/ndoc/flows/data_flow.py](src/ndoc/flows/data_flow.py))
     ```python
@@ -70,7 +70,9 @@
     symbols: List[Symbol] = field(default_factory=list)
     docstring: str = ""
     summary: str = ""
-    todos: List[dict] = field(default_factory=list)  # New: Captured TODOs
+    todos: List[dict] = field(default_factory=list)  # Captured TODOs
+    calls: List[str] = field(default_factory=list)  # Captured calls
+    imports: List[str] = field(default_factory=list)  # Captured imports
     is_core: bool = False # Whether file is marked as @CORE
     ```
 *   **Section** ([src/ndoc/models/context.py](src/ndoc/models/context.py)) - *文档片段 (Document Section).*

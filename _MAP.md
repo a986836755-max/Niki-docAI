@@ -1,12 +1,29 @@
 # Project Map
 > @CONTEXT: Map | Project Structure
-> 最后更新 (Last Updated): 2026-01-31 02:25:59
+> 最后更新 (Last Updated): 2026-01-31 16:50:58
 
 ## @STRUCTURE
 <!-- NIKI_MAP_START -->
+*   **samples/**
+    *   [`_AI.md`](samples/_AI.md#L1)
+    *   [`sample_csharp.cs`](samples/sample_csharp.cs#L1)
 *   **src/**
     *   **ndoc/**
         *   **atoms/**
+            *   **ast/**
+                *   [`_AI.md`](src/ndoc/atoms/ast/_AI.md#L1)
+                *   [`__init__.py`](src/ndoc/atoms/ast/__init__.py#L1) - *Atoms: AST Parsing (Tree-sitter Wrapper).*
+                *   [`base.py`](src/ndoc/atoms/ast/base.py#L1) - *Atoms: AST Parsing Base.*
+                *   [`discovery.py`](src/ndoc/atoms/ast/discovery.py#L1) - *Atoms: AST Symbol Discovery.*
+                *   [`symbols.py`](src/ndoc/atoms/ast/symbols.py#L1) - *Atoms: AST Symbol Extraction.*
+                *   [`utils.py`](src/ndoc/atoms/ast/utils.py#L1) - *Atoms: AST Parsing Utilities.*
+            *   **deps/**
+                *   [`_AI.md`](src/ndoc/atoms/deps/_AI.md#L1)
+                *   [`__init__.py`](src/ndoc/atoms/deps/__init__.py#L1) - *Atom: Dependency Parser.*
+                *   [`core.py`](src/ndoc/atoms/deps/core.py#L1) - *Atoms: Dependency Core Logic.*
+                *   [`manifests.py`](src/ndoc/atoms/deps/manifests.py#L1) - *Atoms: Dependency Manifest Parsers.*
+                *   [`parsers.py`](src/ndoc/atoms/deps/parsers.py#L1) - *Atoms: Source Code Dependency Parsers.*
+                *   [`stats.py`](src/ndoc/atoms/deps/stats.py#L1) - *Atoms: Language Statistics.*
             *   **langs/**
                 *   [`_AI.md`](src/ndoc/atoms/langs/_AI.md#L1)
                 *   [`__init__.py`](src/ndoc/atoms/langs/__init__.py#L1) - *Language Definition Protocol.*
@@ -21,13 +38,13 @@
                 *   [`typescript.py`](src/ndoc/atoms/langs/typescript.py#L1)
             *   [`_AI.md`](src/ndoc/atoms/_AI.md#L1)
             *   [`__init__.py`](src/ndoc/atoms/__init__.py#L1) - *Atoms: File System Operations.*
-            *   [`ast.py`](src/ndoc/atoms/ast.py#L1) - *Atoms: AST Parsing (Tree-sitter Wrapper).*
             *   [`cache.py`](src/ndoc/atoms/cache.py#L1) - *Atoms: Cache Management.*
-            *   [`deps.py`](src/ndoc/atoms/deps.py#L1) - *Atom: Dependency Parser.*
             *   [`fs.py`](src/ndoc/atoms/fs.py#L1) - *Atoms: File System Traversal.*
             *   [`io.py`](src/ndoc/atoms/io.py#L1) - *Atoms: Input/Output Operations.*
             *   [`llm.py`](src/ndoc/atoms/llm.py#L1) - *Atoms: LLM Connector.*
+            *   [`lsp.py`](src/ndoc/atoms/lsp.py#L1) - *Atoms: Lightweight LSP-like features.*
             *   [`scanner.py`](src/ndoc/atoms/scanner.py#L1) - *Atoms: Content Scanner.*
+            *   [`text_utils.py`](src/ndoc/atoms/text_utils.py#L1) - *Atoms: Text Processing Utilities.*
         *   **flows/**
             *   [`_AI.md`](src/ndoc/flows/_AI.md#L1)
             *   [`__init__.py`](src/ndoc/flows/__init__.py#L1) - *Flows: Business Logic Pipelines.*
@@ -57,6 +74,7 @@
         *   [`__init__.py`](src/ndoc/__init__.py#L1) - *Niki-docAI Source Root.*
         *   [`daemon.py`](src/ndoc/daemon.py#L1) - *Daemon: Live Context Watcher.*
         *   [`entry.py`](src/ndoc/entry.py#L1) - *Entry Point: CLI Execution.*
+        *   [`lsp_server.py`](src/ndoc/lsp_server.py#L1) - *LSP Server implementation using pygls.*
     *   **niki_doc_ai.egg-info/**
         *   [`PKG-INFO`](src/niki_doc_ai.egg-info/PKG-INFO#L1)
         *   [`SOURCES.txt`](src/niki_doc_ai.egg-info/SOURCES.txt#L1)
@@ -71,10 +89,11 @@
         *   [`_AI.md`](tests/fixtures/_AI.md#L1)
         *   [`complex_api.py`](tests/fixtures/complex_api.py#L1)
     *   **temp/**
-        *   [`_AI.md`](tests/temp/_AI.md#L1)
     *   [`_AI.md`](tests/_AI.md#L1)
     *   [`conftest.py`](tests/conftest.py#L1)
     *   [`test_ast.py`](tests/test_ast.py#L1)
+    *   [`test_csharp_api.py`](tests/test_csharp_api.py#L1)
+    *   [`test_lsp_server.py`](tests/test_lsp_server.py#L1) - *Simple test client to verify LSP Server initial...*
     *   [`test_scanner.py`](tests/test_scanner.py#L1)
 *   **tools/**
     *   [`_AI.md`](tools/_AI.md#L1)
@@ -114,7 +133,6 @@
                     *   [`not-zip-safe`](vendors/tree-sitter-dart/bindings/python/tree_sitter_dart.egg-info/not-zip-safe#L1)
                     *   [`requires.txt`](vendors/tree-sitter-dart/bindings/python/tree_sitter_dart.egg-info/requires.txt#L1)
                     *   [`top_level.txt`](vendors/tree-sitter-dart/bindings/python/tree_sitter_dart.egg-info/top_level.txt#L1)
-                *   [`_AI.md`](vendors/tree-sitter-dart/bindings/python/_AI.md#L1)
             *   **rust/**
                 *   [`_AI.md`](vendors/tree-sitter-dart/bindings/rust/_AI.md#L1)
                 *   [`build.rs`](vendors/tree-sitter-dart/bindings/rust/build.rs#L1)
@@ -123,8 +141,6 @@
                 *   **TreeSitterDart/**
                     *   [`_AI.md`](vendors/tree-sitter-dart/bindings/swift/TreeSitterDart/_AI.md#L1)
                     *   [`dart.h`](vendors/tree-sitter-dart/bindings/swift/TreeSitterDart/dart.h#L1)
-                *   [`_AI.md`](vendors/tree-sitter-dart/bindings/swift/_AI.md#L1)
-            *   [`_AI.md`](vendors/tree-sitter-dart/bindings/_AI.md#L1)
         *   **queries/**
             *   [`_AI.md`](vendors/tree-sitter-dart/queries/_AI.md#L1)
             *   [`highlights.scm`](vendors/tree-sitter-dart/queries/highlights.scm#L1)
@@ -139,7 +155,7 @@
             *   [`_AI.md`](vendors/tree-sitter-dart/src/_AI.md#L1)
             *   [`grammar.json`](vendors/tree-sitter-dart/src/grammar.json#L1)
             *   [`node-types.json`](vendors/tree-sitter-dart/src/node-types.json#L1)
-            *   [`parser.c`](vendors/tree-sitter-dart/src/parser.c#L1)
+            *   [`parser.c`](vendors/tree-sitter-dart/src/parser.c#L1) - *Automatically @generated by tree-sitter v0.25.10*
             *   [`scanner.c`](vendors/tree-sitter-dart/src/scanner.c#L1)
         *   **test/**
             *   **corpus/**
@@ -172,7 +188,6 @@
                 *   [`functions.dart`](vendors/tree-sitter-dart/test/tags/functions.dart#L1)
                 *   [`keywords.dart`](vendors/tree-sitter-dart/test/tags/keywords.dart#L1)
                 *   [`types.dart`](vendors/tree-sitter-dart/test/tags/types.dart#L1)
-            *   [`_AI.md`](vendors/tree-sitter-dart/test/_AI.md#L1)
         *   **tester/**
             *   [`_AI.md`](vendors/tree-sitter-dart/tester/_AI.md#L1)
             *   [`pubspec.yaml`](vendors/tree-sitter-dart/tester/pubspec.yaml#L1)
@@ -193,7 +208,7 @@
                     *   [`parser_generated_bindings.dart`](vendors/tree-sitter-dart/tree_sitter/lib/src/parser_generated_bindings.dart#L1)
                     *   [`utils.dart`](vendors/tree-sitter-dart/tree_sitter/lib/src/utils.dart#L1)
                 *   [`_AI.md`](vendors/tree-sitter-dart/tree_sitter/lib/_AI.md#L1)
-                *   [`tree_sitter.dart`](vendors/tree-sitter-dart/tree_sitter/lib/tree_sitter.dart#L1)
+                *   [`tree_sitter.dart`](vendors/tree-sitter-dart/tree_sitter/lib/tree_sitter.dart#L1) - *A tree sitter parsing library for Dart.*
             *   **test/**
                 *   [`_AI.md`](vendors/tree-sitter-dart/tree_sitter/test/_AI.md#L1)
                 *   [`tree_sitter_test.dart`](vendors/tree-sitter-dart/tree_sitter/test/tree_sitter_test.dart#L1)
@@ -217,7 +232,7 @@
         *   [`_AI.md`](vendors/tree-sitter-dart/_AI.md#L1)
         *   [`binding.gyp`](vendors/tree-sitter-dart/binding.gyp#L1)
         *   [`go.mod`](vendors/tree-sitter-dart/go.mod#L1)
-        *   [`grammar.js`](vendors/tree-sitter-dart/grammar.js#L1)
+        *   [`grammar.js`](vendors/tree-sitter-dart/grammar.js#L1) - *<reference types="tree-sitter-cli/dsl" />*
         *   [`package.json`](vendors/tree-sitter-dart/package.json#L1)
         *   [`pubspec.yaml`](vendors/tree-sitter-dart/pubspec.yaml#L1)
         *   [`pyproject.toml`](vendors/tree-sitter-dart/pyproject.toml#L1)
@@ -226,7 +241,6 @@
         *   [`testitem.html`](vendors/tree-sitter-dart/testitem.html#L1)
         *   [`tree-sitter-dart.wasm`](vendors/tree-sitter-dart/tree-sitter-dart.wasm#L1)
         *   [`tree-sitter.json`](vendors/tree-sitter-dart/tree-sitter.json#L1)
-    *   [`_AI.md`](vendors/_AI.md#L1)
 *   [`README.md`](README.md#L1)
 *   [`_AI.md`](_AI.md#L1)
 *   [`_ARCH.md`](_ARCH.md#L1)
@@ -240,7 +254,12 @@
 *   [`_SYMBOLS.md`](_SYMBOLS.md#L1)
 *   [`_SYNTAX.md`](_SYNTAX.md#L1)
 *   [`_TECH.md`](_TECH.md#L1)
+*   [`debug_scanner.py`](debug_scanner.py#L1)
+*   [`debug_symbols.py`](debug_symbols.py#L1)
 *   [`requirements.txt`](requirements.txt#L1)
 *   [`setup.py`](setup.py#L1)
+*   [`symbols_log.txt`](symbols_log.txt#L1)
+*   [`test_enhanced_doc.py`](test_enhanced_doc.py#L1) - *@MODULE TestModule*
 *   [`test_python_fix.py`](test_python_fix.py#L1)
+*   [`test_regex.py`](test_regex.py#L1)
 <!-- NIKI_MAP_END -->

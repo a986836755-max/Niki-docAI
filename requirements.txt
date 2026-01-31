@@ -16,3 +16,4 @@ pytest>=8.4.2
 
 # Utilities
 colorama>=0.4.6
+pygls>=1.3.1

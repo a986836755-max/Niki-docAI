@@ -38,3 +38,28 @@
         *   Unit Tests: 针对 `scanner` 和 `ast` 模块。
         *   Smoke Tests: 针对 `entry.py` 进行 Dogfooding 自测。
 *   **Status**: Executed.
+
+### 2026-01-31: Semantic Enrichment & LSP Integration
+
+#### ADR-005: Enhanced Semantic Extraction (语义提取增强)
+*   **Context**: 之前的注释抓取逻辑过于简单，无法处理多行合并、Python 内部字符串 (Inner Docstrings) 以及特定语言 (Dart ///) 的优化。
+*   **Decision**: 
+    *   重构 `scanner.py`，引入 `text_utils.py` 解耦文本清洗逻辑。
+    *   支持多行行注释合并为单一 Docstring。
+    *   增强 Python 语义提取：同时抓取类/函数上方的 `#` 注释和内部的 `"""` 字符串。
+*   **Status**: Completed.
+
+#### ADR-006: LSP Reference Counting (LSP 引用计数集成)
+*   **Context**: 符号索引 `_SYMBOLS.md` 仅列出定义，缺乏使用热度信息。
+*   **Decision**: 
+    *   在 `lsp.py` 中实现轻量级全局词频统计 (Global Word Count) 作为引用计数预估。
+    *   在 `symbols_flow.py` 中集成 `LSPService`，为每个公共符号自动标注引用次数。
+    *   修复了 `Symbol` 对象在缓存重建过程中的路径丢失导致的 CLI 崩溃。
+*   **Status**: Completed.
+
+#### ADR-007: Dart Grammar Ambiguity Resolution (Dart 语法冲突处理)
+*   **Context**: `tree-sitter-dart` 的 `relational_expression` 可选字段导致语法解析歧义。
+*   **Decision**: 
+    *   通过调研发现该可选字段在扁平表达式结构中存在固有冲突。
+    *   移除 `TODO` 并转为正式文档说明，保持当前稳定的解析路径。
+*   **Status**: Resolved by documentation update.

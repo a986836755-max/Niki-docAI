@@ -1,6 +1,6 @@
 # Context: models
 > @CONTEXT: Local | models | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-01-31 02:47:30
+> 最后更新 (Last Updated): 2026-01-31 16:49:04
 
 ## !RULE
 <!-- Add local rules here -->
@@ -8,7 +8,7 @@
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
 *   **[__init__.py](__init__.py#L1)**: Models: Data Definitions.
-*   **[config.py](config.py#L1)**: Models: Configuration definitions. @DEP: dataclasses, typing.Optional, dataclasses.dataclass, typing, typing.List, pathlib.Path, dataclasses.field, pathlib
+*   **[config.py](config.py#L1)**: Models: Configuration definitions. @DEP: typing.List, typing, dataclasses.dataclass, pathlib.Path, dataclasses, dataclasses.field, typing.Optional, pathlib
     *   `@API`
         *   `PUB:` CLS **ScanConfig**
             *   `VAL->` VAR **root_path**`: Path`
@@ -29,7 +29,7 @@
             *   `VAL->` VAR **scan**`: ScanConfig`
             *   `VAL->` VAR **name**`: str = "Project"`
             *   `VAL->` VAR **version**`: str = "0.1.0"`
-*   **[context.py](context.py#L1)**: Models: Context Models. @DEP: dataclasses, typing.Optional, typing.Dict, dataclasses.dataclass, typing, typing.List, pathlib.Path, dataclasses.field, pathlib, typing.Any
+*   **[context.py](context.py#L1)**: Models: Context Models. @DEP: typing.List, typing.Any, typing, dataclasses.dataclass, pathlib.Path, dataclasses, dataclasses.field, typing.Dict, typing.Optional, pathlib
     *   `@API`
         *   `PUB:` CLS **Tag**
             *   `VAL->` VAR **name**`: str`
@@ -55,6 +55,8 @@
             *   `VAL->` VAR **decorators**`: List[str] = field(default_factory=list)`
             *   `VAL->` VAR **bases**`: List[str] = field(default_factory=list)`
             *   `VAL->` VAR **full_content**`: str = ""`
+            *   `VAL->` VAR **path**`: Optional[str] = None`
+            *   `VAL->` VAR **tags**`: List[Tag] = field(default_factory=list)`
             *   `GET->` PRP **is_public**`(self) -> bool`
         *   `PUB:` CLS **FileContext**
             *   `VAL->` VAR **path**`: Path`

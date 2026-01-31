@@ -1,64 +1,198 @@
 # Symbol Index
-> 最后更新 (Last Updated): 2026-01-30 23:27:47
+> 最后更新 (Last Updated): 2026-01-31 16:47:56
 
 ## @OVERVIEW
-*   **Total Public Symbols**: 589
+*   **Total Public Symbols**: 341
 
 ## Root
+*   **[debug_scanner.py](debug_scanner.py#L1)**
+    *   FUN **test** `()` [🔗162]
+*   **[debug_symbols.py](debug_symbols.py#L1)**
+    *   VAR **file_path** ` = Path("src/ndoc/atoms/deps/stats.py")` [🔗146]
+    *   VAR **content** ` = read_text(file_path)` [🔗375]
+    *   VAR **tree** ` = parse_code(content, file_path)` [🔗174]
+    *   VAR **symbols** ` = extract_symbols(tree, content.encode("utf-8"), file_path)` [🔗128]
+*   **[test_enhanced_doc.py](test_enhanced_doc.py#L1)**
+    *   FUN **test_func** `(a: int, b: str) -> bool` [🔗7]
+    *   CLS **TestClass** [🔗7]
+    *   VAR **field** `: int = 10` [🔗186]
+    *   MET **test_method** `(self)` [🔗3]
 *   **[test_python_fix.py](test_python_fix.py#L1)**
-    *   FUN **test_python_parsing** `()`
+    *   FUN **test_python_parsing** `()` [🔗4]
+*   **[test_regex.py](test_regex.py#L1)**
+    *   VAR **TAG_REGEX** ` = re.compile(
+    r"^\s*(?:#+|//|<!--|>)?\s*([@!][A-Z_]+)(?:\s+(.*?))?(?:\s*(?:-->))?\s*$",
+    re.MULTILINE,
+)` [🔗14]
+    *   VAR **text** ` = """
+Inner docstring for test_func.
+    @INTERNAL
+"""` [🔗397]
+    *   VAR **matches** ` = list(TAG_REGEX.finditer(text))` [🔗40]
+    *   VAR **text2** ` = """
+# @CORE
+# This is a core function.
+"""` [🔗7]
+    *   VAR **matches2** ` = list(TAG_REGEX.finditer(text2))` [🔗5]
 
 ## src/ndoc
 *   **[daemon.py](src/ndoc/daemon.py#L1)**
-    *   CLS **DocChangeHandler**
-    *   MET **on_any_event** `(self, event: FileSystemEvent)`
-    *   MET **trigger_update** `(self)`
-    *   MET **run_update** `(self)`
-    *   FUN **start_watch_mode** `(config: ProjectConfig)`
+    *   CLS **DocChangeHandler** [🔗4]
+    *   MET **on_any_event** `(self, event: FileSystemEvent)` [🔗3]
+    *   MET **trigger_update** `(self)` [🔗4]
+    *   MET **run_update** `(self)` [🔗4]
+    *   FUN **start_watch_mode** `(config: ProjectConfig)` [🔗5]
 *   **[entry.py](src/ndoc/entry.py#L1)**
-    *   FUN **main** `()`
+    *   FUN **main** `()` [🔗85]
 
 ## src/ndoc/atoms
-*   **[ast.py](src/ndoc/atoms/ast.py#L1)**
-    *   VAR **tspython** ` = None`
-    *   VAR **tscpp** ` = None`
-    *   VAR **tsjs** ` = None`
-    *   VAR **tsts** ` = None`
-    *   VAR **tsgo** ` = None`
-    *   VAR **tsrust** ` = None`
-    *   VAR **tsdart** ` = None`
-    *   VAR **tscsharp** ` = None`
-    *   VAR **tsjava** ` = None`
-    *   FUN **get_language** `(lang_key: str) -> Optional[Language]`
-    *   CLS **AstNode**
-    *   VAR **type** `: str`
-    *   VAR **text** `: str`
-    *   VAR **start_point** `: tuple[int, int]`
-    *   VAR **end_point** `: tuple[int, int]`
-    *   VAR **children** `: List['AstNode'] = field(default_factory=list)`
-    *   PRP **start_line** `(self) -> int`
-    *   PRP **end_line** `(self) -> int`
-    *   FUN **get_parser** `(lang_key: str = 'python') -> Optional[Parser]`
-    *   FUN **parse_code** `(content: str, file_path: Optional[Path] = None) -> Optional[Tree]`
-    *   FUN **query_tree** `(tree: Tree, query_scm: str, lang_key: str = 'python') -> List[Dict[str, Node]]`
-    *   FUN **node_to_data** `(node: Node, include_children: bool = False) -> AstNode`
-    *   FUN **extract_symbols** `(tree: Tree, content_bytes: bytes, file_path: Optional[Path] = None) -> List[Symbol]`
 *   **[cache.py](src/ndoc/atoms/cache.py#L1)**
-    *   CLS **FileCache**
-    *   MET **load** `(self)`
-    *   MET **save** `(self)`
-    *   MET **get_file_hash** `(self, file_path: Path) -> str`
-    *   MET **is_changed** `(self, file_path: Path) -> bool`
-    *   MET **update** `(self, file_path: Path, result: Any)`
-    *   MET **get** `(self, file_path: Path) -> Optional[Any]`
-*   **[deps.py](src/ndoc/atoms/deps.py#L1)**
+    *   CLS **FileCache** [🔗9]
+    *   MET **load** `(self)` [🔗31]
+    *   MET **save** `(self)` [🔗22]
+    *   MET **get_file_hash** `(self, file_path: Path) -> str` [🔗5]
+    *   MET **is_changed** `(self, file_path: Path) -> bool` [🔗4]
+    *   MET **update** `(self, file_path: Path, result: Any)` [🔗53]
+    *   MET **get** `(self, file_path: Path) -> Optional[Any]` [🔗155]
+*   **[fs.py](src/ndoc/atoms/fs.py#L1)**
+    *   CLS **FileFilter** [🔗14]
+    *   VAR **ignore_patterns** `: Set[str] = field(default_factory=set)` [🔗58]
+    *   VAR **allow_extensions** `: Set[str] = field(default_factory=set)` [🔗8]
+    *   VAR **spec** `: Optional[pathspec.PathSpec] = None` [🔗14]
+    *   PRP **has_extension_filter** `(self) -> bool` [🔗5]
+    *   FUN **load_gitignore** `(root: Path) -> Optional[pathspec.PathSpec]` [🔗5]
+    *   FUN **should_ignore** `(path: Path, filter_config: FileFilter, root: Path = None) -> bool` [🔗7]
+    *   FUN **list_dir** `(path: Path, filter_config: FileFilter, root: Path = None) -> List[Path]` [🔗4]
+    *   FUN **walk_files** `(root: Path, ignore_patterns: List[str], extensions: List[str] = None) -> Iterator[Path]` [🔗13]
+    *   FUN **get_relative_path** `(path: Path, root: Path) -> str` [🔗6]
+*   **[io.py](src/ndoc/atoms/io.py#L1)**
+    *   FUN **set_dry_run** `(enabled: bool) -> None` [🔗4]
+    *   FUN **safe_io** `(operation: Callable[..., Any], error_msg: str, *args: Any, **kwargs: Any) -> Any` [🔗8]
+    *   FUN **read_text** `(path: Path) -> Optional[str]` [🔗38]
+    *   FUN **read_head** `(path: Path, n_bytes: int = 2048) -> Optional[str]` [🔗5]
+    *   FUN **write_text** `(path: Path, content: str) -> bool` [🔗23]
+    *   FUN **read_lines** `(path: Path) -> List[str]` [🔗3]
+    *   FUN **append_text** `(path: Path, content: str) -> bool` [🔗4]
+    *   FUN **update_section** `(path: Path, start_marker: str, end_marker: str, new_content: str) -> bool` [🔗7]
+    *   FUN **update_header_timestamp** `(path: Path) -> bool` [🔗9]
+    *   FUN **delete_file** `(path: Path) -> bool` [🔗5]
+*   **[llm.py](src/ndoc/atoms/llm.py#L1)**
+    *   FUN **call_llm** `(prompt: str, system_prompt: str = "You are a helpful assistant.") -> Optional[str]` [🔗5]
+*   **[lsp.py](src/ndoc/atoms/lsp.py#L1)**
+    *   CLS **LSPService** [🔗10]
+    *   MET **index_project** `(self, files: List[Path])` [🔗5]
+    *   MET **find_definitions** `(self, name: str) -> List[Symbol]` [🔗4]
+    *   MET **get_reference_count** `(self, name: str) -> int` [🔗4]
+    *   MET **find_references** `(self, name: str) -> List[Dict[str, Any]]` [🔗4]
+    *   FUN **get_service** `(root: Path) -> LSPService` [🔗5]
+*   **[scanner.py](src/ndoc/atoms/scanner.py#L1)**
+    *   CLS **TokenRule** [🔗4]
+    *   VAR **name** `: str` [🔗1545]
+    *   VAR **pattern** `: Pattern` [🔗52]
+    *   VAR **group_map** `: Dict[str, int]` [🔗4]
+    *   CLS **ScanResult** [🔗14]
+    *   VAR **tags** `: List[Tag] = field(default_factory=list)` [🔗54]
+    *   VAR **sections** `: Dict[str, Section] = field(default_factory=dict)` [🔗60]
+    *   VAR **symbols** `: List[Symbol] = field(default_factory=list)` [🔗128]
+    *   VAR **docstring** `: str = ""` [🔗70]
+    *   VAR **summary** `: str = ""` [🔗77]
+    *   VAR **todos** `: List[dict] = field(default_factory=list)` [🔗69]
+    *   VAR **calls** `: List[str] = field(default_factory=list)` [🔗57]
+    *   VAR **imports** `: List[str] = field(default_factory=list)` [🔗41]
+    *   VAR **is_core** `: bool = False` [🔗24]
+    *   FUN **get_cache** `(root: Path) -> cache.FileCache` [🔗4]
+    *   FUN **scan_file** `(file_path: Path, root: Path, force: bool = False) -> ScanResult` [🔗11]
+    *   FUN **extract_todos** `(content: str) -> List[dict]` [🔗4]
+    *   FUN **extract_docstring** `(content: str) -> str` [🔗14]
+    *   VAR **SECTION_REGEX** ` = re.compile(
+    r"<!--\s*NIKI_([A-Z0-9_]+)_START\s*-->(.*?)<!--\s*NIKI_\1_END\s*-->", re.DOTALL
+)` [🔗4]
+    *   VAR **DOCSTRING_PATTERNS** ` = [
+    re.compile(r'^\s*"""(.*?)"""', re.DOTALL),
+    re.compile(r"^\s*'''(.*?)'''", re.DOTALL),
+]` [🔗4]
+    *   FUN **parse_tags** `(content: str) -> List[Tag]` [🔗5]
+    *   FUN **parse_sections** `(content: str) -> Dict[str, Section]` [🔗4]
+    *   FUN **extract_summary** `(content: str, docstring: str) -> str` [🔗5]
+    *   FUN **regex_scan** `(content: str, ext: str) -> List[Symbol]` [🔗4]
+    *   FUN **scan_file_content** `(content: str, file_path: Optional[Path] = None) -> ScanResult` [🔗8]
+*   **[text_utils.py](src/ndoc/atoms/text_utils.py#L1)**
+    *   VAR **TAG_REGEX** ` = re.compile(
+    r"^\s*(?:#+|//|<!--|>)?\s*([@!][A-Z_]+)(?:\s+(.*?))?(?:\s*(?:-->))?\s*$",
+    re.MULTILINE,
+)` [🔗14]
+    *   FUN **clean_docstring** `(raw: str) -> str` [🔗8]
+    *   FUN **extract_tags_from_text** `(text: str, line_offset: int = 0) -> List[Tag]` [🔗7]
+
+## src/ndoc/atoms/ast
+*   **[base.py](src/ndoc/atoms/ast/base.py#L1)**
+    *   VAR **tspython** ` = None` [🔗6]
+    *   VAR **tscpp** ` = None` [🔗6]
+    *   VAR **tsjs** ` = None` [🔗6]
+    *   VAR **tsts** ` = None` [🔗6]
+    *   VAR **tsgo** ` = None` [🔗6]
+    *   VAR **tsrust** ` = None` [🔗6]
+    *   VAR **tsdart** ` = None` [🔗6]
+    *   VAR **tscsharp** ` = None` [🔗6]
+    *   VAR **tsjava** ` = None` [🔗6]
+    *   FUN **get_language** `(lang_key: str) -> Optional[Language]` [🔗13]
+    *   CLS **AstNode** [🔗16]
+    *   VAR **type** `: str` [🔗1000]
+    *   VAR **text** `: str` [🔗397]
+    *   VAR **start_point** `: tuple[int, int]` [🔗9]
+    *   VAR **end_point** `: tuple[int, int]` [🔗7]
+    *   VAR **children** `: list['AstNode'] = field(default_factory=list)` [🔗71]
+    *   PRP **start_line** `(self) -> int` [🔗3]
+    *   PRP **end_line** `(self) -> int` [🔗3]
+    *   FUN **get_parser** `(lang_key: str = 'python') -> Optional[Parser]` [🔗7]
+    *   FUN **parse_code** `(content: str, file_path: Optional[Path] = None) -> Optional[Tree]` [🔗17]
+    *   FUN **get_lang_key** `(file_path: Path) -> Optional[str]` [🔗9]
+    *   FUN **query_tree** `(tree: Tree, query_scm: str, lang_key: str = 'python') -> list[dict]` [🔗10]
+*   **[discovery.py](src/ndoc/atoms/ast/discovery.py#L1)**
+    *   FUN **find_calls** `(tree: Tree, lang_key: str = 'python') -> List[str]` [🔗8]
+    *   FUN **find_imports** `(tree: Tree, lang_key: str = 'python') -> List[str]` [🔗8]
+*   **[symbols.py](src/ndoc/atoms/ast/symbols.py#L1)**
+    *   FUN **extract_symbols** `(tree: Tree, content_bytes: bytes, file_path: Optional[Path] = None) -> List[Symbol]` [🔗19]
+*   **[utils.py](src/ndoc/atoms/ast/utils.py#L1)**
+    *   VAR **MAX_VALUE_LENGTH** ` = 60` [🔗11]
+    *   VAR **MAX_CONTENT_LENGTH** ` = 200` [🔗8]
+    *   FUN **truncate** `(text: str, max_len: int = 100) -> str` [🔗11]
+    *   FUN **node_to_data** `(node: Node, include_children: bool = False) -> AstNode` [🔗7]
+
+## src/ndoc/atoms/deps
+*   **[core.py](src/ndoc/atoms/deps/core.py#L1)**
+    *   VAR **SOURCE_PARSERS** ` = {
+    '.py': extract_imports,
+    '.dart': extract_dart_imports,
+    '.cpp': extract_cpp_includes,
+    '.h': extract_cpp_includes,
+    '.hpp': extract_cpp_includes,
+    '.c': extract_cpp_includes,
+    '.cc': extract_cpp_includes,
+    '.cs': extract_csharp_usings,
+}` [🔗10]
+    *   FUN **extract_dependencies** `(content: str, file_path: Path) -> List[str]` [🔗7]
+    *   FUN **get_project_dependencies** `(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, List[str]]` [🔗7]
+*   **[manifests.py](src/ndoc/atoms/deps/manifests.py#L1)**
+    *   FUN **parse_requirements_txt** `(file_path: Path) -> List[str]` [🔗8]
+    *   FUN **parse_pyproject_toml** `(file_path: Path) -> List[str]` [🔗8]
+    *   FUN **parse_package_json** `(file_path: Path) -> List[str]` [🔗8]
+    *   FUN **parse_pubspec_yaml** `(file_path: Path) -> List[str]` [🔗8]
+    *   FUN **parse_cmake_lists** `(file_path: Path) -> List[str]` [🔗8]
+    *   FUN **parse_csproj** `(file_path: Path) -> List[str]` [🔗8]
+*   **[parsers.py](src/ndoc/atoms/deps/parsers.py#L1)**
+    *   FUN **extract_imports** `(content: str) -> List[str]` [🔗11]
+    *   FUN **extract_cpp_includes** `(content: str) -> List[str]` [🔗22]
+    *   FUN **extract_dart_imports** `(content: str) -> List[str]` [🔗10]
+    *   FUN **extract_csharp_usings** `(content: str) -> List[str]` [🔗10]
+*   **[stats.py](src/ndoc/atoms/deps/stats.py#L1)**
     *   VAR **DEFAULT_IGNORE_PATTERNS** ` = {
     '.git', '.vscode', '.idea', '__pycache__', 
     'node_modules', 'venv', 'env', '.env', 
     'dist', 'build', 'target', 'out', 
     '.dart_tool', '.pub-cache', 
     'coverage', 'tmp', 'temp'
-}`
+}` [🔗9]
     *   VAR **LANGUAGE_EXTENSIONS** ` = {
     '.py': 'Python',
     '.js': 'JavaScript',
@@ -87,111 +221,34 @@
     '.cmake': 'CMake',
     '.cs': 'C#',
     '.csproj': 'C# Project',
-}`
-    *   FUN **detect_languages** `(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, float]`
-    *   FUN **extract_imports** `(content: str) -> List[str]`
-    *   FUN **parse_requirements_txt** `(file_path: Path) -> List[str]`
-    *   FUN **parse_pyproject_toml** `(file_path: Path) -> List[str]`
-    *   FUN **parse_package_json** `(file_path: Path) -> List[str]`
-    *   FUN **parse_pubspec_yaml** `(file_path: Path) -> List[str]`
-    *   FUN **parse_cmake_lists** `(file_path: Path) -> List[str]`
-    *   FUN **extract_cpp_includes** `(content: str) -> List[str]`
-    *   FUN **extract_dart_imports** `(content: str) -> List[str]`
-    *   FUN **extract_csharp_usings** `(content: str) -> List[str]`
-    *   FUN **parse_csproj** `(file_path: Path) -> List[str]`
-    *   VAR **SOURCE_PARSERS** ` = {
-    '.py': extract_imports,
-    '.dart': extract_dart_imports,
-    '.cpp': extract_cpp_includes,
-    '.h': extract_cpp_includes,
-    '.hpp': extract_cpp_includes,
-    '.c': extract_cpp_includes,
-    '.cc': extract_cpp_includes,
-    '.cs': extract_csharp_usings,
-}`
-    *   FUN **extract_dependencies** `(content: str, file_path: Path) -> List[str]`
-    *   FUN **get_project_dependencies** `(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, List[str]]`
-*   **[fs.py](src/ndoc/atoms/fs.py#L1)**
-    *   CLS **FileFilter**
-    *   VAR **ignore_patterns** `: Set[str] = field(default_factory=set)`
-    *   VAR **allow_extensions** `: Set[str] = field(default_factory=set)`
-    *   VAR **spec** `: Optional[pathspec.PathSpec] = None`
-    *   PRP **has_extension_filter** `(self) -> bool`
-    *   FUN **load_gitignore** `(root: Path) -> Optional[pathspec.PathSpec]`
-    *   FUN **should_ignore** `(path: Path, filter_config: FileFilter, root: Path = None) -> bool`
-    *   FUN **list_dir** `(path: Path, filter_config: FileFilter, root: Path = None) -> List[Path]`
-    *   FUN **walk_files** `(root: Path, ignore_patterns: List[str], extensions: List[str] = None) -> Iterator[Path]`
-    *   FUN **get_relative_path** `(path: Path, root: Path) -> str`
-*   **[io.py](src/ndoc/atoms/io.py#L1)**
-    *   FUN **set_dry_run** `(enabled: bool) -> None`
-    *   FUN **safe_io** `(operation: Callable[..., Any], error_msg: str, *args: Any, **kwargs: Any) -> Any`
-    *   FUN **read_text** `(path: Path) -> Optional[str]`
-    *   FUN **read_head** `(path: Path, n_bytes: int = 2048) -> Optional[str]`
-    *   FUN **write_text** `(path: Path, content: str) -> bool`
-    *   FUN **read_lines** `(path: Path) -> List[str]`
-    *   FUN **append_text** `(path: Path, content: str) -> bool`
-    *   FUN **update_section** `(path: Path, start_marker: str, end_marker: str, new_content: str) -> bool`
-    *   FUN **update_header_timestamp** `(path: Path) -> bool`
-    *   FUN **delete_file** `(path: Path) -> bool`
-*   **[llm.py](src/ndoc/atoms/llm.py#L1)**
-    *   FUN **call_llm** `(prompt: str, system_prompt: str = "You are a helpful assistant.") -> Optional[str]`
-*   **[scanner.py](src/ndoc/atoms/scanner.py#L1)**
-    *   CLS **TokenRule**
-    *   VAR **name** `: str`
-    *   VAR **pattern** `: Pattern`
-    *   VAR **group_map** `: Dict[str, int]`
-    *   CLS **ScanResult**
-    *   VAR **tags** `: List[Tag] = field(default_factory=list)`
-    *   VAR **sections** `: Dict[str, Section] = field(default_factory=dict)`
-    *   VAR **symbols** `: List[Symbol] = field(default_factory=list)`
-    *   VAR **docstring** `: str = ""`
-    *   VAR **summary** `: str = ""`
-    *   VAR **todos** `: List[dict] = field(default_factory=list)`
-    *   VAR **is_core** `: bool = False`
-    *   FUN **get_cache** `(root: Path) -> cache.FileCache`
-    *   FUN **scan_file** `(file_path: Path, root: Path) -> ScanResult`
-    *   FUN **extract_todos** `(content: str) -> List[dict]`
-    *   FUN **extract_docstring** `(content: str) -> str`
-    *   VAR **TAG_REGEX** ` = re.compile(
-    r"^\s*(?:#+|//|<!--|>)?\s*([@!][A-Z_]+)(?:\s+(.*?))?(?:\s*(?:-->))?\s*$",
-    re.MULTILINE,
-)`
-    *   VAR **SECTION_REGEX** ` = re.compile(
-    r"<!--\s*NIKI_([A-Z0-9_]+)_START\s*-->(.*?)<!--\s*NIKI_\1_END\s*-->", re.DOTALL
-)`
-    *   VAR **DOCSTRING_PATTERNS** ` = [
-    re.compile(r'^\s*"""(.*?)"""', re.DOTALL),
-    re.compile(r"^\s*'''(.*?)'''", re.DOTALL),
-]`
-    *   FUN **parse_tags** `(content: str) -> List[Tag]`
-    *   FUN **parse_sections** `(content: str) -> Dict[str, Section]`
-    *   FUN **extract_summary** `(content: str, docstring: str) -> str`
-    *   FUN **regex_scan** `(content: str, ext: str) -> List[Symbol]`
-    *   FUN **scan_file_content** `(content: str, file_path: Optional[Path] = None) -> ScanResult`
+}` [🔗9]
+    *   FUN **detect_languages** `(root_path: Path, ignore_patterns: Set[str] = None) -> Dict[str, float]` [🔗7]
 
 ## src/ndoc/atoms/langs
 *   **[__init__.py](src/ndoc/atoms/langs/__init__.py#L1)**
-    *   CLS **LanguageDefinition**
-    *   VAR **ID** `: str = ""`
-    *   VAR **EXTENSIONS** `: List[str] = []`
-    *   VAR **SCM_QUERY** `: str = ""`
-    *   VAR **CLASS_TYPES** `: List[str] = []`
-    *   VAR **ASYNC_KEYWORDS** `: List[str] = ["async"]`
-    *   STA **get_visibility** `(captures: Dict[str, Any], content_bytes: bytes) -> str`
-    *   STA **is_public** `(name: str, visibility: str) -> bool`
-    *   CLM **is_async** `(cls, node_text: str) -> bool`
-    *   STA **extract_docstring** `(node: Any, content_bytes: bytes) -> Optional[str]`
-    *   STA **format_signature** `(params_text: Optional[str], return_text: Optional[str]) -> str`
-    *   FUN **register_language** `(lang_cls: Type[LanguageDefinition])`
-    *   FUN **load_languages** `()`
-    *   FUN **get_lang_def** `(lang_id: str) -> Optional[Type[LanguageDefinition]]`
-    *   FUN **get_lang_id_by_ext** `(ext: str) -> Optional[str]`
-    *   FUN **get_all_extensions** `() -> List[str]`
+    *   CLS **LanguageDefinition** [🔗33]
+    *   VAR **ID** `: str = ""` [🔗561]
+    *   VAR **EXTENSIONS** `: List[str] = []` [🔗31]
+    *   VAR **SCM_QUERY** `: str = ""` [🔗32]
+    *   VAR **CALL_QUERY** `: str = ""` [🔗13]
+    *   VAR **SCM_IMPORTS** `: str = ""` [🔗13]
+    *   VAR **CLASS_TYPES** `: List[str] = []` [🔗31]
+    *   VAR **ASYNC_KEYWORDS** `: List[str] = ["async"]` [🔗4]
+    *   STA **get_visibility** `(captures: Dict[str, Any], content_bytes: bytes) -> str` [🔗4]
+    *   STA **is_public** `(name: str, visibility: str) -> bool` [🔗38]
+    *   CLM **is_async** `(cls, node_text: str) -> bool` [🔗4]
+    *   STA **extract_docstring** `(node: Any, content_bytes: bytes) -> Optional[str]` [🔗14]
+    *   STA **format_signature** `(params_text: Optional[str], return_text: Optional[str]) -> str` [🔗8]
+    *   FUN **register_language** `(lang_cls: Type[LanguageDefinition])` [🔗4]
+    *   FUN **load_languages** `()` [🔗6]
+    *   FUN **get_lang_def** `(lang_id: str) -> Optional[Type[LanguageDefinition]]` [🔗9]
+    *   FUN **get_lang_id_by_ext** `(ext: str) -> Optional[str]` [🔗5]
+    *   FUN **get_all_extensions** `() -> List[str]` [🔗3]
 *   **[cpp.py](src/ndoc/atoms/langs/cpp.py#L1)**
-    *   CLS **CppDefinition**
-    *   VAR **ID** ` = "cpp"`
-    *   VAR **EXTENSIONS** ` = [".cpp", ".c", ".h", ".hpp"]`
-    *   VAR **CLASS_TYPES** ` = ["class_specifier", "struct_specifier"]`
+    *   CLS **CppDefinition** [🔗3]
+    *   VAR **ID** ` = "cpp"` [🔗561]
+    *   VAR **EXTENSIONS** ` = [".cpp", ".c", ".h", ".hpp"]` [🔗31]
+    *   VAR **CLASS_TYPES** ` = ["class_specifier", "struct_specifier"]` [🔗31]
     *   VAR **SCM_QUERY** ` = """
 (class_specifier
   name: (type_identifier) @name
@@ -234,61 +291,104 @@
   type: (_) @field_type
   declarator: (field_identifier) @field_name
 ) @field_def
-"""`
-    *   STA **is_public** `(name: str, visibility: str) -> bool`
+"""` [🔗32]
+    *   VAR **CALL_QUERY** ` = """
+(call_expression
+  function: [
+    (identifier) @call_name
+    (field_expression) @call_name
+    (scoped_identifier) @call_name
+  ]
+)
+"""` [🔗13]
+    *   VAR **SCM_IMPORTS** ` = """
+(preproc_include) @import
+"""` [🔗13]
+    *   STA **is_public** `(name: str, visibility: str) -> bool` [🔗38]
 *   **[csharp.py](src/ndoc/atoms/langs/csharp.py#L1)**
-    *   CLS **CSharpDefinition**
-    *   VAR **ID** ` = "c_sharp"`
-    *   VAR **EXTENSIONS** ` = [".cs"]`
-    *   VAR **CLASS_TYPES** ` = ["class_declaration", "struct_declaration", "interface_declaration", "record_declaration"]`
+    *   CLS **CSharpDefinition** [🔗3]
+    *   VAR **ID** ` = "c_sharp"` [🔗561]
+    *   VAR **EXTENSIONS** ` = [".cs"]` [🔗31]
+    *   VAR **CLASS_TYPES** ` = ["class_declaration", "struct_declaration", "interface_declaration", "record_declaration"]` [🔗31]
     *   VAR **SCM_QUERY** ` = """
+(namespace_declaration
+  [(qualified_name) (identifier)] @name
+) @namespace_def
+
 (class_declaration
-  name: (identifier) @name
+  [(modifier) @visibility]*
+  (identifier) @name
+  [(base_list)]? @bases
 ) @class_def
 
 (struct_declaration
-  name: (identifier) @name
+  [(modifier) @visibility]*
+  (identifier) @name
 ) @struct_def
 
 (interface_declaration
-  name: (identifier) @name
+  [(modifier) @visibility]*
+  (identifier) @name
 ) @class_def
 
 (record_declaration
-  name: (identifier) @name
-) @struct_def
+  [(modifier) @visibility]*
+  (identifier) @name
+) @record_def
+
+(enum_declaration
+  [(modifier) @visibility]*
+  (identifier) @name
+) @enum_def
 
 (method_declaration
-  (modifier_list)? @visibility
-  name: (identifier) @name
-  parameters: (parameter_list) @params
-  type: (_)? @ret
+  [(modifier) @visibility]*
+  [(predefined_type) (identifier) (array_type) (generic_name)] @ret
+  (identifier) @name
+  (parameter_list) @params
 ) @func_def
 
 (constructor_declaration
-  (modifier_list)? @visibility
-  name: (identifier) @name
-  parameters: (parameter_list) @params
+  [(modifier) @visibility]*
+  (identifier) @name
+  (parameter_list) @params
 ) @func_def
-"""`
-    *   STA **is_public** `(name: str, visibility: str) -> bool`
+
+(property_declaration
+  [(modifier) @visibility]*
+  [(predefined_type) (identifier) (array_type) (generic_name)] @ret
+  (identifier) @name
+) @property_def
+"""` [🔗32]
+    *   VAR **CALL_QUERY** ` = """
+(invocation_expression
+  function: [(identifier) (member_access_expression)] @call_name
+)
+(object_creation_expression
+  type: [(identifier) (predefined_type)] @call_name
+)
+"""` [🔗13]
+    *   VAR **SCM_IMPORTS** ` = """
+(using_directive) @import
+"""` [🔗13]
+    *   STA **is_public** `(name: str, visibility: str) -> bool` [🔗38]
 *   **[dart.py](src/ndoc/atoms/langs/dart.py#L1)**
-    *   CLS **DartDefinition**
-    *   VAR **ID** ` = "dart"`
-    *   VAR **EXTENSIONS** ` = [".dart"]`
-    *   VAR **CLASS_TYPES** ` = ["class_definition", "mixin_declaration", "enum_declaration"]`
+    *   CLS **DartDefinition** [🔗3]
+    *   VAR **ID** ` = "dart"` [🔗561]
+    *   VAR **EXTENSIONS** ` = [".dart"]` [🔗31]
+    *   VAR **CLASS_TYPES** ` = ["class_definition", "mixin_declaration", "enum_declaration"]` [🔗31]
     *   VAR **SCM_QUERY** ` = """
 (class_definition name: (identifier) @name) @class_def
 (mixin_declaration name: (identifier) @name) @struct_def
 (enum_declaration name: (identifier) @name) @struct_def
 (function_definition name: (identifier) @name) @func_def
-"""`
-    *   STA **is_public** `(name: str, visibility: str) -> bool`
+"""` [🔗32]
+    *   STA **is_public** `(name: str, visibility: str) -> bool` [🔗38]
 *   **[go.py](src/ndoc/atoms/langs/go.py#L1)**
-    *   CLS **GoDefinition**
-    *   VAR **ID** ` = "go"`
-    *   VAR **EXTENSIONS** ` = [".go"]`
-    *   VAR **CLASS_TYPES** ` = ["type_declaration", "type_spec"]`
+    *   CLS **GoDefinition** [🔗3]
+    *   VAR **ID** ` = "go"` [🔗561]
+    *   VAR **EXTENSIONS** ` = [".go"]` [🔗31]
+    *   VAR **CLASS_TYPES** ` = ["type_declaration", "type_spec"]` [🔗31]
     *   VAR **SCM_QUERY** ` = """
 (type_declaration
   (type_spec
@@ -315,13 +415,13 @@
   parameters: (parameter_list) @params
   result: (_)? @ret
 ) @func_def
-"""`
-    *   STA **is_public** `(name: str, visibility: str) -> bool`
+"""` [🔗32]
+    *   STA **is_public** `(name: str, visibility: str) -> bool` [🔗38]
 *   **[java.py](src/ndoc/atoms/langs/java.py#L1)**
-    *   CLS **JavaDefinition**
-    *   VAR **ID** ` = "java"`
-    *   VAR **EXTENSIONS** ` = [".java"]`
-    *   VAR **CLASS_TYPES** ` = ["class_declaration", "interface_declaration", "enum_declaration", "record_declaration"]`
+    *   CLS **JavaDefinition** [🔗3]
+    *   VAR **ID** ` = "java"` [🔗561]
+    *   VAR **EXTENSIONS** ` = [".java"]` [🔗31]
+    *   VAR **CLASS_TYPES** ` = ["class_declaration", "interface_declaration", "enum_declaration", "record_declaration"]` [🔗31]
     *   VAR **SCM_QUERY** ` = """
 (class_declaration
   (modifiers)? @visibility
@@ -363,13 +463,13 @@
     value: (_)? @field_value
   )
 ) @field_def
-"""`
-    *   STA **is_public** `(name: str, visibility: str) -> bool`
+"""` [🔗32]
+    *   STA **is_public** `(name: str, visibility: str) -> bool` [🔗38]
 *   **[javascript.py](src/ndoc/atoms/langs/javascript.py#L1)**
-    *   CLS **JavascriptDefinition**
-    *   VAR **ID** ` = "javascript"`
-    *   VAR **EXTENSIONS** ` = [".js", ".jsx"]`
-    *   VAR **CLASS_TYPES** ` = ["class_declaration"]`
+    *   CLS **JavascriptDefinition** [🔗3]
+    *   VAR **ID** ` = "javascript"` [🔗561]
+    *   VAR **EXTENSIONS** ` = [".js", ".jsx"]` [🔗31]
+    *   VAR **CLASS_TYPES** ` = ["class_declaration"]` [🔗31]
     *   VAR **SCM_QUERY** ` = """
 (class_declaration
   name: (identifier) @name
@@ -417,13 +517,13 @@
     (object)
   ] @field_value
 ) @field_def
-"""`
-    *   STA **is_public** `(name: str, visibility: str) -> bool`
+"""` [🔗32]
+    *   STA **is_public** `(name: str, visibility: str) -> bool` [🔗38]
 *   **[python.py](src/ndoc/atoms/langs/python.py#L1)**
-    *   CLS **PythonDefinition**
-    *   VAR **ID** ` = "python"`
-    *   VAR **EXTENSIONS** ` = [".py"]`
-    *   VAR **CLASS_TYPES** ` = ["class_definition"]`
+    *   CLS **PythonDefinition** [🔗3]
+    *   VAR **ID** ` = "python"` [🔗561]
+    *   VAR **EXTENSIONS** ` = [".py"]` [🔗31]
+    *   VAR **CLASS_TYPES** ` = ["class_definition"]` [🔗31]
     *   VAR **SCM_QUERY** ` = """
 (class_definition
   name: (identifier) @name
@@ -468,15 +568,24 @@
   type: (type)? @field_type
   right: (_)? @field_value
 ) @field_def
-"""`
-    *   STA **is_public** `(name: str, visibility: str) -> bool`
-    *   STA **extract_docstring** `(node: Any, content_bytes: bytes) -> Optional[str]`
-    *   STA **format_signature** `(params_text: Optional[str], return_text: Optional[str]) -> str`
+"""` [🔗32]
+    *   VAR **CALL_QUERY** ` = """
+(call
+  function: [(identifier) (attribute)] @call_name
+)
+"""` [🔗13]
+    *   VAR **SCM_IMPORTS** ` = """
+(import_statement) @import
+(import_from_statement) @import
+"""` [🔗13]
+    *   STA **is_public** `(name: str, visibility: str) -> bool` [🔗38]
+    *   STA **extract_docstring** `(node: Any, content_bytes: bytes) -> Optional[str]` [🔗14]
+    *   STA **format_signature** `(params_text: Optional[str], return_text: Optional[str]) -> str` [🔗8]
 *   **[rust.py](src/ndoc/atoms/langs/rust.py#L1)**
-    *   CLS **RustDefinition**
-    *   VAR **ID** ` = "rust"`
-    *   VAR **EXTENSIONS** ` = [".rs"]`
-    *   VAR **CLASS_TYPES** ` = ["struct_item", "trait_item", "impl_item"]`
+    *   CLS **RustDefinition** [🔗3]
+    *   VAR **ID** ` = "rust"` [🔗561]
+    *   VAR **EXTENSIONS** ` = [".rs"]` [🔗31]
+    *   VAR **CLASS_TYPES** ` = ["struct_item", "trait_item", "impl_item"]` [🔗31]
     *   VAR **SCM_QUERY** ` = """
 (struct_item
   (visibility_modifier)? @visibility
@@ -494,13 +603,13 @@
   parameters: (parameters) @params
   return_type: (type_identifier)? @ret
 ) @func_def
-"""`
-    *   STA **is_public** `(name: str, visibility: str) -> bool`
+"""` [🔗32]
+    *   STA **is_public** `(name: str, visibility: str) -> bool` [🔗38]
 *   **[typescript.py](src/ndoc/atoms/langs/typescript.py#L1)**
-    *   CLS **TypescriptDefinition**
-    *   VAR **ID** ` = "typescript"`
-    *   VAR **EXTENSIONS** ` = [".ts", ".tsx"]`
-    *   VAR **CLASS_TYPES** ` = ["class_declaration", "interface_declaration", "enum_declaration"]`
+    *   CLS **TypescriptDefinition** [🔗3]
+    *   VAR **ID** ` = "typescript"` [🔗561]
+    *   VAR **EXTENSIONS** ` = [".ts", ".tsx"]` [🔗31]
+    *   VAR **CLASS_TYPES** ` = ["class_declaration", "interface_declaration", "enum_declaration"]` [🔗31]
     *   VAR **SCM_QUERY** ` = """
 (class_declaration
   name: (type_identifier) @name
@@ -563,12 +672,12 @@
     (object)
   ] @field_value
 ) @field_def
-"""`
-    *   STA **is_public** `(name: str, visibility: str) -> bool`
+"""` [🔗32]
+    *   STA **is_public** `(name: str, visibility: str) -> bool` [🔗38]
 
 ## src/ndoc/flows
 *   **[archive_flow.py](src/ndoc/flows/archive_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool`
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗141]
 *   **[clean_flow.py](src/ndoc/flows/clean_flow.py#L1)**
     *   VAR **GENERATED_FILES** ` = [
     "_AI.md",
@@ -576,9 +685,13 @@
     "_TECH.md",
     "_DEPS.md",
     "_NEXT.md",
+    "_SYMBOLS.md",
+    "_DATA.md",
+    "_STATS.md",
+    "_SYNTAX.md",
     # _ARCH.md is typically manual or hybrid, avoiding delete for safety unless confirmed
-]`
-    *   FUN **run** `(config: ProjectConfig, target: str = None, force: bool = False) -> bool`
+]` [🔗5]
+    *   FUN **run** `(config: ProjectConfig, target: str = None, force: bool = False) -> bool` [🔗141]
 *   **[config_flow.py](src/ndoc/flows/config_flow.py#L1)**
     *   VAR **RULES_TEMPLATE** ` = """# Project Rules
 > @CONTEXT: Configuration | @TAGS: @CONFIG @RULES
@@ -593,45 +706,58 @@
 > 定义生成的文档样式。
 
 - `!LANG`: Chinese (zh-CN)
-"""`
-    *   FUN **load_project_config** `(root_path: Path) -> ProjectConfig`
-    *   FUN **ensure_rules_file** `(root_path: Path, force: bool = False) -> bool`
+
+## ALM & Memory Rules (ALM与记忆规则)
+> 定义项目生命周期与自动归档规则。
+
+- `MEMORY文档对齐`: 定期更新_MEMORY.md，每当_NEXT.md中一项功能/模块完成，将其归档入_MEMORY.md。
+- `交付即更新`: 在完成代码修改后，习惯性运行 `ndoc all`，确保改动被即时索引。
+
+## Special Keywords (特殊关键字)
+> 用于控制特定目录的文档生成行为。
+
+- `@AGGREGATE`: **Recursive Aggregation**. 当目录包含此标记时，不为子目录生成单独的 `_AI.md`，而是将其内容递归聚合到父级 `_AI.md` 中。
+- `@CHECK_IGNORE`: **Audit Ignore**. 当目录包含此标记时，完全跳过该目录及其子目录的 `_AI.md` 生成。
+"""` [🔗4]
+    *   FUN **load_project_config** `(root_path: Path) -> ProjectConfig` [🔗4]
+    *   FUN **ensure_rules_file** `(root_path: Path, force: bool = False) -> bool` [🔗5]
 *   **[context_flow.py](src/ndoc/flows/context_flow.py#L1)**
-    *   FUN **format_file_summary** `(ctx: FileContext, root: Optional[Path] = None) -> str`
-    *   FUN **format_symbol_list** `(ctx: FileContext) -> str`
-    *   FUN **format_dependencies** `(ctx: FileContext) -> str`
-    *   FUN **generate_dir_content** `(context: DirectoryContext) -> str`
-    *   FUN **cleanup_legacy_map** `(file_path: Path) -> None`
-    *   FUN **process_directory** `(path: Path, config: ProjectConfig, recursive: bool = True, parent_aggregate: bool = False) -> Optional[DirectoryContext]`
-    *   FUN **run** `(config: ProjectConfig) -> bool`
-    *   FUN **update_directory** `(path: Path, config: ProjectConfig) -> bool`
+    *   FUN **format_file_summary** `(ctx: FileContext, root: Optional[Path] = None) -> str` [🔗4]
+    *   FUN **format_symbol_list** `(ctx: FileContext) -> str` [🔗4]
+    *   FUN **format_dependencies** `(ctx: FileContext) -> str` [🔗4]
+    *   FUN **generate_dir_content** `(context: DirectoryContext) -> str` [🔗4]
+    *   FUN **cleanup_legacy_map** `(file_path: Path) -> None` [🔗4]
+    *   FUN **process_directory** `(path: Path, config: ProjectConfig, recursive: bool = True, parent_aggregate: bool = False) -> Optional[DirectoryContext]` [🔗6]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗141]
+    *   FUN **update_directory** `(path: Path, config: ProjectConfig) -> bool` [🔗4]
 *   **[data_flow.py](src/ndoc/flows/data_flow.py#L1)**
-    *   CLS **DataDefinition**
-    *   VAR **name** `: str`
-    *   VAR **type** `: str`
-    *   VAR **path** `: str`
-    *   VAR **docstring** `: str`
-    *   VAR **fields** `: List[str]`
-    *   FUN **run** `(config: ProjectConfig) -> bool`
+    *   CLS **DataDefinition** [🔗6]
+    *   VAR **name** `: str` [🔗1545]
+    *   VAR **type** `: str` [🔗1000]
+    *   VAR **path** `: str` [🔗416]
+    *   VAR **docstring** `: str` [🔗70]
+    *   VAR **fields** `: List[str]` [🔗34]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗141]
+    *   FUN **get_plural** `(name: str) -> str` [🔗4]
 *   **[deps_flow.py](src/ndoc/flows/deps_flow.py#L1)**
-    *   FUN **collect_imports** `(root: Path) -> Dict[str, List[str]]`
-    *   FUN **build_dependency_graph** `(import_map: Dict[str, List[str]]) -> Dict[str, Set[str]]`
-    *   FUN **generate_mermaid_graph** `(graph: Dict[str, Set[str]]) -> str`
-    *   FUN **run** `(config: ProjectConfig) -> bool`
+    *   FUN **collect_imports** `(root: Path) -> Dict[str, List[str]]` [🔗4]
+    *   FUN **build_dependency_graph** `(import_map: Dict[str, List[str]]) -> Dict[str, Set[str]]` [🔗4]
+    *   FUN **generate_mermaid_graph** `(graph: Dict[str, Set[str]]) -> str` [🔗4]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗141]
 *   **[doctor_flow.py](src/ndoc/flows/doctor_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool`
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗141]
 *   **[init_flow.py](src/ndoc/flows/init_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool`
+    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗141]
 *   **[map_flow.py](src/ndoc/flows/map_flow.py#L1)**
-    *   CLS **MapContext**
-    *   VAR **root** `: Path`
-    *   VAR **ignore_patterns** `: List[str]`
-    *   FUN **format_dir_entry** `(name: str, level: int) -> str`
-    *   FUN **format_file_entry** `(path: Path, root: Path, level: int, summary_cache: Dict[Path, str] = None) -> str`
-    *   FUN **extract_file_summary** `(path: Path) -> str`
-    *   FUN **build_tree_lines** `(current_path: Path, context: MapContext, level: int = 0, summary_cache: Dict[Path, str] = None) -> List[str]`
-    *   FUN **generate_tree_content** `(config: ProjectConfig) -> str`
-    *   FUN **run** `(config: ProjectConfig) -> bool`
+    *   CLS **MapContext** [🔗8]
+    *   VAR **root** `: Path` [🔗247]
+    *   VAR **ignore_patterns** `: List[str]` [🔗58]
+    *   FUN **format_dir_entry** `(name: str, level: int) -> str` [🔗4]
+    *   FUN **format_file_entry** `(path: Path, root: Path, level: int, summary_cache: Dict[Path, str] = None) -> str` [🔗4]
+    *   FUN **extract_file_summary** `(path: Path) -> str` [🔗4]
+    *   FUN **build_tree_lines** `(current_path: Path, context: MapContext, level: int = 0, summary_cache: Dict[Path, str] = None) -> List[str]` [🔗5]
+    *   FUN **generate_tree_content** `(config: ProjectConfig) -> str` [🔗4]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗141]
 *   **[plan_flow.py](src/ndoc/flows/plan_flow.py#L1)**
     *   VAR **PLAN_SYSTEM_PROMPT** ` = """
 You are a senior software architect and project manager. 
@@ -647,13 +773,13 @@ Rules:
 
 Current context:
 You are working on Niki-docAI, a tool that generates documentation context for AI assistants.
-"""`
-    *   FUN **run** `(config: ProjectConfig, objective: str) -> bool`
+"""` [🔗4]
+    *   FUN **run** `(config: ProjectConfig, objective: str) -> bool` [🔗141]
 *   **[stats_flow.py](src/ndoc/flows/stats_flow.py#L1)**
-    *   FUN **check_should_update** `(root_path: Path, force: bool) -> bool`
-    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool`
+    *   FUN **check_should_update** `(root_path: Path, force: bool) -> bool` [🔗4]
+    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗141]
 *   **[symbols_flow.py](src/ndoc/flows/symbols_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool`
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗141]
 *   **[syntax_flow.py](src/ndoc/flows/syntax_flow.py#L1)**
     *   VAR **SYNTAX_TEMPLATE** ` = r"""# PROJECT SYNTAX
 > @CONTEXT: DSL 定义 | @TAGS: @SYNTAX @OP
@@ -748,32 +874,32 @@ You are working on Niki-docAI, a tool that generates documentation context for A
 > 从文件头自动发现的标签。
 - `@UNKNOWN`: **Unknown**. 占位符 (Placeholder).
 - `@TODO`: **Unreviewed**. 发现于 [_NEXT.md] (Found in ...).
-"""`
-    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool`
+"""` [🔗4]
+    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗141]
 *   **[tech_flow.py](src/ndoc/flows/tech_flow.py#L1)**
-    *   FUN **generate_tech_content** `(config: ProjectConfig) -> str`
-    *   FUN **run** `(config: ProjectConfig) -> bool`
+    *   FUN **generate_tech_content** `(config: ProjectConfig) -> str` [🔗4]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗141]
 *   **[todo_flow.py](src/ndoc/flows/todo_flow.py#L1)**
-    *   CLS **TodoItem**
-    *   VAR **file_path** `: Path`
-    *   VAR **line** `: int`
-    *   VAR **type** `: str`
-    *   VAR **content** `: str`
-    *   VAR **task_id** `: Optional[str] = None`
-    *   PRP **priority_icon** `(self) -> str`
-    *   FUN **collect_todos** `(root: Path, ignore_patterns: List[str]) -> List[TodoItem]`
-    *   FUN **format_todo_lines** `(todos: List[TodoItem], root: Path) -> str`
-    *   FUN **sync_tasks** `(config: ProjectConfig, todos: List[TodoItem]) -> bool`
-    *   FUN **run** `(config: ProjectConfig) -> bool`
+    *   CLS **TodoItem** [🔗14]
+    *   VAR **file_path** `: Path` [🔗146]
+    *   VAR **line** `: int` [🔗326]
+    *   VAR **type** `: str` [🔗1000]
+    *   VAR **content** `: str` [🔗375]
+    *   VAR **task_id** `: Optional[str] = None` [🔗19]
+    *   PRP **priority_icon** `(self) -> str` [🔗4]
+    *   FUN **collect_todos** `(root: Path, ignore_patterns: List[str]) -> List[TodoItem]` [🔗4]
+    *   FUN **format_todo_lines** `(todos: List[TodoItem], root: Path) -> str` [🔗4]
+    *   FUN **sync_tasks** `(config: ProjectConfig, todos: List[TodoItem]) -> bool` [🔗4]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗141]
 *   **[update_flow.py](src/ndoc/flows/update_flow.py#L1)**
-    *   FUN **run** `() -> bool`
+    *   FUN **run** `() -> bool` [🔗141]
 *   **[verify_flow.py](src/ndoc/flows/verify_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool`
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗141]
 
 ## src/ndoc/models
 *   **[config.py](src/ndoc/models/config.py#L1)**
-    *   CLS **ScanConfig**
-    *   VAR **root_path** `: Path`
+    *   CLS **ScanConfig** [🔗13]
+    *   VAR **root_path** `: Path` [🔗93]
     *   VAR **ignore_patterns** `: List[str] = field(default_factory=lambda: [
         ".git",
         "__pycache__",
@@ -785,60 +911,62 @@ You are working on Niki-docAI, a tool that generates documentation context for A
         "dist",
         "build",
         "ndoc_legacy" # Explicitly ignore legacy
-    ])`
-    *   VAR **extensions** `: List[str] = field(default_factory=list)`
-    *   CLS **ProjectConfig**
-    *   VAR **scan** `: ScanConfig`
-    *   VAR **name** `: str = "Project"`
-    *   VAR **version** `: str = "0.1.0"`
+    ])` [🔗58]
+    *   VAR **extensions** `: List[str] = field(default_factory=list)` [🔗69]
+    *   CLS **ProjectConfig** [🔗103]
+    *   VAR **scan** `: ScanConfig` [🔗70]
+    *   VAR **name** `: str = "Project"` [🔗1545]
+    *   VAR **version** `: str = "0.1.0"` [🔗187]
 *   **[context.py](src/ndoc/models/context.py#L1)**
-    *   CLS **Tag**
-    *   VAR **name** `: str`
-    *   VAR **args** `: List[str] = field(default_factory=list)`
-    *   VAR **line** `: int = 0`
-    *   VAR **raw** `: str = ""`
-    *   CLS **Section**
-    *   VAR **name** `: str`
-    *   VAR **content** `: str`
-    *   VAR **raw** `: str`
-    *   VAR **start_pos** `: int`
-    *   VAR **end_pos** `: int`
-    *   CLS **Symbol**
-    *   VAR **name** `: str`
-    *   VAR **kind** `: str`
-    *   VAR **line** `: int`
-    *   VAR **docstring** `: Optional[str] = None`
-    *   VAR **signature** `: Optional[str] = None`
-    *   VAR **parent** `: Optional[str] = None`
-    *   VAR **is_core** `: bool = False`
-    *   VAR **visibility** `: str = "public"`
-    *   VAR **lang** `: str = "unknown"`
-    *   VAR **decorators** `: List[str] = field(default_factory=list)`
-    *   VAR **bases** `: List[str] = field(default_factory=list)`
-    *   VAR **full_content** `: str = ""`
-    *   PRP **is_public** `(self) -> bool`
-    *   CLS **FileContext**
-    *   VAR **path** `: Path`
-    *   VAR **rel_path** `: str`
-    *   VAR **content** `: Optional[str] = None`
-    *   VAR **tags** `: List[Tag] = field(default_factory=list)`
-    *   VAR **sections** `: Dict[str, Section] = field(default_factory=dict)`
-    *   VAR **symbols** `: List[Symbol] = field(default_factory=list)`
-    *   VAR **docstring** `: Optional[str] = None`
-    *   VAR **is_core** `: bool = False`
-    *   VAR **ast_tree** `: Any = None`
-    *   VAR **title** `: Optional[str] = None`
-    *   VAR **description** `: Optional[str] = None`
-    *   PRP **has_content** `(self) -> bool`
-    *   CLS **DirectoryContext**
-    *   VAR **path** `: Path`
-    *   VAR **files** `: List[FileContext] = field(default_factory=list)`
-    *   VAR **subdirs** `: List[Path] = field(default_factory=list)`
-    *   PRP **name** `(self) -> str`
+    *   CLS **Tag** [🔗43]
+    *   VAR **name** `: str` [🔗1545]
+    *   VAR **args** `: List[str] = field(default_factory=list)` [🔗98]
+    *   VAR **line** `: int = 0` [🔗326]
+    *   VAR **raw** `: str = ""` [🔗36]
+    *   CLS **Section** [🔗24]
+    *   VAR **name** `: str` [🔗1545]
+    *   VAR **content** `: str` [🔗375]
+    *   VAR **raw** `: str` [🔗36]
+    *   VAR **start_pos** `: int` [🔗5]
+    *   VAR **end_pos** `: int` [🔗5]
+    *   CLS **Symbol** [🔗76]
+    *   VAR **name** `: str` [🔗1545]
+    *   VAR **kind** `: str` [🔗141]
+    *   VAR **line** `: int` [🔗326]
+    *   VAR **docstring** `: Optional[str] = None` [🔗70]
+    *   VAR **signature** `: Optional[str] = None` [🔗37]
+    *   VAR **parent** `: Optional[str] = None` [🔗182]
+    *   VAR **is_core** `: bool = False` [🔗24]
+    *   VAR **visibility** `: str = "public"` [🔗156]
+    *   VAR **lang** `: str = "unknown"` [🔗43]
+    *   VAR **decorators** `: List[str] = field(default_factory=list)` [🔗10]
+    *   VAR **bases** `: List[str] = field(default_factory=list)` [🔗20]
+    *   VAR **full_content** `: str = ""` [🔗6]
+    *   VAR **path** `: Optional[str] = None` [🔗416]
+    *   VAR **tags** `: List[Tag] = field(default_factory=list)` [🔗54]
+    *   PRP **is_public** `(self) -> bool` [🔗38]
+    *   CLS **FileContext** [🔗21]
+    *   VAR **path** `: Path` [🔗416]
+    *   VAR **rel_path** `: str` [🔗32]
+    *   VAR **content** `: Optional[str] = None` [🔗375]
+    *   VAR **tags** `: List[Tag] = field(default_factory=list)` [🔗54]
+    *   VAR **sections** `: Dict[str, Section] = field(default_factory=dict)` [🔗60]
+    *   VAR **symbols** `: List[Symbol] = field(default_factory=list)` [🔗128]
+    *   VAR **docstring** `: Optional[str] = None` [🔗70]
+    *   VAR **is_core** `: bool = False` [🔗24]
+    *   VAR **ast_tree** `: Any = None` [🔗4]
+    *   VAR **title** `: Optional[str] = None` [🔗311]
+    *   VAR **description** `: Optional[str] = None` [🔗52]
+    *   PRP **has_content** `(self) -> bool` [🔗7]
+    *   CLS **DirectoryContext** [🔗12]
+    *   VAR **path** `: Path` [🔗416]
+    *   VAR **files** `: List[FileContext] = field(default_factory=list)` [🔗293]
+    *   VAR **subdirs** `: List[Path] = field(default_factory=list)` [🔗20]
+    *   PRP **name** `(self) -> str` [🔗1545]
 
 ## tests
 *   **[conftest.py](tests/conftest.py#L1)**
-    *   VAR **root** ` = Path(__file__).parent.parent`
+    *   VAR **root** ` = Path(__file__).parent.parent` [🔗247]
 *   **[test_ast.py](tests/test_ast.py#L1)**
     *   VAR **SAMPLE_CODE** ` = """
 class MyClass:
@@ -865,11 +993,13 @@ class MyClass:
 def global_func(x: int) -> int:
     '''Global Func Doc'''
     return x * 2
-"""`
-    *   FUN **test_extract_symbols_basic** `()`
-    *   FUN **test_extract_complex_api** `()`
-    *   FUN **find_sym** `(name)`
-    *   FUN **find_member** `(cls_name, name)`
+"""` [🔗5]
+    *   FUN **test_extract_symbols_basic** `()` [🔗3]
+    *   FUN **test_extract_complex_api** `()` [🔗3]
+    *   FUN **find_sym** `(name)` [🔗7]
+    *   FUN **find_member** `(cls_name, name)` [🔗6]
+*   **[test_csharp_api.py](tests/test_csharp_api.py#L1)**
+    *   FUN **test_csharp_extraction** `()` [🔗4]
 *   **[test_scanner.py](tests/test_scanner.py#L1)**
     *   VAR **SAMPLE_CONTENT** ` = """
 # @TAG arg1 arg2
@@ -880,411 +1010,20 @@ Some Content
 class TestClass:
     '''Doc'''
     pass
-"""`
-    *   FUN **test_scan_file_content_mixed** `()`
-    *   FUN **test_scan_file_content_text_only** `()`
+"""` [🔗4]
+    *   FUN **test_scan_file_content_mixed** `()` [🔗3]
+    *   FUN **test_scan_file_content_text_only** `()` [🔗3]
 
 ## tests/fixtures
 *   **[complex_api.py](tests/fixtures/complex_api.py#L1)**
-    *   CLS **User**
-    *   VAR **name** `: str`
-    *   VAR **age** `: int = 18`
-    *   PRP **is_adult** `(self) -> bool`
-    *   ASY **fetch_data** `(self) -> dict`
-    *   CLM **from_dict** `(cls, data: dict) -> "User"`
-    *   CLS **Database**
-    *   VAR **connection_string** `: str = "localhost:5432"`
-    *   MET **connect** `(self)`
-    *   FUN **global_func** `(x: int, y: int) -> int`
-    *   ASY **global_async_func** `()`
-
-## vendors/tree-sitter-dart
-*   **[grammar.js](vendors/tree-sitter-dart/grammar.js#L1)**
-    *   VAR **DART_PREC** ` = {
-    IMPORT_EXPORT: 19,
-    TYPE_IDENTIFIER: 18, //was: 17
-    DOT_IDENTIFIER: 19, //was: 18
-    UNARY_POSTFIX: 17,
-    UNARY_PREFIX: 16,
-    Multiplicative: 15, // *, /, ˜/, % Left
-    Additive: 14, // +, - Left
-    Shift: 13, // <<, >>, >>> Left
-    TYPE_ARGUMENTS: 13,
-    Bitwise_AND: 12, // & Left
-    Bitwise_XOR: 11, // ˆ Left
-    Bitwise_Or: 10, // | Left
-    RelationalTypeCast: 9, // <, >, <=, >=, as, is, is! None 8
-    RelationalTypeTest: 9,
-    Relational: 8, // <, >, <=, >=, as, is, is! None 8
-    Equality: 7, // ==, != None 7
-    Logical_AND: 6, // AND && Left
-    Logical_OR: 5, // Or || Left
-    If: 4, //-null ?? Left
-    Conditional: 3, // e1?e2:e3 Right 3
-    Cascade: 2, // .. Left
-    Assignment: 1, // =, *=, /=, +=, -=, &=, ˆ=, etc. Right
-    BUILTIN: 0,
-    TRY: 0,
-    // Added by Ben for experimentation.
-    SELECTOR_IN_PRIMARY: 1,
-    SELECTOR_IN_ASSIGNMENT: 0,
-    TYPE_ARGS: 1
-}`
-    *   FUN **sep1** `(rule, separator)`
-    *   FUN **sep2** `(rule, separator)`
-    *   FUN **commaSep1** `(rule)`
-    *   FUN **commaSep** `(rule)`
-    *   FUN **commaSep2TrailingComma** `(rule)`
-    *   FUN **commaSep1TrailingComma** `(rule)`
-    *   FUN **commaSepTrailingComma** `(rule)`
-    *   FUN **pureBinaryRun** `(rule, separator, precedence)`
-    *   FUN **binaryRunLeft** `(rule, separator, superItem, precedence)`
-*   **[setup.py](vendors/tree-sitter-dart/setup.py#L1)**
-    *   CLS **Build**
-    *   MET **run** `(self)`
-    *   CLS **BdistWheel**
-    *   MET **get_tag** `(self)`
-
-## vendors/tree-sitter-dart/assets
-*   **[playground.js](vendors/tree-sitter-dart/assets/playground.js#L1)**
-    *   VAR **COLORS_BY_INDEX** ` = [
-    'blue',
-    'chocolate',
-    'darkblue',
-    'darkcyan',
-    'darkgreen',
-    'darkred',
-    'darkslategray',
-    'dimgray',
-    'green',
-    'indigo',
-    'navy',
-    'red',
-    'sienna',
-  ]`
-    *   VAR **languagesByName** ` = {}`
-    *   VAR **treeRows** ` = null`
-    *   VAR **parseCount** ` = 0`
-    *   VAR **isRendering** ` = 0`
-    *   ASY **handleLanguageChange** `()`
-    *   ASY **handleCodeChange** `(editor, changes)`
-    *   ASY **renderTree** `()`
-    *   VAR **row** ` = ''`
-    *   VAR **rows** ` = []`
-    *   VAR **finishedRow** ` = false`
-    *   VAR **visitedChildren** ` = false`
-    *   VAR **indentLevel** ` = 0`
-    *   VAR **i** ` = 0`
-    *   FUN **runTreeQuery** `(_, startRow, endRow)`
-    *   FUN **handleQueryChange** `()`
-    *   VAR **row** ` = 0`
-    *   VAR **endPosition** ` = {
-          line: startPosition.line,
-          ch: startPosition.ch + (error.length || Infinity)
-        }`
-    *   FUN **handleCursorMovement** `()`
-    *   VAR **start** ` = {row: selection.anchor.line, column: selection.anchor.ch}`
-    *   VAR **end** ` = {row: selection.head.line, column: selection.head.ch}`
-    *   FUN **handleTreeClick** `(event)`
-    *   FUN **handleLoggingChange** `()`
-    *   FUN **handleQueryEnableChange** `()`
-    *   FUN **treeEditForEditorChange** `(change)`
-    *   VAR **startPosition** ` = {row: change.from.line, column: change.from.ch}`
-    *   VAR **oldEndPosition** ` = {row: change.to.line, column: change.to.ch}`
-    *   VAR **newEndPosition** ` = {
-      row: startPosition.row + newLineCount - 1,
-      column: newLineCount === 1
-        ? startPosition.column + lastLineLength
-        : lastLineLength
-    }`
-    *   VAR **i** ` = 0`
-    *   VAR **i** ` = 0`
-    *   FUN **colorForCaptureName** `(capture)`
-    *   FUN **loadState** `()`
-    *   FUN **saveState** `()`
-    *   FUN **saveQueryState** `()`
-    *   FUN **debounce** `(func, wait, immediate)`
-    *   FUN **later** `()`
-*   **[tree-sitter.js](vendors/tree-sitter-dart/assets/tree-sitter.js#L1)**
-    *   CLS **Parser**
-    *   MET **constructor** `()`
-    *   MET **initialize** `()`
-    *   MET **init** `(r)`
-    *   MET **u** `(e,t)`
-    *   MET **b** `(e,t)`
-    *   MET **E** `(e)`
-    *   MET **x** `(e,t,r,n)`
-    *   MET **N** `(e,t,r)`
-    *   MET **k** `(e,t)`
-    *   MET **$** `(e,t,r)`
-    *   MET **j** `(e,t)`
-    *   MET **U** `(e,t,r,n)`
-    *   MET **D** `(e,t,r)`
-    *   MET **z** `(e)`
-    *   MET **G** `(e)`
-    *   MET **H** `(e)`
-    *   MET **ne** `(e)`
-    *   MET **se** `(e)`
-    *   MET **oe** `(e)`
-    *   MET **le** `(e)`
-    *   MET **de** `(e)`
-    *   MET **ce** `(e)`
-    *   MET **pe** `(e)`
-    *   MET **he** `(e)`
-    *   MET **r** `()`
-    *   MET **we** `()`
-    *   MET **ye** `(e)`
-    *   MET **Me** `(e,t)`
-    *   MET **ve** `(e,t,r)`
-    *   MET **Ie** `(e)`
-    *   MET **Ae** `(e,t)`
-    *   MET **Se** `(e,t)`
-    *   MET **xe** `(e,t)`
-    *   MET **n** `()`
-    *   MET **c** `(e)`
-    *   MET **Ne** `(e,t)`
-    *   MET **s** `(e)`
-    *   MET **o** `()`
-    *   MET **Pe** `()`
-    *   MET **qe** `()`
-    *   MET **Te** `(e,t)`
-    *   MET **Le** `(e)`
-    *   MET **We** `(e)`
-    *   MET **Oe** `(e)`
-    *   MET **t** `(e,t)`
-    *   MET **r** `(e)`
-    *   MET **n** `(t)`
-    *   MET **He** `(e)`
-    *   MET **Ke** `(e)`
-    *   MET **t** `()`
-    *   MET **Ve** `(e,t)`
-    *   CLS **ParserImpl**
-    *   MET **init** `()`
-    *   MET **initialize** `()`
-    *   MET **delete** `()`
-    *   MET **setLanguage** `(e)`
-    *   MET **getLanguage** `()`
-    *   MET **parse** `(e,t,r)`
-    *   MET **reset** `()`
-    *   MET **setTimeoutMicros** `(e)`
-    *   MET **getTimeoutMicros** `()`
-    *   MET **setLogger** `(e)`
-    *   MET **getLogger** `()`
-    *   CLS **Tree**
-    *   MET **constructor** `(e,t,r,n)`
-    *   MET **copy** `()`
-    *   MET **delete** `()`
-    *   MET **edit** `(e)`
-    *   MET **rootNode** `()`
-    *   MET **getLanguage** `()`
-    *   MET **walk** `()`
-    *   MET **getChangedRanges** `(e)`
-    *   CLS **Node**
-    *   MET **constructor** `(e,t)`
-    *   MET **typeId** `()`
-    *   MET **type** `()`
-    *   MET **endPosition** `()`
-    *   MET **endIndex** `()`
-    *   MET **text** `()`
-    *   MET **isNamed** `()`
-    *   MET **hasError** `()`
-    *   MET **hasChanges** `()`
-    *   MET **isMissing** `()`
-    *   MET **equals** `(e)`
-    *   MET **child** `(e)`
-    *   MET **namedChild** `(e)`
-    *   MET **childForFieldId** `(e)`
-    *   MET **childForFieldName** `(e)`
-    *   MET **childCount** `()`
-    *   MET **namedChildCount** `()`
-    *   MET **firstChild** `()`
-    *   MET **firstNamedChild** `()`
-    *   MET **lastChild** `()`
-    *   MET **lastNamedChild** `()`
-    *   MET **children** `()`
-    *   MET **namedChildren** `()`
-    *   MET **descendantsOfType** `(e,t,r)`
-    *   MET **nextSibling** `()`
-    *   MET **previousSibling** `()`
-    *   MET **nextNamedSibling** `()`
-    *   MET **previousNamedSibling** `()`
-    *   MET **parent** `()`
-    *   MET **descendantForIndex** `(e,t=e)`
-    *   MET **namedDescendantForIndex** `(e,t=e)`
-    *   MET **descendantForPosition** `(e,t=e)`
-    *   MET **namedDescendantForPosition** `(e,t=e)`
-    *   MET **walk** `()`
-    *   MET **toString** `()`
-    *   CLS **TreeCursor**
-    *   MET **constructor** `(e,t)`
-    *   MET **delete** `()`
-    *   MET **reset** `(e)`
-    *   MET **nodeType** `()`
-    *   MET **nodeTypeId** `()`
-    *   MET **nodeId** `()`
-    *   MET **nodeIsNamed** `()`
-    *   MET **nodeIsMissing** `()`
-    *   MET **nodeText** `()`
-    *   MET **startPosition** `()`
-    *   MET **endPosition** `()`
-    *   MET **startIndex** `()`
-    *   MET **endIndex** `()`
-    *   MET **currentNode** `()`
-    *   MET **currentFieldId** `()`
-    *   MET **currentFieldName** `()`
-    *   MET **gotoFirstChild** `()`
-    *   MET **gotoNextSibling** `()`
-    *   MET **gotoParent** `()`
-    *   CLS **Language**
-    *   MET **constructor** `(e,t)`
-    *   MET **version** `()`
-    *   MET **fieldCount** `()`
-    *   MET **fieldIdForName** `(e)`
-    *   MET **fieldNameForId** `(e)`
-    *   MET **idForNodeType** `(e,t)`
-    *   MET **nodeTypeCount** `()`
-    *   MET **nodeTypeForId** `(e)`
-    *   MET **nodeTypeIsNamed** `(e)`
-    *   MET **nodeTypeIsVisible** `(e)`
-    *   MET **query** `(e)`
-    *   MET **load** `(e)`
-    *   CLS **Query**
-    *   MET **constructor** `(e,t,r,n,s,o,_,a)`
-    *   MET **delete** `()`
-    *   MET **matches** `(e,t,r,n)`
-    *   MET **captures** `(e,t,r,n)`
-    *   MET **predicatesForPattern** `(e)`
-    *   MET **didExceedMatchLimit** `()`
-    *   MET **mt** `(e,t,r)`
-    *   MET **ft** `(e,t,r,n)`
-    *   MET **pt** `(e)`
-    *   MET **ht** `(e)`
-    *   MET **gt** `(e)`
-    *   MET **wt** `(e,t=lt)`
-    *   MET **yt** `(e,t=lt)`
-    *   MET **Mt** `(e)`
-    *   MET **bt** `(e,t)`
-    *   MET **vt** `(e)`
-    *   MET **Et** `(e,t)`
-    *   MET **It** `(e)`
-
-## vendors/tree-sitter-dart/bindings/c
-*   **[tree-sitter-dart.h](vendors/tree-sitter-dart/bindings/c/tree-sitter-dart.h#L1)**
-    *   STC **TSLanguage**
-
-## vendors/tree-sitter-dart/bindings/go
-*   **[binding.go](vendors/tree-sitter-dart/bindings/go/binding.go#L1)**
-    *   FUN **Language** `() -> unsafe.Pointer`
-*   **[binding_test.go](vendors/tree-sitter-dart/bindings/go/binding_test.go#L1)**
-    *   FUN **TestCanLoadGrammar** `(t *testing.T)`
-
-## vendors/tree-sitter-dart/bindings/python/tree_sitter_dart
-*   **[binding.c](vendors/tree-sitter-dart/bindings/python/tree_sitter_dart/binding.c#L1)**
-    *   STC **TSLanguage**
-    *   STC **PyModuleDef**
-    *   FUN **PyInit__binding**
-
-## vendors/tree-sitter-dart/bindings/swift/TreeSitterDart
-*   **[dart.h](vendors/tree-sitter-dart/bindings/swift/TreeSitterDart/dart.h#L1)**
-    *   STC **TSLanguage**
-
-## vendors/tree-sitter-dart/src
-*   **[parser.c](vendors/tree-sitter-dart/src/parser.c#L1)**
-    *   FUN **ts_lex**
-    *   FUN **ts_lex_keywords**
-    *   FUN **tree_sitter_dart_external_scanner_destroy**
-    *   FUN **tree_sitter_dart_external_scanner_scan**
-    *   FUN **tree_sitter_dart_external_scanner_serialize**
-    *   FUN **tree_sitter_dart_external_scanner_deserialize**
-*   **[scanner.c](vendors/tree-sitter-dart/src/scanner.c#L1)**
-    *   FUN **tree_sitter_dart_external_scanner_destroy**
-    *   FUN **tree_sitter_dart_external_scanner_reset**
-    *   FUN **tree_sitter_dart_external_scanner_serialize**
-    *   FUN **tree_sitter_dart_external_scanner_deserialize**
-    *   FUN **advance**
-    *   FUN **skip**
-    *   FUN **scan_multiline_comments**
-    *   FUN **scan_templates**
-    *   FUN **tree_sitter_dart_external_scanner_scan**
-
-## vendors/tree-sitter-dart/src/tree_sitter
-*   **[parser.h](vendors/tree-sitter-dart/src/tree_sitter/parser.h#L1)**
-    *   STC **TSLanguage**
-    *   STC **TSLanguageMetadata**
-    *   VAR **major_version** `: uint8_t`
-    *   VAR **minor_version** `: uint8_t`
-    *   VAR **patch_version** `: uint8_t`
-    *   VAR **field_id** `: TSFieldId`
-    *   VAR **child_index** `: uint8_t`
-    *   VAR **inherited** `: bool`
-    *   VAR **index** `: uint16_t`
-    *   VAR **length** `: uint16_t`
-    *   VAR **visible** `: bool`
-    *   VAR **named** `: bool`
-    *   VAR **supertype** `: bool`
-    *   STC **TSLexer**
-    *   STC **TSLexer**
-    *   VAR **lookahead** `: int32_t`
-    *   VAR **result_symbol** `: TSSymbol`
-    *   VAR **shift** `: struct {
-    uint8_t type;
-    TSStateId state;
-    bool extra;
-    bool repetition;
-  }`
-    *   VAR **type** `: uint8_t`
-    *   VAR **state** `: TSStateId`
-    *   VAR **extra** `: bool`
-    *   VAR **repetition** `: bool`
-    *   VAR **reduce** `: struct {
-    uint8_t type;
-    uint8_t child_count;
-    TSSymbol symbol;
-    int16_t dynamic_precedence;
-    uint16_t production_id;
-  }`
-    *   VAR **type** `: uint8_t`
-    *   VAR **child_count** `: uint8_t`
-    *   VAR **symbol** `: TSSymbol`
-    *   VAR **dynamic_precedence** `: int16_t`
-    *   VAR **production_id** `: uint16_t`
-    *   VAR **type** `: uint8_t`
-    *   VAR **lex_state** `: uint16_t`
-    *   VAR **external_lex_state** `: uint16_t`
-    *   VAR **lex_state** `: uint16_t`
-    *   VAR **external_lex_state** `: uint16_t`
-    *   VAR **reserved_word_set_id** `: uint16_t`
-    *   VAR **action** `: TSParseAction`
-    *   VAR **entry** `: struct {
-    uint8_t count;
-    bool reusable;
-  }`
-    *   VAR **count** `: uint8_t`
-    *   VAR **reusable** `: bool`
-    *   VAR **start** `: int32_t`
-    *   VAR **end** `: int32_t`
-    *   STC **TSLanguage**
-    *   VAR **abi_version** `: uint32_t`
-    *   VAR **symbol_count** `: uint32_t`
-    *   VAR **alias_count** `: uint32_t`
-    *   VAR **token_count** `: uint32_t`
-    *   VAR **external_token_count** `: uint32_t`
-    *   VAR **state_count** `: uint32_t`
-    *   VAR **large_state_count** `: uint32_t`
-    *   VAR **production_id_count** `: uint32_t`
-    *   VAR **field_count** `: uint32_t`
-    *   VAR **max_alias_sequence_length** `: uint16_t`
-    *   VAR **keyword_capture_token** `: TSSymbol`
-    *   VAR **external_scanner** `: struct {
-    const bool *states;
-    const TSSymbol *symbol_map;
-    void *(*create)(void);
-    void (*destroy)(void *);
-    bool (*scan)(void *, TSLexer *, const bool *symbol_whitelist);
-    unsigned (*serialize)(void *, char *);
-    void (*deserialize)(void *, const char *, unsigned);
-  }`
-    *   VAR **max_reserved_word_set_size** `: uint16_t`
-    *   VAR **supertype_count** `: uint32_t`
-    *   VAR **metadata** `: TSLanguageMetadata`
-    *   FUN **set_contains**
+    *   CLS **User** [🔗17]
+    *   VAR **name** `: str` [🔗1545]
+    *   VAR **age** `: int = 18` [🔗6]
+    *   PRP **is_adult** `(self) -> bool` [🔗3]
+    *   ASY **fetch_data** `(self) -> dict` [🔗4]
+    *   CLM **from_dict** `(cls, data: dict) -> "User"` [🔗7]
+    *   CLS **Database** [🔗6]
+    *   VAR **connection_string** `: str = "localhost:5432"` [🔗3]
+    *   MET **connect** `(self)` [🔗11]
+    *   FUN **global_func** `(x: int, y: int) -> int` [🔗7]
+    *   ASY **global_async_func** `()` [🔗4]

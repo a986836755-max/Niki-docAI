@@ -5,34 +5,65 @@ class CSharpDefinition(LanguageDefinition):
     EXTENSIONS = [".cs"]
     CLASS_TYPES = ["class_declaration", "struct_declaration", "interface_declaration", "record_declaration"]
     SCM_QUERY = """
+(namespace_declaration
+  [(qualified_name) (identifier)] @name
+) @namespace_def
+
 (class_declaration
-  name: (identifier) @name
+  [(modifier) @visibility]*
+  (identifier) @name
+  [(base_list)]? @bases
 ) @class_def
 
 (struct_declaration
-  name: (identifier) @name
+  [(modifier) @visibility]*
+  (identifier) @name
 ) @struct_def
 
 (interface_declaration
-  name: (identifier) @name
+  [(modifier) @visibility]*
+  (identifier) @name
 ) @class_def
 
 (record_declaration
-  name: (identifier) @name
-) @struct_def
+  [(modifier) @visibility]*
+  (identifier) @name
+) @record_def
+
+(enum_declaration
+  [(modifier) @visibility]*
+  (identifier) @name
+) @enum_def
 
 (method_declaration
-  (modifier_list)? @visibility
-  name: (identifier) @name
-  parameters: (parameter_list) @params
-  type: (_)? @ret
+  [(modifier) @visibility]*
+  [(predefined_type) (identifier) (array_type) (generic_name)] @ret
+  (identifier) @name
+  (parameter_list) @params
 ) @func_def
 
 (constructor_declaration
-  (modifier_list)? @visibility
-  name: (identifier) @name
-  parameters: (parameter_list) @params
+  [(modifier) @visibility]*
+  (identifier) @name
+  (parameter_list) @params
 ) @func_def
+
+(property_declaration
+  [(modifier) @visibility]*
+  [(predefined_type) (identifier) (array_type) (generic_name)] @ret
+  (identifier) @name
+) @property_def
+"""
+    CALL_QUERY = """
+(invocation_expression
+  function: [(identifier) (member_access_expression)] @call_name
+)
+(object_creation_expression
+  type: [(identifier) (predefined_type)] @call_name
+)
+"""
+    SCM_IMPORTS = """
+(using_directive) @import
 """
 
     @staticmethod

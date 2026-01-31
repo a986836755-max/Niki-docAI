@@ -151,9 +151,13 @@ def format_dependencies(ctx: FileContext) -> str:
             return ""
             
         # Use simple indent line
-        deps_str = ", ".join(imports)
+        # Limit the number of dependencies shown to keep it concise
+        MAX_DEPS = 8
+        if len(imports) > MAX_DEPS:
+            deps_str = ", ".join(list(imports)[:MAX_DEPS]) + " ..."
+        else:
+            deps_str = ", ".join(imports)
         
-        # No truncation, allow full visibility
         return f" @DEP: {deps_str}"
     except:
         return ""
