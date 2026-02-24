@@ -67,6 +67,19 @@ class LSPService:
         """
         return self._reference_counts.get(name, 0)
 
+    def get_context_for_file(self, file_path: Path) -> str:
+        """
+        Get 'Memory Context' (Rules, Warns) for a file.
+        This can be used by IDE plugins to display 'Mental Context'.
+        """
+        from ..flows import prompt_flow
+        from ..models.config import ProjectConfig, ScanConfig
+        
+        # We need a minimal config to use prompt_flow
+        # Assuming defaults are okay or we can infer from root
+        config = ProjectConfig(scan=ScanConfig(root_path=self.root))
+        return prompt_flow.get_context_prompt(file_path, config)
+
     def find_references(self, name: str) -> List[Dict[str, Any]]:
         """
         Find references to a symbol using Grep-like search across indexed files.

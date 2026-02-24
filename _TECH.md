@@ -1,6 +1,6 @@
 # Tech Stack Snapshot
 > @CONTEXT: Global | _TECH.md | @TAGS: @TECH @DEPS
-> 最后更新 (Last Updated): 2026-02-24 15:01:50
+> 最后更新 (Last Updated): 2026-02-24 15:04:13
 
 ## 1. Languages (语言分布)
 *   **Python**: `█████████████░░░░░░░` 66.0%
@@ -117,10 +117,12 @@
 *   `urllib.request`
 
 ### src/ndoc/atoms/lsp.py
-*   `pathlib`
 *   `re`
-*   `typing`
+*   `pathlib`
+*   `models.config`
 *   `models.context`
+*   `typing`
+*   `flows`
 
 ### src/ndoc/atoms/scanner.py
 *   `text_utils`

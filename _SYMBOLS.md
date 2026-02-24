@@ -1,14 +1,14 @@
 # Symbol Index
-> 最后更新 (Last Updated): 2026-02-24 15:01:51
+> 最后更新 (Last Updated): 2026-02-24 15:04:15
 
 ## @OVERVIEW
-*   **Total Public Symbols**: 384
+*   **Total Public Symbols**: 385
 
 ## Root
 *   **[debug_scanner.py](debug_scanner.py#L1)**
     *   FUN **test** `()` [🔗161]
 *   **[debug_symbols.py](debug_symbols.py#L1)**
-    *   VAR **file_path** ` = Path("src/ndoc/atoms/deps/stats.py")` [🔗176]
+    *   VAR **file_path** ` = Path("src/ndoc/atoms/deps/stats.py")` [🔗181]
     *   VAR **content** ` = read_text(file_path)` [🔗401]
     *   VAR **tree** ` = parse_code(content, file_path)` [🔗133]
     *   VAR **symbols** ` = extract_symbols(tree, content.encode("utf-8"), file_path)` [🔗129]
@@ -131,6 +131,7 @@ Inner docstring for test_func.
     *   MET **index_project** `(self, files: List[Path])` [🔗9]
     *   MET **find_definitions** `(self, name: str) -> List[Symbol]` [🔗5]
     *   MET **get_reference_count** `(self, name: str) -> int` [🔗6]
+    *   MET **get_context_for_file** `(self, file_path: Path) -> str` [🔗3]
     *   MET **find_references** `(self, name: str) -> List[Dict[str, Any]]` [🔗4]
     *   FUN **get_service** `(root: Path) -> LSPService` [🔗9]
 *   **[scanner.py](src/ndoc/atoms/scanner.py#L1)**
@@ -358,9 +359,9 @@ Inner docstring for test_func.
 
 ## src/ndoc/flows
 *   **[archive_flow.py](src/ndoc/flows/archive_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
 *   **[capability_flow.py](src/ndoc/flows/capability_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig, auto_install: bool = True) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig, auto_install: bool = True) -> bool` [🔗154]
     *   FUN **check_single_file** `(file_path: Path, auto_install: bool = True)` [🔗6]
 *   **[clean_flow.py](src/ndoc/flows/clean_flow.py#L1)**
     *   VAR **GENERATED_FILES** ` = [
@@ -368,7 +369,7 @@ Inner docstring for test_func.
     "_MAP.md",
     "_TECH.md",
     "_DEPS.md...` [🔗5]
-    *   FUN **run** `(config: ProjectConfig, target: str = None, force: bool = False) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig, target: str = None, force: bool = False) -> bool` [🔗154]
 *   **[config_flow.py](src/ndoc/flows/config_flow.py#L1)**
     *   VAR **RULES_TEMPLATE** ` = """# Project Rules
 > @CONTEXT: Configuration | @TAGS: @CONFI...` [🔗4]
@@ -381,7 +382,7 @@ Inner docstring for test_func.
     *   FUN **generate_dir_content** `(context: DirectoryContext) -> str` [🔗4]
     *   FUN **cleanup_legacy_map** `(file_path: Path) -> None` [🔗4]
     *   FUN **process_directory** `(path: Path, config: ProjectConfig, recursive: bool = True, parent_aggregate: bool = False) -> Optional[DirectoryContext]` [🔗6]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
     *   FUN **update_directory** `(path: Path, config: ProjectConfig) -> bool` [🔗4]
 *   **[data_flow.py](src/ndoc/flows/data_flow.py#L1)**
     *   CLS **DataDefinition** [🔗6]
@@ -390,52 +391,52 @@ Inner docstring for test_func.
     *   VAR **path** `: str` [🔗446]
     *   VAR **docstring** `: str` [🔗70]
     *   VAR **fields** `: List[str]` [🔗33]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
     *   FUN **get_plural** `(name: str) -> str` [🔗4]
 *   **[deps_flow.py](src/ndoc/flows/deps_flow.py#L1)**
     *   FUN **collect_imports** `(root: Path) -> Dict[str, List[str]]` [🔗4]
     *   FUN **build_dependency_graph** `(import_map: Dict[str, List[str]]) -> Dict[str, Set[str]]` [🔗4]
     *   FUN **generate_mermaid_graph** `(graph: Dict[str, Set[str]]) -> str` [🔗4]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
 *   **[doctor_flow.py](src/ndoc/flows/doctor_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
 *   **[init_flow.py](src/ndoc/flows/init_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗154]
 *   **[map_flow.py](src/ndoc/flows/map_flow.py#L1)**
     *   CLS **MapContext** [🔗8]
-    *   VAR **root** `: Path` [🔗258]
+    *   VAR **root** `: Path` [🔗260]
     *   VAR **ignore_patterns** `: List[str]` [🔗62]
     *   FUN **format_dir_entry** `(name: str, level: int) -> str` [🔗4]
     *   FUN **format_file_entry** `(path: Path, root: Path, level: int, summary_cache: Dict[Path, str] = None) -> str` [🔗4]
     *   FUN **extract_file_summary** `(path: Path) -> str` [🔗4]
     *   FUN **build_tree_lines** `(current_path: Path, context: MapContext, level: int = 0, summary_cache: Dict[Path, str] = None) -> List[str]` [🔗5]
     *   FUN **generate_tree_content** `(config: ProjectConfig) -> str` [🔗4]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
 *   **[plan_flow.py](src/ndoc/flows/plan_flow.py#L1)**
     *   VAR **PLAN_SYSTEM_PROMPT** ` = """
 You are a senior software architect and project manager....` [🔗4]
-    *   FUN **run** `(config: ProjectConfig, objective: str) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig, objective: str) -> bool` [🔗154]
 *   **[prompt_flow.py](src/ndoc/flows/prompt_flow.py#L1)**
     *   VAR **RULE_MARKER** ` = "## !RULE"` [🔗3]
     *   VAR **CTX_START** ` = "<!-- NIKI_CTX_START -->"` [🔗3]
     *   FUN **extract_rules_from_ai** `(ai_path: Path) -> str` [🔗6]
-    *   FUN **get_context_prompt** `(file_path: Path, config: ProjectConfig) -> str` [🔗4]
-    *   FUN **run** `(file_path: str, config: ProjectConfig) -> bool` [🔗153]
+    *   FUN **get_context_prompt** `(file_path: Path, config: ProjectConfig) -> str` [🔗5]
+    *   FUN **run** `(file_path: str, config: ProjectConfig) -> bool` [🔗154]
 *   **[stats_flow.py](src/ndoc/flows/stats_flow.py#L1)**
     *   FUN **check_should_update** `(root_path: Path, force: bool) -> bool` [🔗4]
-    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗154]
 *   **[symbols_flow.py](src/ndoc/flows/symbols_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
 *   **[syntax_flow.py](src/ndoc/flows/syntax_flow.py#L1)**
     *   VAR **SYNTAX_TEMPLATE** ` = r"""# PROJECT SYNTAX
 > @CONTEXT: DSL 定义 | @TAGS: @SYNTAX @OP...` [🔗4]
-    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗154]
 *   **[tech_flow.py](src/ndoc/flows/tech_flow.py#L1)**
     *   FUN **generate_tech_content** `(config: ProjectConfig) -> str` [🔗4]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
 *   **[todo_flow.py](src/ndoc/flows/todo_flow.py#L1)**
     *   CLS **TodoItem** [🔗14]
-    *   VAR **file_path** `: Path` [🔗176]
+    *   VAR **file_path** `: Path` [🔗181]
     *   VAR **line** `: int` [🔗336]
     *   VAR **type** `: str` [🔗980]
     *   VAR **content** `: str` [🔗401]
@@ -444,28 +445,28 @@ You are a senior software architect and project manager....` [🔗4]
     *   FUN **collect_todos** `(root: Path, ignore_patterns: List[str]) -> List[TodoItem]` [🔗4]
     *   FUN **format_todo_lines** `(todos: List[TodoItem], root: Path) -> str` [🔗4]
     *   FUN **sync_tasks** `(config: ProjectConfig, todos: List[TodoItem]) -> bool` [🔗4]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
 *   **[update_flow.py](src/ndoc/flows/update_flow.py#L1)**
-    *   FUN **run** `() -> bool` [🔗153]
+    *   FUN **run** `() -> bool` [🔗154]
 *   **[verify_flow.py](src/ndoc/flows/verify_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗153]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
 
 ## src/ndoc/models
 *   **[config.py](src/ndoc/models/config.py#L1)**
-    *   CLS **ScanConfig** [🔗15]
-    *   VAR **root_path** `: Path` [🔗113]
+    *   CLS **ScanConfig** [🔗17]
+    *   VAR **root_path** `: Path` [🔗114]
     *   VAR **ignore_patterns** `: List[str] = field(default_factory=lambda: [
         ".git",
         "__p...` [🔗62]
     *   VAR **extensions** `: List[str] = field(default_factory=list)` [🔗75]
-    *   CLS **ProjectConfig** [🔗116]
-    *   VAR **scan** `: ScanConfig` [🔗78]
+    *   CLS **ProjectConfig** [🔗118]
+    *   VAR **scan** `: ScanConfig` [🔗79]
     *   VAR **name** `: str = "Project"` [🔗1428]
     *   VAR **version** `: str = "0.1.0"` [🔗204]
 *   **[context.py](src/ndoc/models/context.py#L1)**
     *   CLS **Tag** [🔗39]
     *   VAR **name** `: str` [🔗1428]
-    *   VAR **args** `: List[str] = field(default_factory=list)` [🔗106]
+    *   VAR **args** `: List[str] = field(default_factory=list)` [🔗109]
     *   VAR **line** `: int = 0` [🔗336]
     *   VAR **raw** `: str = ""` [🔗36]
     *   CLS **Section** [🔗23]
@@ -513,7 +514,7 @@ You are a senior software architect and project manager....` [🔗4]
 
 ## tests
 *   **[conftest.py](tests/conftest.py#L1)**
-    *   VAR **root** ` = Path(__file__).parent.parent` [🔗258]
+    *   VAR **root** ` = Path(__file__).parent.parent` [🔗260]
 *   **[test_ast.py](tests/test_ast.py#L1)**
     *   VAR **SAMPLE_CODE** ` = """
 class MyClass:

@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ndoc.models.config import ProjectConfig, ScanConfig
-from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow, config_flow, syntax_flow, doctor_flow, init_flow, verify_flow, clean_flow, stats_flow, update_flow, symbols_flow, plan_flow, archive_flow, data_flow, capability_flow
+from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow, config_flow, syntax_flow, doctor_flow, init_flow, verify_flow, clean_flow, stats_flow, update_flow, symbols_flow, plan_flow, archive_flow, data_flow, capability_flow, prompt_flow
 from ndoc.daemon import start_watch_mode
 from ndoc.atoms import io
 
@@ -62,9 +62,10 @@ Granular Updates (单独更新):
         description=description,
         formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "symbols", "data", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "plan", "archive", "lsp", "help"], help="Command to execute")
+    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "symbols", "data", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "plan", "archive", "lsp", "prompt", "help"], help="Command to execute")
     parser.add_argument("target", nargs="?", help="Target file or directory (for clean command)")
     parser.add_argument("--root", default=".", help="Project root directory (Default: current dir)")
+    parser.add_argument("--file", "-f", help="Specific file for prompt context generation")
     parser.add_argument("--force", action="store_true", help="⚠️ Force execution (DANGER: Overwrite configs in init, Delete without confirm in clean)")
     parser.add_argument("--dry-run", action="store_true", help="Preview changes without writing to disk")
     
@@ -142,6 +143,15 @@ Granular Updates (单独更新):
             sys.exit(0)
         else:
             sys.exit(1)
+
+    if args.command == "prompt":
+        target_file = args.target or args.file
+        if not target_file:
+            print("❌ Error: Please specify a target file for prompt generation.")
+            print("Usage: ndoc prompt <file_path>")
+            sys.exit(1)
+        prompt_flow.run(target_file, config)
+        sys.exit(0)
 
     if args.command == "lsp":
         if not args.target:

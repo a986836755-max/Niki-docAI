@@ -5,10 +5,6 @@
 ## !RULE
 
 <!-- NIKI_AUTO_MEMORIES_START -->
-### Auto-Detected Rules
-*   **RULE**: All metrics must be normalized to [0, 1] range. [memory_test.py:4](memory_test.py#L4)
-*   **WARN**: Large lists may cause memory overflow, use generator if len > 1M. [memory_test.py:5](memory_test.py#L5)
-*   **INTENT**: We chose float64 for precision. [memory_test.py:6](memory_test.py#L6)
 <!-- NIKI_AUTO_MEMORIES_END -->
 <!-- Add local rules here -->
 

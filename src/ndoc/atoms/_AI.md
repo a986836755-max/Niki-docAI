@@ -1,6 +1,6 @@
 # Context: atoms
 > @CONTEXT: Local | atoms | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-02-24 14:59:54
+> 最后更新 (Last Updated): 2026-02-24 15:03:47
 
 ## !RULE
 
@@ -73,13 +73,14 @@
         *   `PUB:` FUN **call_llm**`(prompt: str, system_prompt: str = "You are a helpful assistant.") -> Optional[str]`
         *   `PRV:` FUN _call_openai_compatible`(api_key: str, base_url: str, model: str, prompt: str, system_prompt: str) -> Optional[str]`
         *   `PRV:` FUN _call_gemini`(api_key: str, prompt: str, system_prompt: str) -> Optional[str]`
-*   **[lsp.py](lsp.py#L1)**: """ @DEP: pathlib, re, typing, models.context
+*   **[lsp.py](lsp.py#L1)**: """ @DEP: re, pathlib, models.config, models.context, typing, flows
     *   `@API`
         *   `PUB:` CLS **LSPService**
             *   `PRV:` MET __init__`(self, root: Path)`
             *   `PUB:` MET **index_project**`(self, files: List[Path])`
             *   `PUB:` MET **find_definitions**`(self, name: str) -> List[Symbol]`
             *   `PUB:` MET **get_reference_count**`(self, name: str) -> int`
+            *   `PUB:` MET **get_context_for_file**`(self, file_path: Path) -> str`
             *   `PUB:` MET **find_references**`(self, name: str) -> List[Dict[str, Any]]`
         *   `VAL->` VAR _INSTANCE`: Optional[LSPService] = None`
         *   `PUB:` FUN **get_service**`(root: Path) -> LSPService`

@@ -1,6 +1,6 @@
 # Data Registry
 > @CONTEXT: Global | _DATA.md | @TAGS: @DATA @MODELS
-> 最后更新 (Last Updated): 2026-02-24 15:01:51
+> 最后更新 (Last Updated): 2026-02-24 15:04:15
 
 > **Goal**: 集中展示项目中的核心数据结构 (Dataclasses, Enums, TypedDicts)。强化 "Logic as Data" 原则。
 
