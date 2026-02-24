@@ -1,17 +1,17 @@
 # Symbol Index
-> 最后更新 (Last Updated): 2026-02-24 15:04:15
+> 最后更新 (Last Updated): 2026-02-24 15:44:55
 
 ## @OVERVIEW
-*   **Total Public Symbols**: 385
+*   **Total Public Symbols**: 394
 
 ## Root
 *   **[debug_scanner.py](debug_scanner.py#L1)**
-    *   FUN **test** `()` [🔗161]
+    *   FUN **test** `()` [🔗163]
 *   **[debug_symbols.py](debug_symbols.py#L1)**
-    *   VAR **file_path** ` = Path("src/ndoc/atoms/deps/stats.py")` [🔗181]
-    *   VAR **content** ` = read_text(file_path)` [🔗401]
+    *   VAR **file_path** ` = Path("src/ndoc/atoms/deps/stats.py")` [🔗172]
+    *   VAR **content** ` = read_text(file_path)` [🔗397]
     *   VAR **tree** ` = parse_code(content, file_path)` [🔗133]
-    *   VAR **symbols** ` = extract_symbols(tree, content.encode("utf-8"), file_path)` [🔗129]
+    *   VAR **symbols** ` = extract_symbols(tree, content.encode("utf-8"), file_path)` [🔗126]
 *   **[test_enhanced_doc.py](test_enhanced_doc.py#L1)**
     *   FUN **test_func** `(a: int, b: str) -> bool` [🔗7]
     *   CLS **TestClass** [🔗5]
@@ -35,26 +35,26 @@ Inner docstring for test_func.
 
 ## editors/vscode/out
 *   **[extension.js](editors/vscode/out/extension.js#L1)**
-    *   VAR **result** ` = {}` [🔗142]
-    *   FUN **activate** `(context)` [🔗13]
+    *   VAR **result** ` = {}` [🔗148]
+    *   FUN **activate** `(context)` [🔗21]
     *   VAR **serverOptions** ` = {
         command: pythonPath,
-        args: ['-m', 'ndoc.ls...` [🔗8]
+        args: ['-m', 'ndoc.ls...` [🔗16]
     *   VAR **clientOptions** ` = {
         documentSelector: [
-            { scheme: 'file', ...` [🔗8]
-    *   FUN **deactivate** `()` [🔗9]
+            { scheme: 'file', ...` [🔗16]
+    *   FUN **deactivate** `()` [🔗17]
 
 ## editors/vscode/src
 *   **[extension.ts](editors/vscode/src/extension.ts#L1)**
-    *   FUN **activate** `(context: vscode.ExtensionContext)` [🔗13]
+    *   FUN **activate** `(context: vscode.ExtensionContext)` [🔗21]
     *   VAR **serverOptions** ` = {
         command: pythonPath,
-        args: ['-m', 'ndoc.ls...` [🔗8]
+        args: ['-m', 'ndoc.ls...` [🔗16]
     *   VAR **clientOptions** ` = {
         documentSelector: [
-            { scheme: 'file', ...` [🔗8]
-    *   FUN **deactivate** `() -> : Thenable<void> | undefined` [🔗9]
+            { scheme: 'file', ...` [🔗16]
+    *   FUN **deactivate** `() -> : Thenable<void> | undefined` [🔗17]
 
 ## samples
 *   **[sample_csharp.cs](samples/sample_csharp.cs#L1)**
@@ -74,27 +74,24 @@ Inner docstring for test_func.
     *   MET **run_update** `(self)` [🔗4]
     *   FUN **start_watch_mode** `(config: ProjectConfig)` [🔗5]
 *   **[entry.py](src/ndoc/entry.py#L1)**
-    *   FUN **main** `()` [🔗94]
+    *   FUN **main** `()` [🔗89]
 *   **[lsp_server.py](src/ndoc/lsp_server.py#L1)**
-    *   VAR **BASE_DIR** ` = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."...` [🔗5]
-    *   CLS **NDocLanguageServer** [🔗21]
-    *   VAR **server** ` = NDocLanguageServer("ndoc-ai-server", "v0.1.0")` [🔗20]
-    *   FUN **lsp_initialize** `(ls: NDocLanguageServer, params)` [🔗3]
-    *   FUN **check_architecture** `(ls: NDocLanguageServer, doc_uri: str)` [🔗5]
-    *   FUN **did_open** `(ls: NDocLanguageServer, params)` [🔗3]
-    *   FUN **did_save** `(ls: NDocLanguageServer, params: DidSaveTextDocumentParams)` [🔗3]
-    *   FUN **hover** `(ls: NDocLanguageServer, params: HoverParams)` [🔗51]
-    *   FUN **main** `()` [🔗94]
+    *   VAR **server** ` = LanguageServer("ndoc-lsp", "0.1.0")` [🔗36]
+    *   FUN **get_service** `(root_path: str) -> Optional[LSPService]` [🔗13]
+    *   FUN **did_open** `(ls: LanguageServer, params: DidOpenTextDocumentParams)` [🔗3]
+    *   FUN **hover** `(ls: LanguageServer, params: HoverParams) -> Optional[Hover]` [🔗53]
+    *   FUN **execute_command** `(ls: LanguageServer, params: ExecuteCommandParams)` [🔗3]
+    *   FUN **run** `()` [🔗162]
 
 ## src/ndoc/atoms
 *   **[cache.py](src/ndoc/atoms/cache.py#L1)**
     *   CLS **FileCache** [🔗9]
     *   MET **load** `(self)` [🔗33]
-    *   MET **save** `(self)` [🔗23]
+    *   MET **save** `(self)` [🔗22]
     *   MET **get_file_hash** `(self, file_path: Path) -> str` [🔗5]
     *   MET **is_changed** `(self, file_path: Path) -> bool` [🔗4]
     *   MET **update** `(self, file_path: Path, result: Any)` [🔗53]
-    *   MET **get** `(self, file_path: Path) -> Optional[Any]` [🔗169]
+    *   MET **get** `(self, file_path: Path) -> Optional[Any]` [🔗167]
 *   **[capabilities.py](src/ndoc/atoms/capabilities.py#L1)**
     *   CLS **CapabilityManager** [🔗21]
     *   VAR **LANGUAGE_PACKAGES** ` = {
@@ -104,14 +101,14 @@ Inner docstring for test_func.
     *   CLM **get_language** `(cls, lang_name: str, auto_install: bool = False) -> Optional[Language]` [🔗21]
 *   **[fs.py](src/ndoc/atoms/fs.py#L1)**
     *   CLS **FileFilter** [🔗14]
-    *   VAR **ignore_patterns** `: Set[str] = field(default_factory=set)` [🔗62]
+    *   VAR **ignore_patterns** `: Set[str] = field(default_factory=set)` [🔗60]
     *   VAR **allow_extensions** `: Set[str] = field(default_factory=set)` [🔗8]
     *   VAR **spec** `: Optional[pathspec.PathSpec] = None` [🔗13]
     *   PRP **has_extension_filter** `(self) -> bool` [🔗5]
     *   FUN **load_gitignore** `(root: Path) -> Optional[pathspec.PathSpec]` [🔗5]
     *   FUN **should_ignore** `(path: Path, filter_config: FileFilter, root: Path = None) -> bool` [🔗7]
     *   FUN **list_dir** `(path: Path, filter_config: FileFilter, root: Path = None) -> List[Path]` [🔗4]
-    *   FUN **walk_files** `(root: Path, ignore_patterns: List[str], extensions: List[str] = None) -> Iterator[Path]` [🔗18]
+    *   FUN **walk_files** `(root: Path, ignore_patterns: List[str], extensions: List[str] = None) -> Iterator[Path]` [🔗17]
     *   FUN **get_relative_path** `(path: Path, root: Path) -> str` [🔗6]
 *   **[io.py](src/ndoc/atoms/io.py#L1)**
     *   FUN **set_dry_run** `(enabled: bool) -> None` [🔗4]
@@ -127,26 +124,26 @@ Inner docstring for test_func.
 *   **[llm.py](src/ndoc/atoms/llm.py#L1)**
     *   FUN **call_llm** `(prompt: str, system_prompt: str = "You are a helpful assistant.") -> Optional[str]` [🔗5]
 *   **[lsp.py](src/ndoc/atoms/lsp.py#L1)**
-    *   CLS **LSPService** [🔗12]
-    *   MET **index_project** `(self, files: List[Path])` [🔗9]
-    *   MET **find_definitions** `(self, name: str) -> List[Symbol]` [🔗5]
-    *   MET **get_reference_count** `(self, name: str) -> int` [🔗6]
-    *   MET **get_context_for_file** `(self, file_path: Path) -> str` [🔗3]
+    *   CLS **LSPService** [🔗17]
+    *   MET **index_project** `(self, files: List[Path])` [🔗7]
+    *   MET **find_definitions** `(self, name: str) -> List[Symbol]` [🔗4]
+    *   MET **get_reference_count** `(self, name: str) -> int` [🔗5]
+    *   MET **get_context_for_file** `(self, file_path: Path) -> str` [🔗4]
     *   MET **find_references** `(self, name: str) -> List[Dict[str, Any]]` [🔗4]
-    *   FUN **get_service** `(root: Path) -> LSPService` [🔗9]
+    *   FUN **get_service** `(root: Path) -> LSPService` [🔗13]
 *   **[scanner.py](src/ndoc/atoms/scanner.py#L1)**
     *   CLS **TokenRule** [🔗4]
-    *   VAR **name** `: str` [🔗1428]
+    *   VAR **name** `: str` [🔗1427]
     *   VAR **pattern** `: Pattern` [🔗56]
     *   VAR **group_map** `: Dict[str, int]` [🔗4]
     *   CLS **ScanResult** [🔗14]
     *   VAR **tags** `: List[Tag] = field(default_factory=list)` [🔗52]
     *   VAR **sections** `: Dict[str, Section] = field(default_factory=dict)` [🔗59]
-    *   VAR **symbols** `: List[Symbol] = field(default_factory=list)` [🔗129]
-    *   VAR **docstring** `: str = ""` [🔗70]
+    *   VAR **symbols** `: List[Symbol] = field(default_factory=list)` [🔗126]
+    *   VAR **docstring** `: str = ""` [🔗68]
     *   VAR **summary** `: str = ""` [🔗77]
     *   VAR **todos** `: List[dict] = field(default_factory=list)` [🔗67]
-    *   VAR **memories** `: List[dict] = field(default_factory=list)` [🔗24]
+    *   VAR **memories** `: List[dict] = field(default_factory=list)` [🔗25]
     *   VAR **calls** `: List[str] = field(default_factory=list)` [🔗55]
     *   VAR **imports** `: List[str] = field(default_factory=list)` [🔗40]
     *   VAR **is_core** `: bool = False` [🔗21]
@@ -175,7 +172,7 @@ Inner docstring for test_func.
 *   **[base.py](src/ndoc/atoms/ast/base.py#L1)**
     *   FUN **get_language** `(lang_key: str) -> Optional[Language]` [🔗21]
     *   CLS **AstNode** [🔗14]
-    *   VAR **type** `: str` [🔗980]
+    *   VAR **type** `: str` [🔗983]
     *   VAR **text** `: str` [🔗400]
     *   VAR **start_point** `: tuple[int, int]` [🔗9]
     *   VAR **end_point** `: tuple[int, int]` [🔗7]
@@ -359,9 +356,9 @@ Inner docstring for test_func.
 
 ## src/ndoc/flows
 *   **[archive_flow.py](src/ndoc/flows/archive_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗162]
 *   **[capability_flow.py](src/ndoc/flows/capability_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig, auto_install: bool = True) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig, auto_install: bool = True) -> bool` [🔗162]
     *   FUN **check_single_file** `(file_path: Path, auto_install: bool = True)` [🔗6]
 *   **[clean_flow.py](src/ndoc/flows/clean_flow.py#L1)**
     *   VAR **GENERATED_FILES** ` = [
@@ -369,7 +366,7 @@ Inner docstring for test_func.
     "_MAP.md",
     "_TECH.md",
     "_DEPS.md...` [🔗5]
-    *   FUN **run** `(config: ProjectConfig, target: str = None, force: bool = False) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig, target: str = None, force: bool = False) -> bool` [🔗162]
 *   **[config_flow.py](src/ndoc/flows/config_flow.py#L1)**
     *   VAR **RULES_TEMPLATE** ` = """# Project Rules
 > @CONTEXT: Configuration | @TAGS: @CONFI...` [🔗4]
@@ -382,139 +379,139 @@ Inner docstring for test_func.
     *   FUN **generate_dir_content** `(context: DirectoryContext) -> str` [🔗4]
     *   FUN **cleanup_legacy_map** `(file_path: Path) -> None` [🔗4]
     *   FUN **process_directory** `(path: Path, config: ProjectConfig, recursive: bool = True, parent_aggregate: bool = False) -> Optional[DirectoryContext]` [🔗6]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗162]
     *   FUN **update_directory** `(path: Path, config: ProjectConfig) -> bool` [🔗4]
 *   **[data_flow.py](src/ndoc/flows/data_flow.py#L1)**
     *   CLS **DataDefinition** [🔗6]
-    *   VAR **name** `: str` [🔗1428]
-    *   VAR **type** `: str` [🔗980]
-    *   VAR **path** `: str` [🔗446]
-    *   VAR **docstring** `: str` [🔗70]
+    *   VAR **name** `: str` [🔗1427]
+    *   VAR **type** `: str` [🔗983]
+    *   VAR **path** `: str` [🔗462]
+    *   VAR **docstring** `: str` [🔗68]
     *   VAR **fields** `: List[str]` [🔗33]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗162]
     *   FUN **get_plural** `(name: str) -> str` [🔗4]
 *   **[deps_flow.py](src/ndoc/flows/deps_flow.py#L1)**
     *   FUN **collect_imports** `(root: Path) -> Dict[str, List[str]]` [🔗4]
     *   FUN **build_dependency_graph** `(import_map: Dict[str, List[str]]) -> Dict[str, Set[str]]` [🔗4]
     *   FUN **generate_mermaid_graph** `(graph: Dict[str, Set[str]]) -> str` [🔗4]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗162]
 *   **[doctor_flow.py](src/ndoc/flows/doctor_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗162]
 *   **[init_flow.py](src/ndoc/flows/init_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗162]
 *   **[map_flow.py](src/ndoc/flows/map_flow.py#L1)**
     *   CLS **MapContext** [🔗8]
-    *   VAR **root** `: Path` [🔗260]
-    *   VAR **ignore_patterns** `: List[str]` [🔗62]
+    *   VAR **root** `: Path` [🔗268]
+    *   VAR **ignore_patterns** `: List[str]` [🔗60]
     *   FUN **format_dir_entry** `(name: str, level: int) -> str` [🔗4]
     *   FUN **format_file_entry** `(path: Path, root: Path, level: int, summary_cache: Dict[Path, str] = None) -> str` [🔗4]
     *   FUN **extract_file_summary** `(path: Path) -> str` [🔗4]
     *   FUN **build_tree_lines** `(current_path: Path, context: MapContext, level: int = 0, summary_cache: Dict[Path, str] = None) -> List[str]` [🔗5]
     *   FUN **generate_tree_content** `(config: ProjectConfig) -> str` [🔗4]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗162]
 *   **[plan_flow.py](src/ndoc/flows/plan_flow.py#L1)**
     *   VAR **PLAN_SYSTEM_PROMPT** ` = """
 You are a senior software architect and project manager....` [🔗4]
-    *   FUN **run** `(config: ProjectConfig, objective: str) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig, objective: str) -> bool` [🔗162]
 *   **[prompt_flow.py](src/ndoc/flows/prompt_flow.py#L1)**
     *   VAR **RULE_MARKER** ` = "## !RULE"` [🔗3]
     *   VAR **CTX_START** ` = "<!-- NIKI_CTX_START -->"` [🔗3]
     *   FUN **extract_rules_from_ai** `(ai_path: Path) -> str` [🔗6]
     *   FUN **get_context_prompt** `(file_path: Path, config: ProjectConfig) -> str` [🔗5]
-    *   FUN **run** `(file_path: str, config: ProjectConfig) -> bool` [🔗154]
+    *   FUN **run** `(file_path: str, config: ProjectConfig) -> bool` [🔗162]
 *   **[stats_flow.py](src/ndoc/flows/stats_flow.py#L1)**
     *   FUN **check_should_update** `(root_path: Path, force: bool) -> bool` [🔗4]
-    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗162]
 *   **[symbols_flow.py](src/ndoc/flows/symbols_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗162]
 *   **[syntax_flow.py](src/ndoc/flows/syntax_flow.py#L1)**
     *   VAR **SYNTAX_TEMPLATE** ` = r"""# PROJECT SYNTAX
 > @CONTEXT: DSL 定义 | @TAGS: @SYNTAX @OP...` [🔗4]
-    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig, force: bool = False) -> bool` [🔗162]
 *   **[tech_flow.py](src/ndoc/flows/tech_flow.py#L1)**
     *   FUN **generate_tech_content** `(config: ProjectConfig) -> str` [🔗4]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗162]
 *   **[todo_flow.py](src/ndoc/flows/todo_flow.py#L1)**
     *   CLS **TodoItem** [🔗14]
-    *   VAR **file_path** `: Path` [🔗181]
-    *   VAR **line** `: int` [🔗336]
-    *   VAR **type** `: str` [🔗980]
-    *   VAR **content** `: str` [🔗401]
+    *   VAR **file_path** `: Path` [🔗172]
+    *   VAR **line** `: int` [🔗340]
+    *   VAR **type** `: str` [🔗983]
+    *   VAR **content** `: str` [🔗397]
     *   VAR **task_id** `: Optional[str] = None` [🔗19]
     *   PRP **priority_icon** `(self) -> str` [🔗4]
     *   FUN **collect_todos** `(root: Path, ignore_patterns: List[str]) -> List[TodoItem]` [🔗4]
     *   FUN **format_todo_lines** `(todos: List[TodoItem], root: Path) -> str` [🔗4]
     *   FUN **sync_tasks** `(config: ProjectConfig, todos: List[TodoItem]) -> bool` [🔗4]
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗162]
 *   **[update_flow.py](src/ndoc/flows/update_flow.py#L1)**
-    *   FUN **run** `() -> bool` [🔗154]
+    *   FUN **run** `() -> bool` [🔗162]
 *   **[verify_flow.py](src/ndoc/flows/verify_flow.py#L1)**
-    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗154]
+    *   FUN **run** `(config: ProjectConfig) -> bool` [🔗162]
 
 ## src/ndoc/models
 *   **[config.py](src/ndoc/models/config.py#L1)**
     *   CLS **ScanConfig** [🔗17]
-    *   VAR **root_path** `: Path` [🔗114]
+    *   VAR **root_path** `: Path` [🔗110]
     *   VAR **ignore_patterns** `: List[str] = field(default_factory=lambda: [
         ".git",
-        "__p...` [🔗62]
+        "__p...` [🔗60]
     *   VAR **extensions** `: List[str] = field(default_factory=list)` [🔗75]
     *   CLS **ProjectConfig** [🔗118]
     *   VAR **scan** `: ScanConfig` [🔗79]
-    *   VAR **name** `: str = "Project"` [🔗1428]
-    *   VAR **version** `: str = "0.1.0"` [🔗204]
+    *   VAR **name** `: str = "Project"` [🔗1427]
+    *   VAR **version** `: str = "0.1.0"` [🔗219]
 *   **[context.py](src/ndoc/models/context.py#L1)**
     *   CLS **Tag** [🔗39]
-    *   VAR **name** `: str` [🔗1428]
-    *   VAR **args** `: List[str] = field(default_factory=list)` [🔗109]
-    *   VAR **line** `: int = 0` [🔗336]
+    *   VAR **name** `: str` [🔗1427]
+    *   VAR **args** `: List[str] = field(default_factory=list)` [🔗113]
+    *   VAR **line** `: int = 0` [🔗340]
     *   VAR **raw** `: str = ""` [🔗36]
     *   CLS **Section** [🔗23]
-    *   VAR **name** `: str` [🔗1428]
-    *   VAR **content** `: str` [🔗401]
+    *   VAR **name** `: str` [🔗1427]
+    *   VAR **content** `: str` [🔗397]
     *   VAR **raw** `: str` [🔗36]
     *   VAR **start_pos** `: int` [🔗5]
     *   VAR **end_pos** `: int` [🔗4]
-    *   CLS **Symbol** [🔗74]
-    *   VAR **name** `: str` [🔗1428]
-    *   VAR **kind** `: str` [🔗143]
-    *   VAR **line** `: int` [🔗336]
-    *   VAR **docstring** `: Optional[str] = None` [🔗70]
+    *   CLS **Symbol** [🔗75]
+    *   VAR **name** `: str` [🔗1427]
+    *   VAR **kind** `: str` [🔗144]
+    *   VAR **line** `: int` [🔗340]
+    *   VAR **docstring** `: Optional[str] = None` [🔗68]
     *   VAR **signature** `: Optional[str] = None` [🔗36]
-    *   VAR **parent** `: Optional[str] = None` [🔗183]
+    *   VAR **parent** `: Optional[str] = None` [🔗184]
     *   VAR **is_core** `: bool = False` [🔗21]
     *   VAR **visibility** `: str = "public"` [🔗121]
     *   VAR **lang** `: str = "unknown"` [🔗59]
     *   VAR **decorators** `: List[str] = field(default_factory=list)` [🔗9]
     *   VAR **bases** `: List[str] = field(default_factory=list)` [🔗18]
     *   VAR **full_content** `: str = ""` [🔗6]
-    *   VAR **path** `: Optional[str] = None` [🔗446]
+    *   VAR **path** `: Optional[str] = None` [🔗462]
     *   VAR **tags** `: List[Tag] = field(default_factory=list)` [🔗52]
     *   PRP **is_public** `(self) -> bool` [🔗38]
     *   CLS **FileContext** [🔗21]
-    *   VAR **path** `: Path` [🔗446]
+    *   VAR **path** `: Path` [🔗462]
     *   VAR **rel_path** `: str` [🔗34]
-    *   VAR **content** `: Optional[str] = None` [🔗401]
+    *   VAR **content** `: Optional[str] = None` [🔗397]
     *   VAR **tags** `: List[Tag] = field(default_factory=list)` [🔗52]
     *   VAR **sections** `: Dict[str, Section] = field(default_factory=dict)` [🔗59]
-    *   VAR **symbols** `: List[Symbol] = field(default_factory=list)` [🔗129]
-    *   VAR **docstring** `: Optional[str] = None` [🔗70]
-    *   VAR **description** `: Optional[str] = None` [🔗56]
+    *   VAR **symbols** `: List[Symbol] = field(default_factory=list)` [🔗126]
+    *   VAR **docstring** `: Optional[str] = None` [🔗68]
+    *   VAR **description** `: Optional[str] = None` [🔗59]
     *   VAR **is_core** `: bool = False` [🔗21]
-    *   VAR **memories** `: List[Dict[str, Any]] = field(default_factory=list)` [🔗24]
+    *   VAR **memories** `: List[Dict[str, Any]] = field(default_factory=list)` [🔗25]
     *   VAR **ast_tree** `: Any = None` [🔗3]
-    *   VAR **title** `: Optional[str] = None` [🔗311]
-    *   VAR **description** `: Optional[str] = None` [🔗56]
+    *   VAR **title** `: Optional[str] = None` [🔗314]
+    *   VAR **description** `: Optional[str] = None` [🔗59]
     *   PRP **has_content** `(self) -> bool` [🔗7]
     *   CLS **DirectoryContext** [🔗12]
-    *   VAR **path** `: Path` [🔗446]
-    *   VAR **files** `: List[FileContext] = field(default_factory=list)` [🔗306]
+    *   VAR **path** `: Path` [🔗462]
+    *   VAR **files** `: List[FileContext] = field(default_factory=list)` [🔗302]
     *   VAR **subdirs** `: List[Path] = field(default_factory=list)` [🔗18]
-    *   PRP **name** `(self) -> str` [🔗1428]
+    *   PRP **name** `(self) -> str` [🔗1427]
 
 ## tests
 *   **[conftest.py](tests/conftest.py#L1)**
-    *   VAR **root** ` = Path(__file__).parent.parent` [🔗260]
+    *   VAR **root** ` = Path(__file__).parent.parent` [🔗268]
 *   **[test_ast.py](tests/test_ast.py#L1)**
     *   VAR **SAMPLE_CODE** ` = """
 class MyClass:
@@ -539,7 +536,7 @@ class MyClass:
 *   **[test_csharp_api.py](tests/test_csharp_api.py#L1)**
     *   FUN **test_csharp_extraction** `()` [🔗4]
 *   **[test_lsp_server.py](tests/test_lsp_server.py#L1)**
-    *   FUN **log** `(msg)` [🔗31]
+    *   FUN **log** `(msg)` [🔗32]
     *   FUN **read_stream** `(stream, name)` [🔗5]
     *   FUN **test_lsp** `()` [🔗4]
 *   **[test_scanner.py](tests/test_scanner.py#L1)**
@@ -554,7 +551,7 @@ Some Content
 ## tests/fixtures
 *   **[complex_api.py](tests/fixtures/complex_api.py#L1)**
     *   CLS **User** [🔗17]
-    *   VAR **name** `: str` [🔗1428]
+    *   VAR **name** `: str` [🔗1427]
     *   VAR **age** `: int = 18` [🔗6]
     *   PRP **is_adult** `(self) -> bool` [🔗3]
     *   ASY **fetch_data** `(self) -> dict` [🔗4]
@@ -564,3 +561,29 @@ Some Content
     *   MET **connect** `(self)` [🔗11]
     *   FUN **global_func** `(x: int, y: int) -> int` [🔗5]
     *   ASY **global_async_func** `()` [🔗4]
+
+## vscode_extension/out
+*   **[extension.js](vscode_extension/out/extension.js#L1)**
+    *   FUN **activate** `(context)` [🔗21]
+    *   VAR **serverArgs** ` = ['-m', 'ndoc', 'server']` [🔗12]
+    *   VAR **devRoot** ` = "e:\\work\\appcodes\\nk_doc_ai"` [🔗10]
+    *   VAR **serverOptions** ` = {
+        command: serverExecutable,
+        args: serverArg...` [🔗16]
+    *   VAR **clientOptions** ` = {
+        documentSelector: [
+            { scheme: 'file', ...` [🔗16]
+    *   FUN **deactivate** `()` [🔗17]
+
+## vscode_extension/src
+*   **[extension.ts](vscode_extension/src/extension.ts#L1)**
+    *   FUN **activate** `(context: ExtensionContext)` [🔗21]
+    *   VAR **serverArgs** ` = ['-m', 'ndoc', 'server']` [🔗12]
+    *   VAR **devRoot** ` = "e:\\work\\appcodes\\nk_doc_ai"` [🔗10]
+    *   VAR **serverOptions** ` = {
+        command: serverExecutable,
+        args: serverArg...` [🔗16]
+    *   VAR **clientOptions** ` = {
+        documentSelector: [
+            { scheme: 'file', ...` [🔗16]
+    *   FUN **deactivate** `() -> : Thenable<void> | undefined` [🔗17]

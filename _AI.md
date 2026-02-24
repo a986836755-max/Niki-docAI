@@ -1,6 +1,6 @@
 # Context: nk_doc_ai
 > @CONTEXT: Local | nk_doc_ai | @TAGS: @LOCAL @LSP @IDE @PROTO
-> 最后更新 (Last Updated): 2026-02-24 14:59:54
+> 最后更新 (Last Updated): 2026-02-24 15:41:25
 
 ## !RULE
 
@@ -17,6 +17,7 @@
 *   **[src/](src/_AI.md#L1)**
 *   **[tests/](tests/_AI.md#L1)**
 *   **[tools/](tools/_AI.md#L1)**
+*   **[vscode_extension/](vscode_extension/_AI.md#L1)**
 *   **[README.md](README.md#L1)**: Niki-docAI
 *   **[_ARCH.md](_ARCH.md#L1)**: PROJECT ARCHITECTURE
 *   **[_DATA.md](_DATA.md#L1)**: Data Registry

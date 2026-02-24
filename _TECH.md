@@ -1,13 +1,13 @@
 # Tech Stack Snapshot
 > @CONTEXT: Global | _TECH.md | @TAGS: @TECH @DEPS
-> 最后更新 (Last Updated): 2026-02-24 15:04:13
+> 最后更新 (Last Updated): 2026-02-24 15:44:54
 
 ## 1. Languages (语言分布)
-*   **Python**: `█████████████░░░░░░░` 66.0%
-*   **Markdown**: `█████░░░░░░░░░░░░░░░` 28.3%
-*   **JSON**: `░░░░░░░░░░░░░░░░░░░░` 2.8%
-*   **JavaScript**: `░░░░░░░░░░░░░░░░░░░░` 0.9%
-*   **TypeScript**: `░░░░░░░░░░░░░░░░░░░░` 0.9%
+*   **Python**: `████████████░░░░░░░░` 61.4%
+*   **Markdown**: `█████░░░░░░░░░░░░░░░` 28.9%
+*   **JSON**: `█░░░░░░░░░░░░░░░░░░░` 5.3%
+*   **JavaScript**: `░░░░░░░░░░░░░░░░░░░░` 1.8%
+*   **TypeScript**: `░░░░░░░░░░░░░░░░░░░░` 1.8%
 *   **C#**: `░░░░░░░░░░░░░░░░░░░░` 0.9%
 
 ## 2. Dependencies (依赖库)
@@ -70,16 +70,17 @@
 *   `argparse`
 *   `ndoc.flows`
 *   `ndoc.atoms`
+*   `ndoc`
 
 ### src/ndoc/lsp_server.py
 *   `sys`
 *   `lsprotocol.types`
 *   `pathlib`
+*   `logging`
 *   `os`
-*   `ndoc.models`
-*   `ndoc.atoms`
 *   `typing`
 *   `pygls.lsp.server`
+*   `ndoc.atoms.lsp`
 
 ### src/ndoc/atoms/cache.py
 *   `pathlib`
@@ -409,6 +410,12 @@
 ### tests/fixtures/complex_api.py
 *   `typing`
 *   `dataclasses`
+
+### vscode_extension/package.json
+*   `vscode-languageclient (^9.0.1)`
+*   `@types/node (dev: ^18.14.6)`
+*   `@types/vscode (dev: ^1.80.0)`
+*   `typescript (dev: ^5.9.3)`
 
 ## 3. Environment (开发环境)
 *   **OS**: Windows (Detected)

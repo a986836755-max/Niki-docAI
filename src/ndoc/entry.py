@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ndoc.models.config import ProjectConfig, ScanConfig
+from ndoc import lsp_server
 from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow, config_flow, syntax_flow, doctor_flow, init_flow, verify_flow, clean_flow, stats_flow, update_flow, symbols_flow, plan_flow, archive_flow, data_flow, capability_flow, prompt_flow
 from ndoc.daemon import start_watch_mode
 from ndoc.atoms import io
@@ -62,7 +63,7 @@ Granular Updates (单独更新):
         description=description,
         formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "symbols", "data", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "plan", "archive", "lsp", "prompt", "help"], help="Command to execute")
+    parser.add_argument("command", choices=["map", "context", "tech", "todo", "deps", "symbols", "data", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "plan", "archive", "lsp", "prompt", "server", "help"], help="Command to execute")
     parser.add_argument("target", nargs="?", help="Target file or directory (for clean command)")
     parser.add_argument("--root", default=".", help="Project root directory (Default: current dir)")
     parser.add_argument("--file", "-f", help="Specific file for prompt context generation")
@@ -151,6 +152,12 @@ Granular Updates (单独更新):
             print("Usage: ndoc prompt <file_path>")
             sys.exit(1)
         prompt_flow.run(target_file, config)
+        sys.exit(0)
+
+    if args.command == "server":
+        # Do not print to stdout as it breaks LSP protocol
+        sys.stderr.write("Starting Niki-docAI LSP Server...\n")
+        lsp_server.run()
         sys.exit(0)
 
     if args.command == "lsp":

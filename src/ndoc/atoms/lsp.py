@@ -9,7 +9,7 @@ from . import scanner
 
 class LSPService:
     def __init__(self, root: Path):
-        self.root = root
+        self.root = Path(root) if isinstance(root, str) else root
         self._symbol_cache: Dict[str, List[Symbol]] = {}
         self._indexed_files: List[Path] = []
         self._file_content_cache: Dict[Path, str] = {}

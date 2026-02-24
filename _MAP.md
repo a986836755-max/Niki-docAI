@@ -1,6 +1,6 @@
 # Project Map
 > @CONTEXT: Map | Project Structure
-> 最后更新 (Last Updated): 2026-02-24 15:04:13
+> 最后更新 (Last Updated): 2026-02-24 15:41:25
 
 ## @STRUCTURE
 <!-- NIKI_MAP_START -->
@@ -120,6 +120,18 @@
 *   **tools/**
     *   [`_AI.md`](tools/_AI.md#L1) - *Context: tools*
     *   [`doxygen.exe`](tools/doxygen.exe#L1)
+*   **vscode_extension/**
+    *   **out/**
+        *   [`_AI.md`](vscode_extension/out/_AI.md#L1) - *Context: out*
+        *   [`extension.js`](vscode_extension/out/extension.js#L1)
+        *   [`extension.js.map`](vscode_extension/out/extension.js.map#L1)
+    *   **src/**
+        *   [`_AI.md`](vscode_extension/src/_AI.md#L1) - *Context: src*
+        *   [`extension.ts`](vscode_extension/src/extension.ts#L1)
+    *   [`_AI.md`](vscode_extension/_AI.md#L1) - *Context: vscode_extension*
+    *   [`package-lock.json`](vscode_extension/package-lock.json#L1)
+    *   [`package.json`](vscode_extension/package.json#L1)
+    *   [`tsconfig.json`](vscode_extension/tsconfig.json#L1)
 *   [`README.md`](README.md#L1) - *Niki-docAI*
 *   [`_AI.md`](_AI.md#L1) - *Context: nk_doc_ai*
 *   [`_ARCH.md`](_ARCH.md#L1) - *PROJECT ARCHITECTURE*
