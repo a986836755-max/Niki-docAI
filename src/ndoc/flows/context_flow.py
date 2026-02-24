@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from datetime import datetime
 
-from ..atoms import fs, io, scanner, ast, deps
+from ..atoms import fs, io, scanner, ast, deps, lsp
 from ..models.config import ProjectConfig
 from ..models.context import FileContext, DirectoryContext
 
@@ -118,6 +118,16 @@ def format_symbol_list(ctx: FileContext) -> str:
         
         if sym.signature:
             display += f"`{sym.signature}`"
+
+        # Add Reference Count if available
+        # Need to access LSP Service somehow. It's a singleton.
+        # But root path? We can assume _INSTANCE is initialized if run() was called.
+        # If not, we skip.
+        lsp_service = lsp.get_service(Path(".")) # Root doesn't matter for get_service singleton access
+        if lsp_service and lsp_service._is_indexed:
+            count = lsp_service.get_reference_count(sym.name)
+            if count > 0:
+                display += f" [🔗{count}]"
             
         lines.append(f"{indent}*   {display}")
         
@@ -322,7 +332,9 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
                 tags=scan_result.tags,
                 sections=scan_result.sections,
                 symbols=scan_result.symbols,
-                docstring=scan_result.docstring
+                docstring=scan_result.docstring,
+                memories=scan_result.memories,
+                description=scan_result.summary
             )
             files.append(f_ctx)
     
@@ -340,6 +352,23 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
             start_marker = "<!-- NIKI_AUTO_Context_START -->"
             end_marker = "<!-- NIKI_AUTO_Context_END -->"
             
+            mem_start = "<!-- NIKI_AUTO_MEMORIES_START -->"
+            mem_end = "<!-- NIKI_AUTO_MEMORIES_END -->"
+            
+            # Format memories
+            memory_lines = []
+            for f in files:
+                if not hasattr(f, 'memories') or not f.memories:
+                    continue
+                for m in f.memories:
+                    # Format: *   **TYPE**: Content [File:L123]
+                    link = f"[{f.path.name}:{m['line']}]({f.path.name}#L{m['line']})"
+                    memory_lines.append(f"*   **{m['type']}**: {m['content']} {link}")
+            
+            memory_content = "\n".join(memory_lines)
+            if memory_content:
+                memory_content = f"### Auto-Detected Rules\n{memory_content}"
+            
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # Check if file exists to initialize it with markers if needed
@@ -351,12 +380,17 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
 ## !RULE
 <!-- Add local rules here -->
 
+{mem_start}
+{memory_content}
+{mem_end}
+
 {start_marker}
 {content}
 {end_marker}
 """
                 io.write_text(ai_file, template)
             else:
+                # Update Context
                 if io.update_section(ai_file, start_marker, end_marker, content):
                     io.update_header_timestamp(ai_file)
                 else:
@@ -364,6 +398,38 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
                     wrapped_content = f"\n\n{start_marker}\n{content}\n{end_marker}\n"
                     io.append_text(ai_file, wrapped_content)
                     io.update_header_timestamp(ai_file)
+                
+                # Update Memories
+                if io.update_section(ai_file, mem_start, mem_end, memory_content):
+                    pass
+                else:
+                    # Inject memories section if missing (e.g. legacy files)
+                    # Try to insert after ## !RULE
+                    file_content = io.read_text(ai_file)
+                    rule_marker = "## !RULE"
+                    if rule_marker in file_content and mem_start not in file_content:
+                        # Insert after ## !RULE section
+                        # We look for the next section (starting with ## or #) or end of file
+                        # But simpler is to just append it to ## !RULE if we can locate it
+                        # For now, let's just append it before Context Start if possible, or after !RULE
+                        
+                        # Regex replace to insert after !RULE line
+                        pattern = r"(## !RULE.*?\n)"
+                        replacement = f"\\1\n{mem_start}\n{memory_content}\n{mem_end}\n"
+                        new_content = re.sub(pattern, replacement, file_content, flags=re.DOTALL)
+                        if new_content != file_content:
+                            io.write_text(ai_file, new_content)
+                        else:
+                            # Fallback: append before context start
+                            wrapped_mem = f"\n{mem_start}\n{memory_content}\n{mem_end}\n"
+                            io.update_section(ai_file, start_marker, end_marker, content) # Ensure content is updated
+                            # We need to insert mem block.
+                            # Let's just rewrite the file if structure is simple enough? No, user edits.
+                            # Just append it at the end of !RULE section manually by user?
+                            # No, automation.
+                            pass # For now, only new files or files with marker get updates.
+                            # To support migration, we could force inject.
+                            pass
     else:
         # Cleanup: If we shouldn't write, ensure file doesn't exist
         if ai_file.exists():
@@ -379,6 +445,13 @@ def run(config: ProjectConfig) -> bool:
     执行 Context 生成流 (Execute Context Flow).
     """
     print(f"Generating Recursive Context starting from {config.scan.root_path}...")
+    
+    # 0. Initialize LSP Index for reference counting
+    lsp_service = lsp.get_service(config.scan.root_path)
+    if not lsp_service._is_indexed:
+        files = list(fs.walk_files(config.scan.root_path, config.scan.ignore_patterns))
+        lsp_service.index_project(files)
+        
     process_directory(config.scan.root_path, config, recursive=True)
     return True
 

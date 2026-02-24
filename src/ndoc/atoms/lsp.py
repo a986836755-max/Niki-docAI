@@ -23,13 +23,16 @@ class LSPService:
         self._symbol_cache.clear()
         self._file_content_cache.clear()
         self._reference_counts.clear()
-        self._indexed_files = files
+        
+        # Ensure files is a list (consume generator if necessary)
+        self._indexed_files = list(files)
+        
         from . import io
         import re
 
-        print(f"LSP: Indexing {len(files)} files...")
+        print(f"LSP: Indexing {len(self._indexed_files)} files...")
         # 1. First pass: Index symbols and cache content
-        for f in files:
+        for f in self._indexed_files:
             content = io.read_text(f)
             if content:
                 self._file_content_cache[f] = content

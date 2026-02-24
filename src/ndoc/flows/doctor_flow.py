@@ -35,7 +35,6 @@ def run(config: ProjectConfig) -> bool:
     dependencies = [
         ("watchdog", "Watchdog (File Monitor)"),
         ("tree_sitter", "Tree-sitter (Parser Core)"),
-        ("tree_sitter_python", "Tree-sitter Python Grammar"),
         ("colorama", "Colorama (Terminal Color)"),
     ]
     
@@ -86,14 +85,22 @@ def _check_import(module_name: str) -> bool:
 
 def _check_tree_sitter_bindings() -> bool:
     try:
-        from tree_sitter import Language, Parser
-        import tree_sitter_python
+        from tree_sitter import Parser
+        from ..atoms.capabilities import CapabilityManager
         
-        # Try to initialize
-        PY_LANGUAGE = Language(tree_sitter_python.language())
-        parser = Parser(PY_LANGUAGE)
+        # Check basic mechanism by checking python language availability
+        # Use auto_install=False to just check, or True to ensure minimal viability?
+        # The user wants auto-install, so let's try to ensure python binding works as a baseline.
         
-        _pass("Tree-sitter bindings working")
+        print("  [INFO] Checking Tree-sitter capability mechanism...")
+        lang = CapabilityManager.get_language('python', auto_install=True)
+        
+        if not lang:
+            _warn("Tree-sitter Python binding could not be installed/loaded.")
+            return False # If basic python binding fails, something is wrong with pip/network
+            
+        parser = Parser(lang)
+        _pass("Tree-sitter mechanism operational (Python binding verified)")
         return True
     except Exception as e:
         _fail(f"Tree-sitter binding error: {e}")

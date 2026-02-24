@@ -12,7 +12,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 from ndoc.models.config import ProjectConfig
-from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, symbols_flow, data_flow, deps_flow, archive_flow
+from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, symbols_flow, data_flow, deps_flow, archive_flow, capability_flow
 
 class DocChangeHandler(FileSystemEventHandler):
     """
@@ -53,6 +53,10 @@ class DocChangeHandler(FileSystemEventHandler):
         
         # For modified files, we add them to dirty list
         if not event.is_directory:
+            # Proactive Capability Check for new files
+            if event.event_type == 'created':
+                capability_flow.check_single_file(src_path)
+            
             self.dirty_paths.add(src_path)
             
         self.trigger_update()
@@ -132,6 +136,9 @@ def start_watch_mode(config: ProjectConfig):
     # Watch the root path recursively
     print(f"[Watch] Starting watchdog on {config.scan.root_path}")
     print(f"[Watch] Ignoring _*.md files to prevent loops.")
+    
+    # Run initial capability check
+    capability_flow.run(config)
     
     observer.schedule(event_handler, str(config.scan.root_path), recursive=True)
     observer.start()

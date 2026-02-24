@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ndoc.models.config import ProjectConfig, ScanConfig
-from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow, config_flow, syntax_flow, doctor_flow, init_flow, verify_flow, clean_flow, stats_flow, update_flow, symbols_flow, plan_flow, archive_flow, data_flow
+from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, deps_flow, config_flow, syntax_flow, doctor_flow, init_flow, verify_flow, clean_flow, stats_flow, update_flow, symbols_flow, plan_flow, archive_flow, data_flow, capability_flow
 from ndoc.daemon import start_watch_mode
 from ndoc.atoms import io
 
@@ -104,6 +104,8 @@ Granular Updates (单独更新):
     
     if args.command == "init":
         if init_flow.run(config, force=args.force):
+            # Check capabilities on init as well
+            capability_flow.run(config)
             sys.exit(0)
         else:
             sys.exit(1)
@@ -149,7 +151,7 @@ Granular Updates (单独更新):
         from ndoc.atoms import lsp, fs
         print(f"🔍 Searching for symbol: {args.target}")
         lsp_service = lsp.get_service(root_path)
-        files = fs.walk_files(root_path, config.scan.ignore_patterns)
+        files = list(fs.walk_files(root_path, config.scan.ignore_patterns))
         lsp_service.index_project(files)
         
         # Find Definitions
@@ -169,6 +171,10 @@ Granular Updates (单独更新):
         sys.exit(0)
     
     if args.command in ["map", "all"]: 
+        # Check capabilities before scanning
+        print("Checking project capabilities...")
+        capability_flow.run(config)
+        
         print("Running Map Flow...")
         # Update: Use 'run' instead of 'update_map_doc' to match DOD convention
         if map_flow.run(config):

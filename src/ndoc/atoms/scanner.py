@@ -38,6 +38,7 @@ class ScanResult:
     docstring: str = ""
     summary: str = ""
     todos: List[dict] = field(default_factory=list)  # Captured TODOs
+    memories: List[dict] = field(default_factory=list) # Captured Memories (!RULE, !WARN)
     calls: List[str] = field(default_factory=list)  # Captured calls
     imports: List[str] = field(default_factory=list)  # Captured imports
     is_core: bool = False # Whether file is marked as @CORE
@@ -85,6 +86,7 @@ def scan_file(file_path: Path, root: Path, force: bool = False) -> ScanResult:
                     docstring=cached_data.get('docstring', ""),
                     summary=cached_data.get('summary', ""),
                     todos=cached_data.get('todos', []),
+                    memories=cached_data.get('memories', []),
                     calls=cached_data.get('calls', []),
                     imports=cached_data.get('imports', []),
                     is_core=cached_data.get('is_core', False)
@@ -109,6 +111,7 @@ def scan_file(file_path: Path, root: Path, force: bool = False) -> ScanResult:
         'docstring': result.docstring,
         'summary': result.summary,
         'todos': result.todos,
+        'memories': result.memories,
         'calls': result.calls,
         'imports': result.imports,
         'is_core': result.is_core
@@ -148,6 +151,36 @@ def extract_todos(content: str) -> List[dict]:
             "content": text
         })
     return todos
+
+
+def extract_memories(content: str) -> List[dict]:
+    """
+    提取 !RULE / !WARN / !INTENT 等记忆标记.
+    Capture groups: (Marker, Content)
+    Returns: List of dict(line, type, content)
+    """
+    memories = []
+    # Pattern: (comment_char) (whitespace) (!MARKER) (colon?) (whitespace) (content)
+    # Example: // !RULE: content
+    # Markers: !RULE, !WARN, !INTENT
+    pattern = re.compile(
+        r"^\s*(?:#|//|<!--)\s*!(RULE|WARN|INTENT):?\s*(.*)$", re.MULTILINE
+    )
+
+    for match in pattern.finditer(content):
+        start_index = match.start()
+        line_num = content.count("\n", 0, start_index) + 1
+        
+        marker = match.group(1)
+        text = match.group(2).strip()
+        
+        memories.append({
+            "line": line_num,
+            "type": marker,
+            "content": text
+        })
+    return memories
+
 
 
 def extract_docstring(content: str) -> str:
@@ -308,6 +341,7 @@ def scan_file_content(content: str, file_path: Optional[Path] = None) -> ScanRes
     docstring = extract_docstring(content)
     summary = extract_summary(content, docstring)
     todos = extract_todos(content)
+    memories = extract_memories(content)
     
     # 2. Structural Analysis (AST) - Optional
     symbols = []
@@ -370,6 +404,7 @@ def scan_file_content(content: str, file_path: Optional[Path] = None) -> ScanRes
         docstring=docstring,
         summary=summary,
         todos=todos,
+        memories=memories,
         calls=calls,
         imports=imports,
         is_core=is_core

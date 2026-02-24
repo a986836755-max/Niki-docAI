@@ -90,7 +90,9 @@ class FileContext:
     sections: Dict[str, Section] = field(default_factory=dict)
     symbols: List[Symbol] = field(default_factory=list) # Extracted symbols
     docstring: Optional[str] = None
+    description: Optional[str] = None # Added for compatibility
     is_core: bool = False # Whether file is marked as @CORE
+    memories: List[Dict[str, Any]] = field(default_factory=list) # Extracted memories (!RULE, !WARN)
     
     # AST Data (Optional, lazy loaded)
     ast_tree: Any = None # Optional[Tree] from tree-sitter

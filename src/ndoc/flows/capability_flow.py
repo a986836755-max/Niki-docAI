@@ -1,0 +1,52 @@
+"""
+Flow: Capability Auto-Discovery and Installation.
+业务流：自动检测项目语言并安装所需能力 (Auto-Install Capabilities).
+"""
+from typing import Set
+from pathlib import Path
+from ..atoms import fs, capabilities, langs
+from ..models.config import ProjectConfig
+
+def run(config: ProjectConfig, auto_install: bool = True) -> bool:
+    """
+    Scan project for file extensions and ensure corresponding languages are installed.
+    """
+    print(f"Scanning project capabilities in {config.scan.root_path}...")
+    
+    # 1. Collect all extensions in the project
+    extensions: Set[str] = set()
+    
+    # Use existing walk_files with default ignore patterns
+    files = fs.walk_files(config.scan.root_path, config.scan.ignore_patterns)
+    
+    for file_path in files:
+        ext = file_path.suffix.lower()
+        if ext:
+            extensions.add(ext)
+            
+    # 2. Map extensions to languages
+    required_languages: Set[str] = set()
+    for ext in extensions:
+        lang_id = langs.get_lang_id_by_ext(ext)
+        if lang_id:
+            required_languages.add(lang_id)
+            
+    if not required_languages:
+        print("ℹ️  No supported languages detected.")
+        return True
+        
+    # 3. Ensure capabilities are installed
+    # This will trigger batch installation if needed
+    capabilities.CapabilityManager.ensure_languages(required_languages, auto_install=auto_install)
+    
+    return True
+
+def check_single_file(file_path: Path, auto_install: bool = True):
+    """
+    Check capability for a single file (used in Watch mode).
+    """
+    ext = file_path.suffix.lower()
+    lang_id = langs.get_lang_id_by_ext(ext)
+    
+    if lang_id:
+        capabilities.CapabilityManager.ensure_languages({lang_id}, auto_install=auto_install)

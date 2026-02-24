@@ -86,6 +86,14 @@
 - `<!-- NIKI_TODO_START -->`: **Todo**. 任务聚合开始 (Start of task aggregation).
 - `<!-- NIKI_CTX_START -->`: **Context**. 实时上下文开始 (Start of live context).
 - `<!-- NIKI_MAP_START -->`: **Map**. 文件树开始 (Start of file tree).
+- `<!-- NIKI_AUTO_MEMORIES_START -->`: **Memories**. 自动记忆块开始 (Start of memory block).
+- `<!-- NIKI_AUTO_MEMORIES_END -->`: **Memories**. 自动记忆块结束 (End of memory block).
+
+### Memory Markers (代码记忆标记)
+> 嵌入代码中的特殊注释，用于提取上下文记忆。
+- `!RULE`: **Constraint**. 强制规则，提取至 _AI.md (Rule to enforce).
+- `!WARN`: **Pitfall**. 潜在陷阱，提取至 _AI.md (Known issue/warning).
+- `!INTENT`: **Rationale**. 设计意图，提取至 _AI.md (Design intent).
 
 ### @DISCOVERED
 > 从文件头自动发现的标签。

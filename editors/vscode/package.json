@@ -1,0 +1,47 @@
+{
+    "name": "ndoc-ai",
+    "displayName": "NDoc AI",
+    "description": "Semantic Documentation and Symbol Indexing for Niki projects",
+    "version": "0.1.0",
+    "publisher": "nikidice",
+    "engines": {
+        "vscode": "^1.75.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Documentation"
+    ],
+    "activationEvents": [
+        "onLanguage:python",
+        "onLanguage:dart",
+        "onLanguage:javascript",
+        "onLanguage:typescript"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "configuration": {
+            "type": "object",
+            "title": "NDoc AI",
+            "properties": {
+                "ndoc.pythonPath": {
+                    "type": "string",
+                    "default": "python",
+                    "description": "Path to the Python interpreter"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^8.1.0"
+    },
+    "devDependencies": {
+        "@types/node": "^18.14.6",
+        "@types/vscode": "^1.75.0",
+        "typescript": "^4.9.5"
+    }
+}

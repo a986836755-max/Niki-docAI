@@ -7,20 +7,33 @@ import os
 from pathlib import Path
 from typing import Optional, List
 
-from pygls.server import LanguageServer
+from pygls.lsp.server import LanguageServer
 from lsprotocol.types import (
     INITIALIZE,
     TEXT_DOCUMENT_DID_OPEN,
+    TEXT_DOCUMENT_DID_SAVE,
     TEXT_DOCUMENT_HOVER,
     Hover,
     MarkupContent,
     MarkupKind,
     TextDocumentItem,
     HoverParams,
+    DidSaveTextDocumentParams,
+    InitializeResult,
+    ServerCapabilities,
+    Diagnostic,
+    DiagnosticSeverity,
+    Position,
+    Range,
 )
 
 # 确保 src 目录在路径中
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+# 调试：打印路径
+sys.stderr.write(f"LSP Server starting. sys.path: {sys.path}\n")
 
 from ndoc.atoms import lsp, fs, scanner
 from ndoc.models import config
@@ -38,30 +51,100 @@ def lsp_initialize(ls: NDocLanguageServer, params):
     """
     项目初始化：索引整个工作区。
     """
-    ls.root_path = Path(params.root_path or os.getcwd())
+    sys.stderr.write("LSP Server: Handling initialize request...\n")
+    sys.stderr.flush()
+    
+    # 兼容性处理
+    if isinstance(params, dict):
+        root_path = params.get('rootPath') or params.get('root_path')
+        root_uri = params.get('rootUri') or params.get('root_uri')
+    else:
+        root_path = getattr(params, 'root_path', None) or getattr(params, 'rootPath', None)
+        root_uri = getattr(params, 'root_uri', None) or getattr(params, 'rootUri', None)
+    
+    if not root_path and root_uri:
+        if root_uri.startswith("file:///"):
+            root_path = root_uri[8:].replace("/", os.sep)
+        elif root_uri.startswith("file://"):
+            root_path = root_uri[7:].replace("/", os.sep)
+            
+    ls.root_path = Path(root_path or os.getcwd())
     ls.lsp_service = lsp.get_service(ls.root_path)
     
-    # 记录日志到标准错误，以免干扰标准输出的 RPC 通信
-    sys.stderr.write(f"LSP Server: Initializing at {ls.root_path}\n")
+    sys.stderr.write(f"LSP Server: Workspace root is {ls.root_path}\n")
+    sys.stderr.flush()
     
-    # 加载配置以获取忽略模式
+    # 执行全量索引
     cfg = config.load_config(ls.root_path)
     ignore_patterns = cfg.get("ignore", [])
-    
-    # 扫描并索引所有文件
     files = list(fs.walk_files(ls.root_path, ignore_patterns))
-    sys.stderr.write(f"LSP Server: Found {len(files)} files to index\n")
+    sys.stderr.write(f"LSP Server: Found {len(files)} files to index.\n")
+    sys.stderr.flush()
     ls.lsp_service.index_project(files)
     
-    sys.stderr.write(f"LSP Server: Indexing complete\n")
+    sys.stderr.write(f"LSP Server: Indexing completed successfully.\n")
+    sys.stderr.flush()
+    
+    return InitializeResult(
+        capabilities=ServerCapabilities(
+            hover_provider=True,
+            text_document_sync=1, # Full sync for simplicity in initial version
+        )
+    )
+
+def check_architecture(ls: NDocLanguageServer, doc_uri: str):
+    """
+    架构校验：检查目录是否包含 _AI.md，并报告诊断信息。
+    """
+    if not doc_uri.startswith("file:///"):
+        return
+    
+    file_path = Path(doc_uri[8:].replace("/", os.sep))
+    dir_path = file_path.parent
+    ai_md_path = dir_path / "_AI.md"
+    
+    diagnostics = []
+    if not ai_md_path.exists():
+        # 如果不存在 _AI.md，在第一行显示一个警告
+        diagnostics.append(Diagnostic(
+            range=Range(
+                start=Position(line=0, character=0),
+                end=Position(line=0, character=1)
+            ),
+            message=f"Missing architecture documentation: {ai_md_path.name} not found in {dir_path.name}. 请根据项目规范创建 _AI.md 以同步架构知识。",
+            severity=DiagnosticSeverity.Information,
+            source="NDoc Architecture Check"
+        ))
+    
+    ls.publish_diagnostics(doc_uri, diagnostics)
 
 @server.feature(TEXT_DOCUMENT_DID_OPEN)
 def did_open(ls: NDocLanguageServer, params):
     """
-    当文件打开时，确保它是最新的索引。
+    当文件打开时，确保它是最新的索引，并运行架构校验。
     """
-    # 可以在这里做单文件重扫描逻辑
-    pass
+    doc_uri = params.text_document.uri
+    if doc_uri.startswith("file:///"):
+        file_path = Path(doc_uri[8:].replace("/", os.sep))
+        sys.stderr.write(f"LSP Server: Opening file {file_path}\n")
+        ls.lsp_service.index_project([file_path])
+        # 运行架构校验
+        check_architecture(ls, doc_uri)
+
+@server.feature(TEXT_DOCUMENT_DID_SAVE)
+def did_save(ls: NDocLanguageServer, params: DidSaveTextDocumentParams):
+    """
+    当文件保存时，重新索引该文件以更新语义，并运行架构校验。
+    """
+    doc_uri = params.text_document.uri
+    if doc_uri.startswith("file:///"):
+        file_path = Path(doc_uri[8:].replace("/", os.sep))
+        sys.stderr.write(f"LSP Server: Re-indexing on save: {file_path}\n")
+        sys.stderr.flush()
+        # 增量更新索引
+        ls.lsp_service.index_project([file_path])
+        # 运行架构校验
+        check_architecture(ls, doc_uri)
 
 @server.feature(TEXT_DOCUMENT_HOVER)
 def hover(ls: NDocLanguageServer, params: HoverParams):
@@ -112,8 +195,12 @@ def hover(ls: NDocLanguageServer, params: HoverParams):
     )
 
 def main():
-    # 默认通过标准输入输出 (stdio) 通信
+    sys.stderr.write("LSP Server: Inside main()\n")
+    sys.stderr.flush()
+    # 显式使用 stdio 传输
     server.start_io()
 
 if __name__ == "__main__":
+    sys.stderr.write("LSP Server: Running via main block\n")
+    sys.stderr.flush()
     main()

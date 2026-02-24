@@ -1,67 +1,60 @@
 # Context: tests
 > @CONTEXT: Local | tests | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-01-31 16:50:58
+> 最后更新 (Last Updated): 2026-02-24 14:59:54
 
 ## !RULE
+
+<!-- NIKI_AUTO_MEMORIES_START -->
+
+<!-- NIKI_AUTO_MEMORIES_END -->
 <!-- Add local rules here -->
 
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
 *   **[fixtures/](fixtures/_AI.md#L1)**
 *   **[temp/](temp/_AI.md#L1)**
-*   **[conftest.py](conftest.py#L1)** @DEP: sys, pathlib.Path, pathlib
+*   **[conftest.py](conftest.py#L1)** @DEP: pathlib, sys
     *   `@API`
         *   `VAL->` VAR **root**` = Path(__file__).parent.parent`
-*   **[test_ast.py](test_ast.py#L1)** @DEP: ndoc.atoms.ast.extract_symbols, ndoc.atoms.io.read_text, pathlib.Path, ndoc.atoms.ast.parse_code, ndoc.models.context, ndoc.atoms.ast, ndoc.models.context.Symbol, ndoc.atoms.io, pytest, pathlib
+*   **[test_ast.py](test_ast.py#L1)** @DEP: ndoc.atoms.ast, ndoc.models.context, pathlib, pytest, ndoc.atoms.io
     *   `@API`
         *   `VAL->` VAR **SAMPLE_CODE**` = """
 class MyClass:
     '''Class Docstring'''
     
-    def method_one(self, a, b):
-        '''Method One Doc'''
-        return a + b
-        
-    @property
-    def prop_one(self):
-        '''Property One Doc'''
-        return 1
-        
-    @classmethod
-    def class_method(cls):
-        '''Class Method Doc'''
-        pass
-        
-    @staticmethod
-    def static_method():
-        pass
-
-def global_func(x: int) -> int:
-    '''Global Func Doc'''
-    return x * 2
-"""`
+    def me...`
         *   `PUB:` FUN **test_extract_symbols_basic**`()`
         *   `PUB:` FUN **test_extract_complex_api**`()`
         *   `PUB:` FUN **find_sym**`(name)`
         *   `PUB:` FUN **find_member**`(cls_name, name)`
-*   **[test_csharp_api.py](test_csharp_api.py#L1)** @DEP: pathlib.Path, ndoc.atoms.ast, sys, ndoc.atoms, ndoc.atoms.io, pathlib
+*   **[test_capabilities.py](test_capabilities.py#L1)** @DEP: unittest, sys, ndoc.atoms.capabilities, os, unittest.mock
+    *   `@API`
+        *   `PUB:` CLS **TestCapabilityManager**
+            *   `PUB:` MET **test_get_language_installed**`(self)`
+            *   `PUB:` MET **test_try_import_python**`(self)`
+            *   `PUB:` MET **test_try_import_unknown**`(self)`
+*   **[test_capability_flow.py](test_capability_flow.py#L1)** @DEP: unittest, sys, pathlib, ndoc.models.config, os, ndoc.flows, unittest.mock
+    *   `@API`
+        *   `PUB:` CLS **TestCapabilityFlow**
+            *   `PUB:` MET **setUp**`(self)`
+            *   `PUB:` MET **test_run_detects_languages**`(self, mock_ensure, mock_walk)`
+            *   `PUB:` MET **test_check_single_file**`(self, mock_ensure)`
+            *   `PUB:` MET **test_check_single_file_unknown**`(self, mock_ensure)`
+*   **[test_csharp_api.py](test_csharp_api.py#L1)** @DEP: pathlib, sys, ndoc.atoms
     *   `@API`
         *   `PUB:` FUN **test_csharp_extraction**`()`
-*   **[test_lsp_server.py](test_lsp_server.py#L1)**: Simple test client to verify LSP Server initialization. @DEP: json, time, sys, subprocess
+*   **[test_lsp_server.py](test_lsp_server.py#L1)**: """ @DEP: sys, json, threading, time, os, subprocess
     *   `@API`
-        *   `PUB:` FUN **test_lsp_init**`()`
-*   **[test_scanner.py](test_scanner.py#L1)** @DEP: pathlib.Path, ndoc.atoms.scanner, ndoc.atoms.scanner.scan_file_content, pytest, pathlib
+        *   `PUB:` FUN **log**`(msg)`
+        *   `PUB:` FUN **read_stream**`(stream, name)`
+        *   `PUB:` FUN **test_lsp**`()`
+*   **[test_scanner.py](test_scanner.py#L1)** @DEP: pathlib, pytest, ndoc.atoms.scanner
     *   `@API`
         *   `VAL->` VAR **SAMPLE_CONTENT**` = """
 # @TAG arg1 arg2
 <!-- NIKI_TEST_START -->
 Some Content
-<!-- NIKI_TEST_END -->
-
-class TestClass:
-    '''Doc'''
-    pass
-"""`
+<...`
         *   `PUB:` FUN **test_scan_file_content_mixed**`()`
         *   `PUB:` FUN **test_scan_file_content_text_only**`()`
 <!-- NIKI_AUTO_Context_END -->

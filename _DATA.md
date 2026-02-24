@@ -1,8 +1,17 @@
 # Data Registry
 > @CONTEXT: Global | _DATA.md | @TAGS: @DATA @MODELS
-> 最后更新 (Last Updated): 2026-01-31 16:47:56
+> 最后更新 (Last Updated): 2026-02-24 15:01:51
 
 > **Goal**: 集中展示项目中的核心数据结构 (Dataclasses, Enums, TypedDicts)。强化 "Logic as Data" 原则。
+
+## Enums
+*   **ServiceStatus** ([samples/sample_csharp.cs](samples/sample_csharp.cs))
+    ```python
+    public enum ServiceStatus
+    Idle,
+    Running,
+    Error
+    ```
 
 ## Dataclasses
 *   **AstNode** ([src/ndoc/atoms/ast/base.py](src/ndoc/atoms/ast/base.py)) - *通用 AST 节点数据结构 (Generic AST Node Data).*
@@ -11,7 +20,7 @@
     text: str
     start_point: tuple[int, int]  # (row, col)
     end_point: tuple[int, int]
-    children: list['AstNode'] = field(default_factory=list)
+    children: list['...
     ```
 *   **DataDefinition** ([src/ndoc/flows/data_flow.py](src/ndoc/flows/data_flow.py))
     ```python
@@ -32,19 +41,12 @@
     path: Path
     rel_path: str
     content: Optional[str] = None
-    tags: List[Tag] = field(default_factory=list)
-    sections: Dict[str, Section] = field(default_factory=dict)
-    symbols: List[Symbol] = field(default_factory=list) # Extracted symbols
-    docstring: Optional[str] = None
-    is_core: bool = False # Whether file is marked as @CORE
-    ast_tree: Any = None # Optional[Tree] from tree-sitter
-    title: Optional[str] = None
+    tags: List[Tag] = field(default_factory=...
     ```
 *   **FileFilter** ([src/ndoc/atoms/fs.py](src/ndoc/atoms/fs.py)) - *文件过滤器配置 (File Filter Configuration).*
     ```python
     ignore_patterns: Set[str] = field(default_factory=set)
     allow_extensions: Set[str] = field(default_factory=set)
-    spec: Optional[pathspec.PathSpec] = None
     ```
 *   **MapContext** ([src/ndoc/flows/map_flow.py](src/ndoc/flows/map_flow.py))
     ```python
@@ -60,20 +62,13 @@
 *   **ScanConfig** ([src/ndoc/models/config.py](src/ndoc/models/config.py)) - *扫描配置 (Configuration for file scanning).*
     ```python
     root_path: Path
-    ignore_patterns: List[str] = field(default_factory=lambda: [
-    extensions: List[str] = field(default_factory=list)
+    ignore_patterns: List[str] = field(default_factory=l...
     ```
 *   **ScanResult** ([src/ndoc/atoms/scanner.py](src/ndoc/atoms/scanner.py)) - *扫描结果 (Scan Result).*
     ```python
     tags: List[Tag] = field(default_factory=list)
     sections: Dict[str, Section] = field(default_factory=dict)
-    symbols: List[Symbol] = field(default_factory=list)
-    docstring: str = ""
-    summary: str = ""
-    todos: List[dict] = field(default_factory=list)  # Captured TODOs
-    calls: List[str] = field(default_factory=list)  # Captured calls
-    imports: List[str] = field(default_factory=list)  # Captured imports
-    is_core: bool = False # Whether file is marked as @CORE
+    symbols: List[Symbol] = ...
     ```
 *   **Section** ([src/ndoc/models/context.py](src/ndoc/models/context.py)) - *文档片段 (Document Section).*
     ```python
@@ -81,20 +76,13 @@
     content: str
     raw: str
     start_pos: int
-    end_pos: int
     ```
 *   **Symbol** ([src/ndoc/models/context.py](src/ndoc/models/context.py)) - *代码符号 (Code Symbol).*
     ```python
     name: str
     kind: str # 'class' | 'function' | 'method'
     line: int
-    docstring: Optional[str] = None
-    signature: Optional[str] = None # e.g. "(x: int) -> int"
-    parent: Optional[str] = None # e.g. "ClassName" for methods/fields
-    is_core: bool = False # Whether symbol is marked as @CORE
-    visibility: str = "public" # 'public' | 'private' | 'protected'
-    lang: str = "unknown" # Language key (e.g., 'python', 'go')
-    decorators: List[str] = field(default_factory=list)
+    docstring: Optional...
     ```
 *   **Tag** ([src/ndoc/models/context.py](src/ndoc/models/context.py)) - *文档/代码标签 (Documentation/Code Tag).*
     ```python
@@ -110,11 +98,6 @@
     type: str  # TODO, FIXME, etc.
     content: str
     task_id: Optional[str] = None
-    icons = {
-    "FIXME": "🔴", # High
-    "XXX": "🟣",   # Critical
-    "HACK": "🚧",  # Warning
-    "TODO": "🔵",  # Medium
     ```
 *   **TokenRule** ([src/ndoc/atoms/scanner.py](src/ndoc/atoms/scanner.py)) - *词法分析规则 (Lexical Analysis Rule).*
     ```python

@@ -63,3 +63,21 @@
     *   通过调研发现该可选字段在扁平表达式结构中存在固有冲突。
     *   移除 `TODO` 并转为正式文档说明，保持当前稳定的解析路径。
 *   **Status**: Resolved by documentation update.
+
+### 2026-02-24: Dynamic Capability & Robustness
+
+#### ADR-008: Dynamic Capability Loading (动态能力加载)
+*   **Context**: 单体式 `tree-sitter` 绑定增加了启动时间和部署体积，且难以支持多语言扩展。
+*   **Decision**: 
+    *   采用 **Kernel + Plugins** 架构。
+    *   使用 `CapabilityManager` 实现按需加载和通过 `pip` 自动供应依赖。
+    *   建立 `langs` 映射模块，支持文件扩展名到解析器包的动态映射。
+*   **Status**: Completed.
+
+#### ADR-009: Robust LSP Integration (LSP 健壮性增强)
+*   **Context**: LSP 在处理大量文件列表时崩溃 (Generator 消费问题)，且其语义价值未在核心上下文文档中体现。
+*   **Decision**: 
+    *   修复 `LSPService` 中的生成器消费 Bug。
+    *   将引用计数集成到 `context_flow`，在 `_AI.md` 的 API 列表中直接展示符号热度 (`[🔗N]`)。
+    *   增强 CLI 健壮性，确保在无解析器情况下优雅降级。
+*   **Status**: Completed.

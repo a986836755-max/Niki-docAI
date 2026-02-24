@@ -7,78 +7,18 @@ from pathlib import Path
 from tree_sitter import Language, Parser, Tree
 from dataclasses import dataclass, field
 from .. import langs
+from ..capabilities import CapabilityManager
 
 # Cache languages
 _LANGUAGES = {}
-
-try:
-    import tree_sitter_python as tspython
-except ImportError:
-    tspython = None
-
-try:
-    import tree_sitter_cpp as tscpp
-except ImportError:
-    tscpp = None
-
-try:
-    import tree_sitter_javascript as tsjs
-except ImportError:
-    tsjs = None
-    
-try:
-    import tree_sitter_typescript as tsts
-except ImportError:
-    tsts = None
-
-try:
-    import tree_sitter_go as tsgo
-except ImportError:
-    tsgo = None
-
-try:
-    import tree_sitter_rust as tsrust
-except ImportError:
-    tsrust = None
-
-try:
-    import tree_sitter_dart as tsdart
-except ImportError:
-    tsdart = None
-
-try:
-    import tree_sitter_c_sharp as tscsharp
-except ImportError:
-    tscsharp = None
-
-try:
-    import tree_sitter_java as tsjava
-except ImportError:
-    tsjava = None
 
 def get_language(lang_key: str) -> Optional[Language]:
     if lang_key in _LANGUAGES:
         return _LANGUAGES[lang_key]
     
-    lang_obj = None
-    if lang_key == 'python' and tspython:
-        lang_obj = Language(tspython.language())
-    elif lang_key == 'cpp' and tscpp:
-        lang_obj = Language(tscpp.language())
-    elif lang_key == 'javascript' and tsjs:
-        lang_obj = Language(tsjs.language())
-    elif lang_key == 'typescript' and tsts:
-        lang_obj = Language(tsts.language_typescript())
-    elif lang_key == 'go' and tsgo:
-        lang_obj = Language(tsgo.language())
-    elif lang_key == 'rust' and tsrust:
-        lang_obj = Language(tsrust.language())
-    elif lang_key == 'dart' and tsdart:
-        lang_obj = Language(tsdart.language())
-    elif lang_key == 'c_sharp' and tscsharp:
-        lang_obj = Language(tscsharp.language())
-    elif lang_key == 'java' and tsjava:
-        lang_obj = Language(tsjava.language())
+    # Use CapabilityManager to load/install language dynamically
+    # By default, we allow interactive installation prompts
+    lang_obj = CapabilityManager.get_language(lang_key)
     
     if lang_obj:
         _LANGUAGES[lang_key] = lang_obj

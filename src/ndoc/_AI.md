@@ -1,17 +1,23 @@
 # Context: ndoc
 > @CONTEXT: Local | ndoc | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-01-31 16:51:14
+> 最后更新 (Last Updated): 2026-02-24 14:59:54
 
 ## !RULE
-<!-- Add local rules here -->
+
+<!-- NIKI_AUTO_MEMORIES_START -->
+
+<!-- NIKI_AUTO_MEMORIES_END -->
+*   **Proactive Capability Check**: `entry.py` serves as the primary gatekeeper. It must invoke `capability_flow` to ensure all necessary language parsers are installed *before* executing documentation generation flows (`map`, `context`, `all`).
+*   **Dynamic Watchdog**: `daemon.py` monitors file system events. When a new file type is detected (e.g., a `.rs` file added to a python project), it must trigger a capability check to auto-provision the parser on the fly, ensuring zero-configuration support for polyglot projects.
+*   **CLI Robustness**: All CLI commands (including `lsp`) must handle missing capabilities gracefully, either by attempting auto-installation or falling back to regex-based scanning without crashing.
 
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
 *   **[atoms/](atoms/_AI.md#L1)**
 *   **[flows/](flows/_AI.md#L1)**
 *   **[models/](models/_AI.md#L1)**
-*   **[__init__.py](__init__.py#L1)**: Niki-docAI Source Root.
-*   **[daemon.py](daemon.py#L1)**: Daemon: Live Context Watcher. @DEP: watchdog.observers.Observer, ndoc.flows.symbols_flow, ndoc.flows.tech_flow, watchdog.events.FileSystemEvent, ndoc.flows.deps_flow, pathlib.Path, ndoc.flows, pathlib, typing.List, ndoc.flows.context_flow, typing.Callable, time, ndoc.flows.data_flow, ndoc.flows.map_flow, watchdog.events.FileSystemEventHandler, typing.Set, typing, ndoc.flows.archive_flow, ndoc.models.config, traceback, threading, ndoc.flows.todo_flow, watchdog.events, ndoc.models.config.ProjectConfig, watchdog.observers
+*   **[__init__.py](__init__.py#L1)**: """
+*   **[daemon.py](daemon.py#L1)**: """ @DEP: threading, pathlib, watchdog.observers, time, ndoc.models.config, traceback, ndoc.flows, typing ...
     *   `@API`
         *   `PUB:` CLS **DocChangeHandler**
             *   `PRV:` MET __init__`(self, config: ProjectConfig, debounce_interval: float = 2.0)`
@@ -19,16 +25,19 @@
             *   `PUB:` MET **trigger_update**`(self)`
             *   `PUB:` MET **run_update**`(self)`
         *   `PUB:` FUN **start_watch_mode**`(config: ProjectConfig)`
-*   **[entry.py](entry.py#L1)**: Entry Point: CLI Execution. @DEP: ndoc.flows.config_flow, ndoc.flows.tech_flow, ndoc.flows.syntax_flow, ndoc.flows.verify_flow, ndoc.flows.deps_flow, ndoc.flows.doctor_flow, ndoc.flows.clean_flow, ndoc.models.config.ScanConfig, pathlib.Path, ndoc.flows, ndoc.atoms.lsp, sys, ndoc.flows.init_flow, ndoc.flows.plan_flow, ndoc.atoms, pathlib, ndoc.flows.stats_flow, ndoc.flows.context_flow, argparse, ndoc.flows.update_flow, ndoc.flows.data_flow, ndoc.flows.map_flow, ndoc.daemon, ndoc.flows.archive_flow, ndoc.models.config, ndoc.flows.todo_flow, ndoc.atoms.fs, ndoc.atoms.io, ndoc.daemon.start_watch_mode, ndoc.models.config.ProjectConfig, ndoc.flows.symbols_flow
+*   **[entry.py](entry.py#L1)**: """ @DEP: sys, ndoc.daemon, pathlib, ndoc.models.config, argparse, ndoc.flows, ndoc.atoms
     *   `@API`
         *   `PUB:` FUN **main**`()`
-*   **[lsp_server.py](lsp_server.py#L1)**: LSP Server implementation using pygls. @DEP: lsprotocol.types.INITIALIZE, pygls.server.LanguageServer, pathlib.Path, ndoc.atoms.lsp, sys, lsprotocol.types, ndoc.atoms, lsprotocol.types.TEXT_DOCUMENT_DID_OPEN, pathlib, typing.List, pygls.server, lsprotocol.types.TextDocumentItem, lsprotocol.types.HoverParams, ndoc.atoms.scanner, lsprotocol.types.MarkupContent, typing, ndoc.models, ndoc.models.config, os, lsprotocol.types.TEXT_DOCUMENT_HOVER, ndoc.atoms.fs, typing.Optional, lsprotocol.types.MarkupKind, lsprotocol.types.Hover
+*   **[lsp_server.py](lsp_server.py#L1)**: """ @DEP: sys, lsprotocol.types, pathlib, os, ndoc.models, ndoc.atoms, typing, pygls.lsp.server
     *   `@API`
+        *   `VAL->` VAR **BASE_DIR**` = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."...`
         *   `PUB:` CLS **NDocLanguageServer**
             *   `PRV:` MET __init__`(self, *args, **kwargs)`
         *   `VAL->` VAR **server**` = NDocLanguageServer("ndoc-ai-server", "v0.1.0")`
         *   `PUB:` FUN **lsp_initialize**`(ls: NDocLanguageServer, params)`
+        *   `PUB:` FUN **check_architecture**`(ls: NDocLanguageServer, doc_uri: str)`
         *   `PUB:` FUN **did_open**`(ls: NDocLanguageServer, params)`
+        *   `PUB:` FUN **did_save**`(ls: NDocLanguageServer, params: DidSaveTextDocumentParams)`
         *   `PUB:` FUN **hover**`(ls: NDocLanguageServer, params: HoverParams)`
         *   `PUB:` FUN **main**`()`
 <!-- NIKI_AUTO_Context_END -->
