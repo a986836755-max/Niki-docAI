@@ -1,3 +1,13 @@
+# <NIKI_AUTO_HEADER_START>
+# ------------------------------------------------------------------------------
+# 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# *   **Dynamic Capability Loading**: New flows (like `capability_flow.py`) must be registered in `entry.py` to ensure ...
+# *   **Auto-Provisioning**: `capability_flow` acts as the project's "immune system", proactively detecting and install...
+# *   **Doctor Integration**: `doctor_flow` should reuse the `CapabilityManager` logic to verify system health, rather ...
+# ------------------------------------------------------------------------------
+# <NIKI_AUTO_HEADER_END>
 """
 Flow: Dependency Graph Generation.
 业务流：生成模块依赖图 (_DEPS.md)。
@@ -7,6 +17,7 @@ from pathlib import Path
 from typing import Dict, List, Set
 from collections import defaultdict
 
+from ..parsing import scanner
 from ..atoms import fs, io, deps
 from ..models.config import ProjectConfig
 
@@ -22,18 +33,24 @@ def collect_imports(root: Path) -> Dict[str, List[str]]:
     # Only scan .py files
     # Ignore common artifacts
     ignore = {'.git', '__pycache__', 'venv', 'env', 'node_modules', 'dist', 'build', 'site-packages'}
-    files = fs.walk_files(root, ignore_patterns=list(ignore), extensions={'.py'})
     
-    for file_path in files:
-        try:
-            content = io.read_text(file_path)
-            imports = deps.extract_imports(content)
-            
-            # Normalize path relative to root
-            rel_path = file_path.relative_to(root).as_posix()
-            import_map[rel_path] = imports
-        except Exception as e:
-            print(f"Error parsing {file_path}: {e}")
+    # Use scanner.scan_project which is now parallel and cached (Phase 3 Optimized)
+    # This handles incremental updates via cache checking
+    results = scanner.scan_project(root, list(ignore))
+    
+    for file_path, result in results.items():
+        # Only process Python files for import map
+        if file_path.suffix == '.py':
+            try:
+                # Use cached imports from ScanResult
+                imports = result.imports
+                
+                # Normalize path relative to root
+                rel_path = file_path.relative_to(root).as_posix()
+                import_map[rel_path] = imports
+            except Exception as e:
+                # print(f"Error processing {file_path}: {e}")
+                pass
             
     return import_map
 
@@ -121,6 +138,62 @@ def generate_mermaid_graph(graph: Dict[str, Set[str]]) -> str:
         
     return "```mermaid\n" + "\n".join(lines) + "\n```"
 
+def find_circular_dependencies(graph: Dict[str, Set[str]]) -> List[List[str]]:
+    """
+    Find circular dependencies (Strongly Connected Components) using Tarjan's Algorithm.
+    Returns a list of cycles (each cycle is a list of node names).
+    """
+    index = 0
+    stack = []
+    indices = {}
+    lowlinks = {}
+    on_stack = set()
+    cycles = []
+    
+    def strongconnect(v):
+        nonlocal index
+        indices[v] = index
+        lowlinks[v] = index
+        index += 1
+        stack.append(v)
+        on_stack.add(v)
+        
+        # Consider successors of v
+        if v in graph:
+            for w in graph[v]:
+                if w not in indices:
+                    # Successor w has not yet been visited; recurse on it
+                    strongconnect(w)
+                    lowlinks[v] = min(lowlinks[v], lowlinks[w])
+                elif w in on_stack:
+                    # Successor w is in stack and hence in the current SCC
+                    lowlinks[v] = min(lowlinks[v], indices[w])
+        
+        # If v is a root node, pop the stack and generate an SCC
+        if lowlinks[v] == indices[v]:
+            scc = []
+            while True:
+                w = stack.pop()
+                on_stack.remove(w)
+                scc.append(w)
+                if w == v:
+                    break
+            
+            # SCC of size > 1 implies a cycle
+            if len(scc) > 1:
+                cycles.append(scc)
+            # Self-loop check (if size is 1)
+            elif len(scc) == 1:
+                node = scc[0]
+                if node in graph and node in graph[node]:
+                    cycles.append(scc)
+
+    for node in list(graph.keys()):
+        if node not in indices:
+            strongconnect(node)
+            
+    return cycles
+
 def run(config: ProjectConfig) -> bool:
     """Execute the Deps Flow"""
     target_file = config.scan.root_path / "_DEPS.md"
@@ -128,7 +201,19 @@ def run(config: ProjectConfig) -> bool:
     print(f"Scanning dependencies in {config.scan.root_path}...")
     import_map = collect_imports(config.scan.root_path)
     
+    # Build the raw dependency graph
+    raw_graph = defaultdict(set)
+    # Re-implement simple graph building logic here to ensure we have the graph object
+    # Or refactor build_dependency_graph to return it properly (it already does)
     graph = build_dependency_graph(import_map)
+    
+    # Check for circular dependencies
+    cycles = find_circular_dependencies(graph)
+    if cycles:
+        print(f"\n⚠️  Found {len(cycles)} circular dependencies:")
+        for cycle in cycles:
+            print(f"   - Cycle: {' -> '.join(cycle)} -> {cycle[0]}")
+    
     mermaid = generate_mermaid_graph(graph)
     
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

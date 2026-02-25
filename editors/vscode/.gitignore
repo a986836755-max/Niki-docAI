@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build Output
+out/
+dist/
+
+# Packaging
+*.vsix
+
+# Testing
+.vscode-test/
+
+# IDE
+.vscode/
+
+# Logs
+*.log
+
+# System
+.DS_Store
+Thumbs.db
+
+# Source Maps (optional, but good to ignore if generated in src)
+*.map

@@ -1,10 +1,17 @@
 # Data Registry
 > @CONTEXT: Global | _DATA.md | @TAGS: @DATA @MODELS
-> 最后更新 (Last Updated): 2026-02-24 15:44:55
+> 最后更新 (Last Updated): 2026-02-24 23:16:57
 
 > **Goal**: 集中展示项目中的核心数据结构 (Dataclasses, Enums, TypedDicts)。强化 "Logic as Data" 原则。
 
 ## Enums
+*   **ActionType** ([src/ndoc/atoms/hippocampus.py](src/ndoc/atoms/hippocampus.py))
+    ```python
+    OPEN = 1
+    EDIT = 5  # Higher weight
+    SAVE = 2
+    CLOSE = 0
+    ```
 *   **ServiceStatus** ([samples/sample_csharp.cs](samples/sample_csharp.cs))
     ```python
     public enum ServiceStatus
@@ -48,10 +55,26 @@
     ignore_patterns: Set[str] = field(default_factory=set)
     allow_extensions: Set[str] = field(default_factory=set)
     ```
+*   **Hippocampus** ([src/ndoc/atoms/hippocampus.py](src/ndoc/atoms/hippocampus.py)) - *Short-term memory buffer.*
+    ```python
+    buffer: Deque[Observation] = field(default_factory=lambda: deque(maxlen=100))
+    ```
+*   **IndexEntry** ([src/ndoc/atoms/index.py](src/ndoc/atoms/index.py))
+    ```python
+    tag: Tag
+    source_file: str
+    weight: int = 1
+    ```
 *   **MapContext** ([src/ndoc/flows/map_flow.py](src/ndoc/flows/map_flow.py))
     ```python
     root: Path
     ignore_patterns: List[str]
+    ```
+*   **Observation** ([src/ndoc/atoms/hippocampus.py](src/ndoc/atoms/hippocampus.py))
+    ```python
+    file_path: str
+    action: ActionType
+    timestamp: float = field(default_factory=time.time)
     ```
 *   **ProjectConfig** ([src/ndoc/models/config.py](src/ndoc/models/config.py)) - *项目全局配置 (Global Project Configuration).*
     ```python
@@ -77,6 +100,11 @@
     raw: str
     start_pos: int
     ```
+*   **SemanticIndex** ([src/ndoc/atoms/index.py](src/ndoc/atoms/index.py))
+    ```python
+    rules: Dict[str, List[IndexEntry]] = field(default_factory=dict)
+    keywords: Dict[str, Set[str]] = field(default_factory=dic...
+    ```
 *   **Symbol** ([src/ndoc/models/context.py](src/ndoc/models/context.py)) - *代码符号 (Code Symbol).*
     ```python
     name: str
@@ -86,10 +114,17 @@
     ```
 *   **Tag** ([src/ndoc/models/context.py](src/ndoc/models/context.py)) - *文档/代码标签 (Documentation/Code Tag).*
     ```python
+    Supports attributes: !RULE[CRITICAL], @ADR[CONF=0.8]
     name: str
-    args: List[str] = field(default_factory=list)
-    line: int = 0
-    raw: str = ""
+    args: List[str] = field(default_fac...
+    ```
+*   **TodoItem** ([src/ndoc/flows/status_flow.py](src/ndoc/flows/status_flow.py))
+    ```python
+    file_path: Path
+    line: int
+    type: str  # TODO, FIXME, etc.
+    content: str
+    task_id: Optional[str] = None
     ```
 *   **TodoItem** ([src/ndoc/flows/todo_flow.py](src/ndoc/flows/todo_flow.py))
     ```python
@@ -104,6 +139,13 @@
     name: str
     pattern: Pattern
     group_map: Dict[str, int]  # Map logical names to regex groups
+    ```
+*   **Violation** ([src/ndoc/atoms/checker.py](src/ndoc/atoms/checker.py))
+    ```python
+    file_path: str
+    rule_name: str
+    message: str
+    severity: str = "ERROR" # ERROR, WARNING
     ```
 
 

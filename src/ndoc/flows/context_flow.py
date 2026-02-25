@@ -1,3 +1,13 @@
+# <NIKI_AUTO_HEADER_START>
+# ------------------------------------------------------------------------------
+# 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# *   **Dynamic Capability Loading**: New flows (like `capability_flow.py`) must be registered in `entry.py` to ensure ...
+# *   **Auto-Provisioning**: `capability_flow` acts as the project's "immune system", proactively detecting and install...
+# *   **Doctor Integration**: `doctor_flow` should reuse the `CapabilityManager` logic to verify system health, rather ...
+# ------------------------------------------------------------------------------
+# <NIKI_AUTO_HEADER_END>
 """
 Flow: Recursive Context Generation.
 业务流：递归生成局部上下文 (_AI.md)。
@@ -8,9 +18,14 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from datetime import datetime
 
-from ..atoms import fs, io, scanner, ast, deps, lsp
+from ..core import fs, io
+from ..parsing import scanner, ast, deps
+from ..parsing.ast import skeleton
+from ..interfaces import lsp
+from ..brain.vectordb import VectorDB
 from ..models.config import ProjectConfig
 from ..models.context import FileContext, DirectoryContext
+from .test_map_flow import run_test_mapping, TestUsageMapper
 
 # --- Data Structures ---
 
@@ -48,14 +63,22 @@ def format_file_summary(ctx: FileContext, root: Optional[Path] = None) -> str:
         
     return summary
 
-def format_symbol_list(ctx: FileContext) -> str:
+def format_symbol_list(ctx: FileContext, use_skeleton: bool = False) -> str:
     """
     格式化符号列表 (Format symbol list).
-    Supports hierarchical display (Classes -> Members).
+    Supports hierarchical display (Classes -> Members) or Semantic Skeleton.
     """
     if not ctx.symbols:
         return ""
         
+    # Option 1: Semantic Skeleton (New High-Density Mode)
+    # Only if use_skeleton is True (Currently experimental/optional)
+    # For now, let's inject a small skeleton preview for core files?
+    # Or maybe keep the list format but improve content?
+    
+    # Let's keep the structured list for _AI.md as it's easier to scan for humans than a code block.
+    # But we can enhance the description.
+    
     # Build hierarchy map: parent_name -> list[Symbol]
     children_map = {}
     roots = []
@@ -129,6 +152,18 @@ def format_symbol_list(ctx: FileContext) -> str:
             if count > 0:
                 display += f" [🔗{count}]"
             
+        # Add Test Usages
+        if hasattr(sym, 'test_usages') and sym.test_usages:
+            usage_links = []
+            for usage in sym.test_usages[:3]:
+                path = usage['path']
+                line = usage['line']
+                # Create a link relative to project root (assume user is in IDE)
+                usage_links.append(f"[{path}#L{line}]")
+            
+            if usage_links:
+                display += f" ↳ Usage: {', '.join(usage_links)}"
+
         lines.append(f"{indent}*   {display}")
         
         # Recurse for children
@@ -245,7 +280,49 @@ def cleanup_legacy_map(file_path: Path) -> None:
     if has_changes:
         io.write_text(file_path, content.strip() + "\n")
 
-def process_directory(path: Path, config: ProjectConfig, recursive: bool = True, parent_aggregate: bool = False) -> Optional[DirectoryContext]:
+def _inject_test_usages(f_ctx: FileContext, test_mapper: TestUsageMapper, config: ProjectConfig):
+    """
+    Inject test usage information into symbols.
+    """
+    try:
+        # Rel path relative to root: src/ndoc/...
+        rel_path = Path(f_ctx.rel_path)
+        parts = list(rel_path.parts)
+        # Simple heuristic for python projects in src layout
+        if parts and parts[0] == "src":
+            parts = parts[1:]
+        
+        module_path = ".".join(parts)
+        if module_path.endswith(".py"):
+            module_path = module_path[:-3]
+        
+        module_name = module_path
+        
+        for sym in f_ctx.symbols:
+            full_name = f"{module_name}.{sym.name}"
+            usages = test_mapper.get_usages(full_name)
+            if usages:
+                sym.test_usages = usages
+                
+            # Check parent for methods (Class.method)
+            if sym.parent:
+                parent_full_name = f"{module_name}.{sym.parent}.{sym.name}"
+                usages_p = test_mapper.get_usages(parent_full_name)
+                if usages_p:
+                    if sym.test_usages:
+                        # Merge without duplicates
+                        existing_paths = {f"{u['path']}:{u['line']}" for u in sym.test_usages}
+                        for u in usages_p:
+                            key = f"{u['path']}:{u['line']}"
+                            if key not in existing_paths:
+                                sym.test_usages.append(u)
+                    else:
+                        sym.test_usages = usages_p
+                        
+    except Exception:
+        pass
+
+def process_directory(path: Path, config: ProjectConfig, recursive: bool = True, parent_aggregate: bool = False, test_mapper: Optional[TestUsageMapper] = None, vectordb: Optional[VectorDB] = None) -> Optional[DirectoryContext]:
     """
     处理单个目录 (Process single directory).
     Args:
@@ -253,6 +330,8 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
         config: Project configuration.
         recursive: Whether to process subdirectories recursively.
         parent_aggregate: Whether the parent directory is aggregating this one.
+        test_mapper: Optional TestUsageMapper for linking tests.
+        vectordb: Optional VectorDB for indexing.
     """
     # 0. Read Local Context & Tags to determine behavior
     ai_file = path / "_AI.md"
@@ -302,7 +381,7 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
                 # If we are @CHECK_IGNORE, also tell child to NOT write (cleanup only)
                 pass_aggregate = is_aggregate or is_check_ignore
                 
-                child_ctx = process_directory(entry, config, recursive=True, parent_aggregate=pass_aggregate)
+                child_ctx = process_directory(entry, config, recursive=True, parent_aggregate=pass_aggregate, test_mapper=test_mapper, vectordb=vectordb)
                 
                 if child_ctx:
                     if is_aggregate and not is_check_ignore:
@@ -336,6 +415,10 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
                 memories=scan_result.memories,
                 description=scan_result.summary
             )
+            
+            if test_mapper:
+                _inject_test_usages(f_ctx, test_mapper, config)
+
             files.append(f_ctx)
     
     # 3. Generate Content (Transform)
@@ -378,7 +461,9 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
 > 最后更新 (Last Updated): {timestamp}
 
 ## !RULE
-<!-- Add local rules here -->
+<!-- Add local rules here. Examples: -->
+<!-- !RULE: @LAYER(core) CANNOT_IMPORT @LAYER(ui) -->
+<!-- !RULE: @FORBID(hardcoded_paths) -->
 
 {mem_start}
 {memory_content}
@@ -436,6 +521,66 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
             # print(f"Removing redundant context: {ai_file}")
             io.delete_file(ai_file)
 
+    if vectordb and should_write_ai and (files or subdirs):
+        base_id = str(path.relative_to(config.scan.root_path)).replace('\\', '/')
+        if base_id == ".":
+            base_id = "root"
+            
+        base_metadata = {
+            "type": "context",
+            "path": str(path),
+            "tags": ",".join([t.name for t in local_tags]),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        if ai_file.exists():
+            full_content = io.read_text(ai_file)
+            if full_content:
+                # 1. Store Full Document
+                vectordb.add_documents(
+                    documents=[full_content],
+                    metadatas=[base_metadata],
+                    ids=[base_id]
+                )
+                
+                # 2. Store Chunks (Split by H2 headers)
+                # Simple splitter: split by "\n## "
+                # This helps retrieve specific sections like "## !RULE" or "## @FILES"
+                chunks = re.split(r'\n## ', full_content)
+                chunk_docs = []
+                chunk_metas = []
+                chunk_ids = []
+                
+                for i, chunk in enumerate(chunks):
+                    if not chunk.strip():
+                        continue
+                        
+                    # Re-add header marker if it's not the first preamble
+                    chunk_text = f"## {chunk}" if i > 0 else chunk
+                    
+                    # Extract title for metadata
+                    title_line = chunk.split('\n')[0].strip()
+                    section_title = title_line
+                    
+                    # Construct ID: path/section_title
+                    safe_title = re.sub(r'[^a-zA-Z0-9]', '_', section_title)[:30]
+                    c_id = f"{base_id}#{safe_title}_{i}"
+                    
+                    meta = base_metadata.copy()
+                    meta["section"] = section_title
+                    meta["is_chunk"] = True
+                    
+                    chunk_docs.append(chunk_text)
+                    chunk_metas.append(meta)
+                    chunk_ids.append(c_id)
+                    
+                if chunk_docs:
+                    vectordb.add_documents(
+                        documents=chunk_docs,
+                        metadatas=chunk_metas,
+                        ids=chunk_ids
+                    )
+
     return ctx
 
 # --- Entry Point ---
@@ -452,7 +597,17 @@ def run(config: ProjectConfig) -> bool:
         files = list(fs.walk_files(config.scan.root_path, config.scan.ignore_patterns))
         lsp_service.index_project(files)
         
-    process_directory(config.scan.root_path, config, recursive=True)
+    # 0.1 Initialize VectorDB for context ingestion
+    # Only if chromadb is available (checked inside VectorDB)
+    vectordb = VectorDB(config.scan.root_path)
+    
+    test_mapper = None
+    try:
+        test_mapper = run_test_mapping(config)
+    except Exception as e:
+        print(f"Warning: Test mapping failed: {e}")
+        
+    process_directory(config.scan.root_path, config, recursive=True, test_mapper=test_mapper, vectordb=vectordb)
     return True
 
 def update_directory(path: Path, config: ProjectConfig) -> bool:
@@ -461,7 +616,9 @@ def update_directory(path: Path, config: ProjectConfig) -> bool:
     Non-recursive.
     """
     try:
-        process_directory(path, config, recursive=False)
+        # Also pass vectordb to update index incrementally
+        vectordb = VectorDB(config.scan.root_path)
+        process_directory(path, config, recursive=False, vectordb=vectordb)
         return True
     except Exception as e:
         print(f"Failed to update directory {path}: {e}")

@@ -31,3 +31,11 @@ tests/__pycache__/
 # System
 .DS_Store
 Thumbs.db
+
+# VS Code Extension
+vscode_extension/out/
+vscode_extension/node_modules/
+vscode_extension/*.vsix
+editors/vscode/out/
+editors/vscode/node_modules/
+editors/vscode/*.vsix

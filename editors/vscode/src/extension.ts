@@ -1,5 +1,5 @@
 import * as path from 'path';
-import * as vscode from 'vscode';
+import { workspace, ExtensionContext, window, commands, Uri } from 'vscode';
 import {
     LanguageClient,
     LanguageClientOptions,
@@ -8,66 +8,141 @@ import {
 } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
-let outputChannel: vscode.OutputChannel;
 
-export function activate(context: vscode.ExtensionContext) {
-    outputChannel = vscode.window.createOutputChannel('NDoc AI');
-    outputChannel.appendLine('NDoc AI Extension is now active!');
-
-    const config = vscode.workspace.getConfiguration('ndoc');
-    const pythonPath = config.get<string>('pythonPath') || 'python';
+export function activate(context: ExtensionContext) {
+    const config = workspace.getConfiguration('ndoc');
+    // Default to 'py' on Windows if not configured, as 'python' might not be in PATH
+    const defaultPython = process.platform === 'win32' ? 'py' : 'python3';
+    const pythonPath = config.get<string>('pythonPath') || defaultPython;
     
-    // 获取项目根目录
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
-        outputChannel.appendLine('No workspace folder found. LSP server will not start.');
-        return;
-    }
-    const projectRoot = workspaceFolders[0].uri.fsPath;
+    // Server implementation (using ndoc CLI 'server' command)
+    // We assume the user has 'ndoc' installed or available in the project.
     
-    // 假设 ndoc 源码就在当前插件所在的项目中，或者在工作区中
-    // 这里的逻辑可以根据实际部署方式调整
-    const ndocSrcPath = path.join(projectRoot, 'src');
-    outputChannel.appendLine(`Using PYTHONPATH: ${ndocSrcPath}`);
+    let serverExecutable = pythonPath;
+    let serverArgs = ['-m', 'ndoc', 'server'];
+    let env = { ...process.env };
 
-    const serverOptions: ServerOptions = {
-        command: pythonPath,
-        args: ['-m', 'ndoc.lsp_server'],
-        options: {
-            env: {
-                ...process.env,
-                "PYTHONPATH": ndocSrcPath,
-                "PYTHONUNBUFFERED": "1"
+    // Check for 'ndoc.server.localPath' override (Dogfooding Mode)
+    const localPath = config.get<string>('server.localPath');
+    if (localPath && localPath.trim() !== '') {
+        const devRoot = path.resolve(localPath);
+        const devEntry = path.join(devRoot, 'src', 'ndoc', 'entry.py');
+        
+        // Simple synchronous check
+        const fs = require('fs');
+        if (fs.existsSync(devEntry)) {
+            serverArgs = [devEntry, 'server'];
+            // Set PYTHONPATH so it finds the 'ndoc' package
+            env['PYTHONPATH'] = path.join(devRoot, 'src');
+            window.showInformationMessage(`🐶 Niki-docAI Dogfooding: Using local source at ${devRoot}`);
+        } else {
+            window.showWarningMessage(`⚠️ Niki-docAI: Local path configured but entry.py not found at ${devEntry}. Falling back to installed package.`);
+        }
+    } else if (context.extensionMode === 2) { // ExtensionMode.Development fallback
+        // ... (existing dev logic, but now superseded by explicit config)
+        const devRoot = "e:\\work\\appcodes\\nk_doc_ai";
+        const devEntry = path.join(devRoot, 'src', 'ndoc', 'entry.py');
+        serverArgs = [devEntry, 'server'];
+        env['PYTHONPATH'] = path.join(devRoot, 'src');
+        window.showInformationMessage(`🔧 Niki-docAI Dev Mode: Using local server at ${devEntry}`);
+    } else {
+        // Production mode: try to find if workspace has local ndoc source
+        const workspaceRoot = workspace.workspaceFolders?.[0].uri.fsPath;
+        if (workspaceRoot) {
+            const localEntry = path.join(workspaceRoot, 'src', 'ndoc', 'entry.py');
+            // Check if file exists (sync check for simplicity)
+            const fs = require('fs');
+            if (fs.existsSync(localEntry)) {
+                 serverArgs = [localEntry, 'server'];
+                 // If we found local source, we likely need PYTHONPATH too if not installed
+                 // But let's assume if it's in workspace, user configured environment.
             }
         }
+    }
+
+        const serverOptions: ServerOptions = {
+        command: serverExecutable,
+        args: [...serverArgs, '--stdio'], // Explicitly add --stdio for clarity
+        options: { env: env }, // Pass the environment with PYTHONPATH
+        transport: TransportKind.stdio,
     };
 
     const clientOptions: LanguageClientOptions = {
         documentSelector: [
             { scheme: 'file', language: 'python' },
-            { scheme: 'file', language: 'dart' },
+            { scheme: 'file', language: 'csharp' },
             { scheme: 'file', language: 'javascript' },
-            { scheme: 'file', language: 'typescript' }
+            { scheme: 'file', language: 'typescript' },
+            { scheme: 'file', language: 'cpp' },
+            { scheme: 'file', language: 'c' }
         ],
         synchronize: {
-            fileEvents: vscode.workspace.createFileSystemWatcher('**/*')
-        },
-        outputChannel: outputChannel
+            fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
+        }
     };
 
     client = new LanguageClient(
-        'ndocAI',
-        'NDoc AI Language Server',
+        'ndocLSP',
+        'Niki-docAI LSP',
         serverOptions,
         clientOptions
     );
 
-    outputChannel.appendLine('Starting NDoc AI Language Server...');
-    client.start().then(() => {
-        outputChannel.appendLine('LSP Server started successfully.');
-    }).catch(err => {
-        outputChannel.appendLine(`Failed to start LSP Server: ${err}`);
-    });
+    client.start();
+    
+    window.showInformationMessage('🧠 Niki-docAI Thinking Interface Active');
+
+    // Register custom commands
+    context.subscriptions.push(commands.registerCommand('ndoc.showContext', async (uri?: string) => {
+        let editor = window.activeTextEditor;
+        
+        // If URI is passed (e.g. from CodeLens), try to find that document
+        if (uri) {
+            const doc = workspace.textDocuments.find(d => d.uri.toString() === uri);
+            if (doc) {
+                // If the document is not active, we might need to show it, 
+                // but usually CodeLens is clicked on an active editor.
+            }
+        }
+
+        if (!editor) {
+            window.showErrorMessage('No active editor');
+            return;
+        }
+
+        // We can reuse the hover logic or fetch context via a new request
+        // For simplicity, let's just trigger the Hover manually or show a QuickPick with info
+        // BUT, since we want to show the full context, let's execute a command on the server
+        
+        // Actually, we can't easily "trigger hover" programmatically at a specific position from here without more work.
+        // Let's just show an Information Message for now, or an Output Channel
+        
+        const outputChannel = window.createOutputChannel("Niki-docAI Context");
+        outputChannel.show(true);
+        outputChannel.appendLine("Fetching context...");
+        
+        try {
+            // Call the custom command on the server
+            // Note: client.sendRequest('workspace/executeCommand', ...) is the standard way
+            const result = await client.sendRequest('workspace/executeCommand', {
+                command: 'ndoc.getThinkingContext',
+                arguments: [editor.document.uri.toString()]
+            });
+            
+            outputChannel.clear();
+            if (result) {
+                outputChannel.appendLine("🧠 Niki-docAI Context Rules:");
+                outputChannel.appendLine("========================================");
+                outputChannel.appendLine(result as string);
+                outputChannel.appendLine("========================================");
+                outputChannel.appendLine("(You can copy this context to your AI Assistant)");
+            } else {
+                outputChannel.appendLine("No context found or error occurred.");
+            }
+        } catch (e) {
+            outputChannel.appendLine(`Error fetching context: ${e}`);
+        }
+    }));
 }
 
 export function deactivate(): Thenable<void> | undefined {

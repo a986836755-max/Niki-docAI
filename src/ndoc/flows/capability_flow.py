@@ -1,3 +1,13 @@
+# <NIKI_AUTO_HEADER_START>
+# ------------------------------------------------------------------------------
+# 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# *   **Dynamic Capability Loading**: New flows (like `capability_flow.py`) must be registered in `entry.py` to ensure ...
+# *   **Auto-Provisioning**: `capability_flow` acts as the project's "immune system", proactively detecting and install...
+# *   **Doctor Integration**: `doctor_flow` should reuse the `CapabilityManager` logic to verify system health, rather ...
+# ------------------------------------------------------------------------------
+# <NIKI_AUTO_HEADER_END>
 """
 Flow: Capability Auto-Discovery and Installation.
 业务流：自动检测项目语言并安装所需能力 (Auto-Install Capabilities).
@@ -38,6 +48,12 @@ def run(config: ProjectConfig, auto_install: bool = True) -> bool:
     # 3. Ensure capabilities are installed
     # This will trigger batch installation if needed
     capabilities.CapabilityManager.ensure_languages(required_languages, auto_install=auto_install)
+    
+    # 4. Ensure optional packages (like chromadb) are installed if needed
+    # We can check config or just try to install if missing
+    # For now, let's proactively ensure chromadb if user wants full features
+    if auto_install:
+        capabilities.CapabilityManager.ensure_package("chromadb", auto_install=True)
     
     return True
 

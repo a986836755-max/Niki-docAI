@@ -1,110 +1,190 @@
+# <NIKI_AUTO_HEADER_START>
+# ------------------------------------------------------------------------------
+# 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# *   **Dynamic Capability Loading**: New flows (like `capability_flow.py`) must be registered in `entry.py` to ensure ...
+# *   **Auto-Provisioning**: `capability_flow` acts as the project's "immune system", proactively detecting and install...
+# *   **Doctor Integration**: `doctor_flow` should reuse the `CapabilityManager` logic to verify system health, rather ...
+# ------------------------------------------------------------------------------
+# <NIKI_AUTO_HEADER_END>
 """
 Flow: Project Archiving & Memory.
 业务流：项目归档与记忆提取。将已完成任务移入历史并提取关键决策。
 """
-import re
 from datetime import datetime
 from pathlib import Path
-from ..atoms import io, llm
+from typing import List, Dict
+from ..atoms import io, fs, scanner
 from ..models.config import ProjectConfig
 
 def run(config: ProjectConfig) -> bool:
     """
     Execute Archive Flow.
+    Scans the project for memory markers (@DECISION, @LESSON, @INTENT, !RULE)
+    and aggregates them into _MEMORY.md.
     """
-    next_file = config.scan.root_path / "_NEXT.md"
-    memory_file = config.scan.root_path / "_MEMORY.md"
+    root_path = config.scan.root_path
+    memory_file = root_path / "_MEMORY.md"
     
-    if not next_file.exists():
-        return False
-
-    content = io.read_text(next_file)
-    if not content:
-        return False
-
-    # 1. Identify completed tasks/sections
-    # For simplicity, we look for level 3 headers (###) where all items are [x]
-    # Use a more robust split that captures the header
-    sections = re.split(r'\n(###\s+.*)', content)
+    print(f"🧠 Scanning for project memories in {root_path}...")
     
-    header = sections[0]
-    remaining_sections = []
-    archived_content = []
+    # 1. Scan all files
+    filter_config = fs.FileFilter(
+        ignore_patterns=set(config.scan.ignore_patterns),
+        allow_extensions=set(config.scan.include_extensions)
+    )
     
-    for i in range(1, len(sections), 2):
-        section_title = sections[i]
-        # Body is the next element, but might contain subsequent ### if split was weird
-        section_body = sections[i+1] if i+1 < len(sections) else ""
-        
-        # Check if all tasks in this section are completed
-        # Find all checkboxes: [ ] or [x]
-        tasks = re.findall(r'\[( |x)\]', section_body)
-        
-        if tasks and all(t == 'x' for t in tasks):
-            print(f"📦 Archiving completed section: {section_title.strip()}")
-            archived_content.append(f"{section_title}{section_body}")
-        else:
-            remaining_sections.append(f"{section_title}{section_body}")
-
-    if not archived_content:
-        print("ℹ️ No fully completed sections to archive.")
-        return True
-
-    # 2. Update _NEXT.md
-    new_next_content = header + "\n" + "\n".join(remaining_sections)
+    decisions = []
+    lessons = []
+    intents = set()
+    rules = []
     
-    # Add to @HISTORY section in _NEXT.md
-    history_marker = "## @HISTORY"
-    timestamp = datetime.now().strftime("%Y-%m-%d")
-    archive_block = f"\n#### Archived on {timestamp}\n" + "\n".join(archived_content)
+    # Init VectorDB for Auto-Knowledge Distillation
+    vdb = None
+    try:
+        from ..brain.vectordb import VectorDB
+        vdb = VectorDB(root_path)
+    except:
+        pass
     
-    if history_marker in new_next_content:
-        parts = new_next_content.split(history_marker, 1)
-        new_next_content = parts[0] + history_marker + "\n" + archive_block + parts[1]
-    else:
-        new_next_content += f"\n\n{history_marker}\n" + archive_block
-
-    io.write_text(next_file, new_next_content)
-    io.update_header_timestamp(next_file)
-
-    # 3. Memory Extraction (Optional LLM Step)
-    _extract_memory(config, archived_content, memory_file)
-
-    return True
-
-def _extract_memory(config: ProjectConfig, archived_content: list, memory_file: Path):
-    """
-    Extract key decisions and learnings from archived content using LLM.
-    """
-    if not archived_content:
-        return
-
-    print("🧠 Extracting memory from archived tasks...")
+    files = list(fs.walk_files(root_path, config.scan.ignore_patterns))
     
-    prompt = f"""
-Below are recently completed and archived tasks from the project roadmap.
-Please extract key technical decisions, architectural changes, or "lessons learned" into a concise summary.
-Format the output as Markdown bullets.
-
-Archived Content:
-{"".join(archived_content)}
-"""
+    docs_to_embed = []
+    metas_to_embed = []
+    ids_to_embed = []
     
-    system_prompt = "You are a project historian. Focus on 'Why' and 'How' certain things were built, not just 'What'."
-    
-    summary = llm.call_llm(prompt, system_prompt=system_prompt)
-    if not summary:
-        return
+    for file_path in files:
+        # Skip _MEMORY.md itself to avoid recursion if we scan .md files
+        if file_path.name == "_MEMORY.md":
+            continue
+            
+        try:
+            # Use scanner to extract metadata
+            result = scanner.scan_file(file_path, root_path)
+            
+            # Prepare for VectorDB Embedding
+            # We embed:
+            # 1. Decisions/Lessons content
+            # 2. File Docstrings (High-level summary)
+            
+            rel_p = fs.get_relative_path(file_path, root_path)
+            
+            # Embed Docstring if available
+            if result.docstring:
+                 docs_to_embed.append(result.docstring)
+                 metas_to_embed.append({"source": str(rel_p), "type": "docstring"})
+                 ids_to_embed.append(f"doc_{rel_p}")
+            
+            # Aggregate Decisions
+            for item in result.decisions:
+                content = item.get("content", "")
+                decisions.append({
+                    "file": file_path,
+                    "line": item.get("line", 0),
+                    "content": content
+                })
+                # Embed Decision
+                docs_to_embed.append(content)
+                metas_to_embed.append({"source": str(rel_p), "type": "decision"})
+                ids_to_embed.append(f"dec_{rel_p}_{item.get('line',0)}")
+                
+            # Aggregate Lessons
+            for item in result.lessons:
+                content = item.get("content", "")
+                lessons.append({
+                    "file": file_path,
+                    "line": item.get("line", 0),
+                    "content": content
+                })
+                # Embed Lesson
+                docs_to_embed.append(content)
+                metas_to_embed.append({"source": str(rel_p), "type": "lesson"})
+                ids_to_embed.append(f"les_{rel_p}_{item.get('line',0)}")
+                
+            # Aggregate Intents
+            for item in result.intents:
+                if isinstance(item, str):
+                    intents.add(item)
+            
+            # Aggregate Rules (!RULE)
+            for item in result.memories:
+                if item.get("type") == "RULE":
+                    content = item.get("content", "")
+                    rules.append({
+                        "file": file_path,
+                        "line": item.get("line", 0),
+                        "content": content
+                    })
+                    # Embed Rule
+                    docs_to_embed.append(content)
+                    metas_to_embed.append({"source": str(rel_p), "type": "rule"})
+                    ids_to_embed.append(f"rul_{rel_p}_{item.get('line',0)}")
+                    
+        except Exception as e:
+            # print(f"⚠️ Failed to scan {file_path.name}: {e}")
+            pass
 
-    # Update _MEMORY.md
+    # Update VectorDB
+    if vdb and docs_to_embed:
+        print(f"🧠 Embedding {len(docs_to_embed)} knowledge fragments into VectorDB...")
+        vdb.add_documents(docs_to_embed, metas_to_embed, ids_to_embed)
+
+    # 2. Generate Content
+    lines = []
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    entry = f"\n### Memory Update ({timestamp})\n{summary}\n"
     
-    if not memory_file.exists():
-        header = "# PROJECT MEMORY\n> @CONTEXT: Architectural Decisions & Learnings\n"
-        io.write_text(memory_file, header + entry)
+    lines.append(f"# Project Memory")
+    lines.append(f"> @CONTEXT: Memory | Knowledge Base | @TAGS: @MEMORY")
+    lines.append(f"> 最后更新 (Last Updated): {timestamp}")
+    lines.append("")
+    
+    # Decisions
+    lines.append("## 1. Decisions (@DECISION)")
+    if not decisions:
+        lines.append("*   *(No decisions recorded)*")
     else:
-        current_memory = io.read_text(memory_file)
-        io.write_text(memory_file, current_memory + "\n" + entry)
+        for d in decisions:
+            rel_path = fs.get_relative_path(d['file'], root_path)
+            link = f"[`{d['file'].name}:{d['line']}`]({rel_path}#L{d['line']})"
+            lines.append(f"*   {link}: {d['content']}")
+    lines.append("")
     
-    print(f"✅ Memory updated in {memory_file.name}")
+    # Lessons
+    lines.append("## 2. Lessons (@LESSON)")
+    if not lessons:
+        lines.append("*   *(No lessons recorded)*")
+    else:
+        for l in lessons:
+            rel_path = fs.get_relative_path(l['file'], root_path)
+            link = f"[`{l['file'].name}:{l['line']}`]({rel_path}#L{l['line']})"
+            lines.append(f"*   {link}: {l['content']}")
+    lines.append("")
+    
+    # Rules
+    lines.append("## 3. Distributed Rules (!RULE)")
+    if not rules:
+        lines.append("*   *(No local rules found)*")
+    else:
+        for r in rules:
+            rel_path = fs.get_relative_path(r['file'], root_path)
+            link = f"[`{r['file'].name}:{r['line']}`]({rel_path}#L{r['line']})"
+            lines.append(f"*   {link}: {r['content']}")
+    lines.append("")
+
+    # Intents
+    lines.append("## 4. Intents (@INTENT)")
+    if not intents:
+        lines.append("*   *(No intents recorded)*")
+    else:
+        for i in sorted(list(intents)):
+            lines.append(f"*   {i}")
+    lines.append("")
+    
+    content = "\n".join(lines)
+    
+    # 3. Write to file
+    io.write_text(memory_file, content)
+    print(f"✅ Memory updated: {memory_file.name}")
+    
+    return True

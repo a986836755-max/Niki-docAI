@@ -1,0 +1,57 @@
+# Niki-docAI 2.0 (Rebirth) - AI Protocol
+# This file teaches AI agents (like Cursor/Trae) how to interact with the ndoc ecosystem.
+
+# 1. Context Acquisition (Context)
+# Before modifying any file, you MUST understand its context.
+# DO NOT hallucinate rules or styles. Read the single source of truth.
+#
+# Command: `ndoc prompt --file <file_path>`
+# Action: Run this command to get the full context prompt for the target file.
+#         It includes Global Rules (_RULES.md), Local Context (_AI.md), and Syntax Definitions.
+
+# 2. Syntax Compliance (Language)
+# You MUST follow the project's DSL defined in `_SYNTAX.md`.
+#
+# Core Tags:
+# - @API: Public interfaces (classes/functions).
+# - !RULE: Mandatory constraints. Attributes: [CRITICAL], [FORBID=tag], [REQUIRE=tag].
+# - @ADR: Architecture Decision Records.
+# - @TODO: Technical debt or future plans.
+# - @DECISION: Record architectural decisions in code comments.
+# - @LESSON: Record learned lessons in code comments.
+
+# 3. Constraint Verification (Check)
+# After writing code, you MUST verify it against the project's constraints.
+#
+# Command: `ndoc check <file_path>`
+# Action: Run this command. If it fails, you MUST fix the violations before finishing.
+#         Common violations:
+#         - Forbidden tags (e.g., @deprecated when forbidden).
+#         - Missing required tags (e.g., @author missing on critical files).
+
+# 4. Memory Management (Hippocampus)
+# If you discover new patterns or important decisions, propose them for memory.
+#
+# Action: Add a comment `# @DECISION: <content>` or `# @LESSON: <content>` in the code.
+#         ndoc archive will automatically harvest these observations into the local `_MEMORY.md` and VectorDB.
+
+# 5. Documentation Generation (Output)
+# Do not manually edit `_ARCH.md`, `_STATUS.md`, `_MAP.md`.
+#
+# Command: `ndoc all`
+# Action: Run this to regenerate all documentation artifacts based on your code changes.
+#         This updates Architecture Overview, Status Board, and Data Registry.
+
+# 6. Semantic Navigation (LSP)
+# Use the Niki-LSP features to understand code concepts.
+# Action: Hover over symbols to see their semantic context (Concept/Definition) from VectorDB.
+
+# 7. Knowledge Distillation (Archive)
+# Periodically, or when completing a major task, archive the context.
+# Command: `ndoc archive`
+# Action: This extracts decisions/lessons and embeds them into the VectorDB for long-term memory.
+
+# 8. Watch Mode (Daemon)
+# When performing continuous edits, ensure the daemon is running.
+# Command: `ndoc watch`
+# Action: This keeps the context fresh in real-time.

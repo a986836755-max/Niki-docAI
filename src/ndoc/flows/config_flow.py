@@ -1,3 +1,13 @@
+# <NIKI_AUTO_HEADER_START>
+# ------------------------------------------------------------------------------
+# 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# *   **Dynamic Capability Loading**: New flows (like `capability_flow.py`) must be registered in `entry.py` to ensure ...
+# *   **Auto-Provisioning**: `capability_flow` acts as the project's "immune system", proactively detecting and install...
+# *   **Doctor Integration**: `doctor_flow` should reuse the `CapabilityManager` logic to verify system health, rather ...
+# ------------------------------------------------------------------------------
+# <NIKI_AUTO_HEADER_END>
 """
 Flow: Configuration Loading.
 业务流：从 _RULES.md 加载项目配置 (Documentation as Configuration).
@@ -29,6 +39,12 @@ RULES_TEMPLATE = """# Project Rules
 
 - `MEMORY文档对齐`: 定期更新_MEMORY.md，每当_NEXT.md中一项功能/模块完成，将其归档入_MEMORY.md。
 - `交付即更新`: 在完成代码修改后，习惯性运行 `ndoc all`，确保改动被即时索引。
+
+## Architecture Rules (架构规则)
+> 定义项目架构约束与分层规则。
+
+- `!RULE`: `@LAYER(core) CANNOT_IMPORT @LAYER(ui)` (示例：核心层不能依赖UI层)
+- `!RULE`: `@FORBID(hardcoded_paths)` (示例：禁止硬编码路径)
 
 ## Special Keywords (特殊关键字)
 > 用于控制特定目录的文档生成行为。

@@ -31,71 +31,48 @@
 
 ## @TAGS
 > 全局标签定义。AI 必须遵循这些语义。
+> 新增支持属性语法：`@TAG[KEY=VALUE, FLAG]` (e.g., `!RULE[CRITICAL]`, `@ADR[CONF=0.8]`)
 
-### Structural (结构类)
+### Identity (身份类)
+- `@OVERVIEW`: **Summary**. 核心职责/存在意义 (Core responsibility).
+- `@API`: **Public**. 公共接口 (Public Interface).
 - `@DOMAIN`: **Scope**. 边界/领域 (Boundary/Domain).
 - `@MODULE`: **Module**. 独立单元 (Independent unit).
-- `@API`: **Public**. 公共接口 (Public Interface).
-- `@AGGREGATE`: **Recursive**. 包含子目录 (Include subdirs).
-- `@ARCH`: **Architecture**. 文件列表/图谱 (File list/Graph).
-- `@MAP`: **Navigation**. 链接/结构 (Links/Structure).
-- `@TREE`: **Directory Tree**. 项目层级 (Project hierarchy).
-- `@GRAPH`: **Dependency Graph**. 可视化关系 (Visual relationships).
-- `@INDEX`: **Index**. 交叉引用 (Cross-reference).
 
-### Constraint (约束类)
-- `!RULE`: **Constraint**. 强制规则 (Mandatory rule).
-- `!CONST`: **Invariant**. 不可变事实 (Immutable fact).
-
-### Semantic (语义类)
-- `@OVERVIEW`: **Summary**. 核心职责/存在意义 (Core responsibility).
-- `@VISION`: **Vision**. 长期目标 (Long-term goal).
-- `@USAGE`: **Usage**. 示例/用法 (Examples/How-to).
+### Logic (逻辑类)
 - `@FLOW`: **Process**. 时序/数据流 (Sequence/Data flow).
 - `@STATE`: **State**. 状态机/变量 (State machine/Variables).
 - `@EVENT`: **Event**. 发射/处理的事件 (Emitted/Handled events).
-- `@DEF`: **Term**. 定义/概念 (Definition/Concept).
-- `@TERM`: **Glossary**. 术语定义 (Term definition).
 - `@TECH`: **Technology**. 技术栈信息 (Stack info).
-- `@STACK`: **Stack**. 依赖/版本 (Dependencies/Versions).
-- `@ANALYSIS`: **Analysis**. 洞察/指标 (Insights/Metrics).
 
-### Evolutionary (演进类)
-- `!TODO`: **Debt**. 已知问题 (Known issue).
-- `@PLAN`: **Roadmap**. 未来计划 (Future plan).
-- `@BACKLOG`: **Backlog**. 待办事项 (Future tasks).
-- `@MEMORY`: **ADR**. 决策记录 (Decision record).
-- `@ADR`: **Decision**. 决策记录 (Record of decisions).
-- `@DEPRECATED`: **No**. 请勿使用 (Do not use).
-- `@EXPERIMENTAL`: **WIP**. 不稳定 (Unstable).
-- `@LEGACY`: **Legacy**. 旧代码 (Old code).
+### Contract (契约类)
+- `!RULE`: **Constraint**. 强制规则 (Mandatory rule). 支持 `[CRITICAL]` 属性。
+- `!CONST`: **Invariant**. 不可变事实 (Immutable fact).
+- `!LIMIT`: **Boundary**. 技术边界 (Technical limits).
+
+### Memory (记忆类)
+- `@ADR`: **Decision**. 架构决策记录 (Architecture Decision Record). 取代 `@MEMORY`, `@DECISION`.
+- `!TODO`: **Plan**. 待办/债务 (Tasks/Debt). 取代 `@BACKLOG`, `@PLAN`.
+- `@REF`: **Reference**. 长效引用 (Long-term reference).
+- `# @NDOC:OBSERVE`: **Observation**. 观察者快照 (Observation Snapshot).
 
 ### Meta (元数据类)
-- `@META`: **Metadata**. 文件属性 (File attributes).
-- `@CONFIG`: **Configuration**. 设置/规则 (Settings/Rules).
-- `@CHECK_IGNORE`: **Audit Ignore**. 审计忽略 (Audit Ignore).
 - `@CONTEXT`: **Context**. 范围定义 (Scope definition).
-- `@TAGS`: **Tag Def**. 标签字典 (Tag dictionary).
 - `@SYNTAX`: **Syntax**. DSL 规则 (DSL rules).
-- `@OP`: **Operator**. DSL 操作符 (DSL operators).
-- `@TOOL`: **Tooling**. CLI 指令 (CLI instructions).
+- `@CONFIG`: **Configuration**. 设置/规则 (Settings/Rules).
+- `@DEPRECATED`: **No**. 请勿使用 (Do not use).
+- `@EXPERIMENTAL`: **WIP**. 不稳定 (Unstable).
+
+### Structural (结构类 - Auto)
+- `@AGGREGATE`: **Recursive**. 包含子目录 (Include subdirs).
+- `@MAP`: **Navigation**. 链接/结构 (Links/Structure).
+- `@graph`: **Dependency**. 依赖关系 (Dependencies).
 
 ### Live Markers (自动仪表盘)
-- `<!-- NIKI_AUTO_DOC_START -->`: **Generic**. 自动生成块开始 (Start of auto-gen block).
-- `<!-- NIKI_AUTO_DOC_END -->`: **Generic**. 自动生成块结束 (End of auto-gen block).
-- `<!-- NIKI_TODO_START -->`: **Todo**. 任务聚合开始 (Start of task aggregation).
-- `<!-- NIKI_CTX_START -->`: **Context**. 实时上下文开始 (Start of live context).
-- `<!-- NIKI_MAP_START -->`: **Map**. 文件树开始 (Start of file tree).
-- `<!-- NIKI_AUTO_MEMORIES_START -->`: **Memories**. 自动记忆块开始 (Start of memory block).
-- `<!-- NIKI_AUTO_MEMORIES_END -->`: **Memories**. 自动记忆块结束 (End of memory block).
-
-### Memory Markers (代码记忆标记)
-> 嵌入代码中的特殊注释，用于提取上下文记忆。
-- `!RULE`: **Constraint**. 强制规则，提取至 _AI.md (Rule to enforce).
-- `!WARN`: **Pitfall**. 潜在陷阱，提取至 _AI.md (Known issue/warning).
-- `!INTENT`: **Rationale**. 设计意图，提取至 _AI.md (Design intent).
+- `<!-- NIKI_AUTO_DOC_START -->`: **Generic**. 自动生成块 (Auto-gen block).
+- `<!-- NIKI_TODO_START -->`: **Task**. 任务聚合 (Task aggregation).
+- `<!-- NIKI_MEMORIES_START -->`: **Memory**. 记忆聚合 (Memory aggregation).
 
 ### @DISCOVERED
-> 从文件头自动发现的标签。
-- `@UNKNOWN`: **Unknown**. 占位符 (Placeholder).
-- `@TODO`: **Unreviewed**. 发现于 [_NEXT.md] (Found in ...).
+> 自动发现的潜在概念 (Automatically discovered concepts).
+- `@UNKNOWN`: **Placeholder**. 未定义标签 (Undefined tag).

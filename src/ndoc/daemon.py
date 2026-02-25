@@ -1,3 +1,15 @@
+# <NIKI_AUTO_HEADER_START>
+# ------------------------------------------------------------------------------
+# 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# *   **Proactive Capability Check**: `entry.py` serves as the primary gatekeeper. It must invoke `capability_flow` to ...
+# *   **Dynamic Watchdog**: `daemon.py` monitors file system events. When a new file type is detected (e.g., a `.rs` fi...
+# *   **CLI Robustness**: All CLI commands (including `lsp`) must handle missing capabilities gracefully, either by att...
+# *   **LSP Protocol Integrity**: `entry.py`'s `server` command MUST NOT print anything to `stdout` other than JSON-RPC...
+# *   **Context Awareness**: `lsp_server.py` implements "Thinking Context" via `textDocument/hover`, aggregating rules ...
+# ------------------------------------------------------------------------------
+# <NIKI_AUTO_HEADER_END>
 """
 Daemon: Live Context Watcher.
 守护进程：实时上下文监听器。
@@ -12,7 +24,8 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 from ndoc.models.config import ProjectConfig
-from ndoc.flows import map_flow, context_flow, tech_flow, todo_flow, symbols_flow, data_flow, deps_flow, archive_flow, capability_flow
+from ndoc.flows import map_flow, context_flow, todo_flow, symbols_flow, data_flow, deps_flow, archive_flow, capability_flow, arch_flow
+from ndoc.brain.hippocampus import Hippocampus, ActionType
 
 class DocChangeHandler(FileSystemEventHandler):
     """
@@ -26,6 +39,7 @@ class DocChangeHandler(FileSystemEventHandler):
         self.timer: threading.Timer = None
         self.dirty_paths: Set[Path] = set()
         self.needs_structure_update = False
+        self.hippocampus = Hippocampus() # Short-term memory
 
     def on_any_event(self, event: FileSystemEvent):
         # 1. Ignore directories (watchdog sends dir events, but we care about files mostly)
@@ -47,6 +61,13 @@ class DocChangeHandler(FileSystemEventHandler):
 
         # 4. Collect Changes
         print(f"[Watch] Detected change: {event.event_type} {src_path.name}")
+        
+        # Record to Hippocampus
+        action = ActionType.EDIT
+        if event.event_type == 'created': action = ActionType.OPEN # Approximation
+        elif event.event_type == 'deleted': action = ActionType.CLOSE # Approximation
+        
+        self.hippocampus.record(str(src_path), action)
         
         if event.is_directory or event.event_type in ['created', 'deleted', 'moved']:
             self.needs_structure_update = True
@@ -81,6 +102,12 @@ class DocChangeHandler(FileSystemEventHandler):
         current_dirty_paths = list(self.dirty_paths)
         structure_update = self.needs_structure_update
         
+        # Log Hippocampus Heatmap
+        heat_map = self.hippocampus.get_file_heat()
+        if heat_map:
+            top_files = sorted(heat_map.items(), key=lambda x: x[1], reverse=True)[:3]
+            print(f"[Brain] 🔥 Hot files: {', '.join([Path(f).name for f, _ in top_files])}")
+        
         self.dirty_paths.clear()
         self.needs_structure_update = False
         
@@ -114,8 +141,7 @@ class DocChangeHandler(FileSystemEventHandler):
 
             # 4. Global Metadata Flows (Cached)
             print("[Watch] Updating Tech Stack, Dependencies, Symbol Index and Data Registry...")
-            tech_flow.run(self.config)
-            deps_flow.run(self.config)
+            arch_flow.run(self.config) # Replaces tech_flow and deps_flow
             symbols_flow.run(self.config)
             data_flow.run(self.config)
             

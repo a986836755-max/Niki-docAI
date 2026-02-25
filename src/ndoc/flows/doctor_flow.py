@@ -1,3 +1,13 @@
+# <NIKI_AUTO_HEADER_START>
+# ------------------------------------------------------------------------------
+# 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# *   **Dynamic Capability Loading**: New flows (like `capability_flow.py`) must be registered in `entry.py` to ensure ...
+# *   **Auto-Provisioning**: `capability_flow` acts as the project's "immune system", proactively detecting and install...
+# *   **Doctor Integration**: `doctor_flow` should reuse the `CapabilityManager` logic to verify system health, rather ...
+# ------------------------------------------------------------------------------
+# <NIKI_AUTO_HEADER_END>
 """
 Flow: System Diagnostics.
 业务流：环境诊断 (Environment Doctor).
@@ -9,7 +19,10 @@ import shutil
 from pathlib import Path
 from typing import List, Tuple
 
-from ndoc.models.config import ProjectConfig
+from ..models.config import ProjectConfig
+from ..core import capabilities
+from ..core.capabilities import CapabilityManager
+from ..parsing import langs
 
 def run(config: ProjectConfig) -> bool:
     """
@@ -86,21 +99,38 @@ def _check_import(module_name: str) -> bool:
 def _check_tree_sitter_bindings() -> bool:
     try:
         from tree_sitter import Parser
-        from ..atoms.capabilities import CapabilityManager
-        
-        # Check basic mechanism by checking python language availability
-        # Use auto_install=False to just check, or True to ensure minimal viability?
-        # The user wants auto-install, so let's try to ensure python binding works as a baseline.
         
         print("  [INFO] Checking Tree-sitter capability mechanism...")
-        lang = CapabilityManager.get_language('python', auto_install=True)
         
-        if not lang:
-            _warn("Tree-sitter Python binding could not be installed/loaded.")
-            return False # If basic python binding fails, something is wrong with pip/network
+        # 1. Check Python binding as baseline smoke test (ensure core mechanism works)
+        # We try to install Python binding if missing because it's the host language
+        py_lang = CapabilityManager.get_language('python', auto_install=True)
+        if not py_lang:
+            _fail("Tree-sitter Python binding failed (Core mechanism issue)")
+            return False
             
-        parser = Parser(lang)
-        _pass("Tree-sitter mechanism operational (Python binding verified)")
+        parser = Parser(py_lang)
+        _pass("Core binding (Python) verified")
+        
+        # 2. Check other registered languages
+        installed = []
+        missing = []
+        
+        for lang_name in sorted(CapabilityManager.LANGUAGE_PACKAGES.keys()):
+            if lang_name == 'python': continue
+            
+            l = CapabilityManager.get_language(lang_name, auto_install=False)
+            if l:
+                installed.append(lang_name)
+            else:
+                missing.append(lang_name)
+                
+        if installed:
+            print(f"  [OK] Installed languages: {', '.join(installed)}")
+        
+        if missing:
+            print(f"  [INFO] Available (Not Installed): {', '.join(missing)}")
+            
         return True
     except Exception as e:
         _fail(f"Tree-sitter binding error: {e}")

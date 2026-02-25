@@ -1,47 +1,75 @@
 {
-    "name": "ndoc-ai",
-    "displayName": "NDoc AI",
-    "description": "Semantic Documentation and Symbol Indexing for Niki projects",
-    "version": "0.1.0",
-    "publisher": "nikidice",
-    "engines": {
-        "vscode": "^1.75.0"
-    },
-    "categories": [
-        "Programming Languages",
-        "Documentation"
+  "name": "nk-doc-ai-vscode",
+  "displayName": "Niki-docAI VS Code Extension",
+  "description": "IDE Integration for Niki-docAI: Context-Aware Memory & Thinking Interface",
+  "version": "0.1.1",
+  "publisher": "niki",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/niki/nk-doc-ai"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:python",
+    "onLanguage:csharp",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:cpp",
+    "onLanguage:c",
+    "workspaceContains:_RULES.md"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ndoc.showContext",
+        "title": "Niki: Show Thinking Context"
+      },
+      {
+        "command": "ndoc.restartServer",
+        "title": "Niki: Restart LSP Server"
+      }
     ],
-    "activationEvents": [
-        "onLanguage:python",
-        "onLanguage:dart",
-        "onLanguage:javascript",
-        "onLanguage:typescript"
-    ],
-    "main": "./out/extension.js",
-    "contributes": {
-        "configuration": {
-            "type": "object",
-            "title": "NDoc AI",
-            "properties": {
-                "ndoc.pythonPath": {
-                    "type": "string",
-                    "default": "python",
-                    "description": "Path to the Python interpreter"
-                }
-            }
+    "configuration": {
+      "type": "object",
+      "title": "Niki-docAI",
+      "properties": {
+        "ndoc.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to the Python interpreter to run ndoc."
+        },
+        "ndoc.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging."
+        },
+        "ndoc.server.localPath": {
+          "type": "string",
+          "default": "",
+          "description": "[Dev Mode] Path to local nk_doc_ai source code (e.g., E:/work/appcodes/nk_doc_ai). If set, uses this source directly instead of installed package."
         }
-    },
-    "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./"
-    },
-    "dependencies": {
-        "vscode-languageclient": "^8.1.0"
-    },
-    "devDependencies": {
-        "@types/node": "^18.14.6",
-        "@types/vscode": "^1.75.0",
-        "typescript": "^4.9.5"
+      }
     }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^18.14.6",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^3.7.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
 }

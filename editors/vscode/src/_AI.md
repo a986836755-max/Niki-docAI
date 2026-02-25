@@ -1,6 +1,6 @@
 # Context: src
 > @CONTEXT: Local | src | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-02-24 14:59:54
+> 最后更新 (Last Updated): 2026-02-25 12:15:45
 
 ## !RULE
 
@@ -13,12 +13,15 @@
 ## @STRUCTURE
 *   **[extension.ts](extension.ts#L1)**
     *   `@API`
-        *   `PUB:` FUN **activate**`(context: vscode.ExtensionContext)`
+        *   `PUB:` FUN **activate**`(context: ExtensionContext)` [🔗28]
+        *   `VAL->` VAR **serverArgs**` = ['-m', 'ndoc', 'server']` [🔗12]
+        *   `VAL->` VAR **env**` = { ...process.env }` [🔗1844]
+        *   `VAL->` VAR **devRoot**` = "e:\\work\\appcodes\\nk_doc_ai"` [🔗16]
         *   `VAL->` VAR **serverOptions**` = {
-        command: pythonPath,
-        args: ['-m', 'ndoc.ls...`
+        command: serverExecutable,
+        args: [...serve...` [🔗14]
         *   `VAL->` VAR **clientOptions**` = {
         documentSelector: [
-            { scheme: 'file', ...`
-        *   `PUB:` FUN **deactivate**`() -> : Thenable<void> | undefined`
+            { scheme: 'file', ...` [🔗70]
+        *   `PUB:` FUN **deactivate**`() -> : Thenable<void> | undefined` [🔗18]
 <!-- NIKI_AUTO_Context_END -->
