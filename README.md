@@ -1,7 +1,11 @@
-# Niki-docAI
+# Niki-docAI 2.0 (Rebirth)
 
-> **Context Ops & Architecture Guard for AI-Assisted Development**
+> **Context Ops & Architecture Guard for AI-Assisted Development**  
 > **面向 AI 辅助开发的上下文运维与架构守护工具**
+
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/)
+[![Status](https://img.shields.io/badge/Status-Beta-orange.svg)]()
 
 ---
 
@@ -43,90 +47,35 @@ In the era of AI-assisted coding, we face three major pain points:
 
 Niki-docAI provides a suite of tools to automate "Context Ops":
 
+### Core Features (核心特性)
+
 *   **Automated Context Map (`_MAP.md`)**:
     Automatically generates a navigational map of your project structure with **Precise Line References** (e.g., `file.py#L1`), helping AI find the right files instantly.
     自动生成项目结构的导航地图，并包含**精确的行号引用**，帮助 AI 瞬间定位文件。
 
-*   **Dependency Graph (`_DEPS.md`)**:
-    Scans your code to generate real-time dependency graphs (Mermaid), ensuring the architecture view is always synced with reality.
-    扫描代码生成实时的依赖关系图，确保架构视图永远与现实同步。
+*   **Architecture Guard (`ndoc check`)**:
+    **[NEW in 2.0]** Enforce architecture rules (e.g., Layering) defined in `_RULES.md` using `!RULE`. Prevents "Architecture Drift" before it happens.
+    **[2.0 新功能]** 基于 `!RULE` 强制执行架构规则（如分层约束）。防止架构腐化。
 
-*   **Project Statistics (`_STATS.md`)**:
-    Provides insights into project scale, doc/code ratio, and AI context coverage.
-    提供项目规模、文档/代码比率及 AI 上下文覆盖率的统计洞察。
+*   **Circular Dependency Detection (`ndoc deps`)**:
+    **[NEW in 2.0]** Detects and reports circular dependencies in your codebase using Tarjan's algorithm.
+    **[2.0 新功能]** 自动检测并报告代码库中的循环依赖。
 
-*   **Task Tracking (`_NEXT.md`)**:
-    Aggregates TODOs and FIXMEs from source code into a prioritized roadmap.
-    自动聚合源码中的 TODO/FIXME，形成优先级明确的开发路线图。
+*   **Intelligent Retrieval (`ndoc prompt --focus`)**:
+    **[NEW in 2.0]** Uses **Vector Database (ChromaDB)** to semantic search related context, enabling AI to "recall" relevant code even if it's not open.
+    **[2.0 新功能]** 利用向量数据库进行语义检索，让 AI 能“回忆”起未打开的相关代码。
 
-*   **Recursive Context (`_AI.md`)**:
-    Generates local context summaries in every directory, creating a fractal knowledge base.
-    在每个目录下生成局部上下文摘要，构建分形的知识库。
+*   **Impact Analysis (`ndoc impact`)**:
+    **[NEW in 2.0]** Analyzes Git changes to predict which modules and tests are affected.
+    **[2.0 新功能]** 分析 Git 变更，智能预测受影响的模块和测试用例。
 
-### Key Features (关键特性)
-1. **Configurability (可配置化)**:
-    Unified config via `_RULES.md` (Documentation as Configuration).
-    通过 `_RULES.md` 进行统一配置（文档即配置）。
-    - *Reference `_RULES.md` for `!IGNORE`, `!INCLUDE`, and special keywords like `@AGGREGATE` and `@CHECK_IGNORE`.*
-    - *参阅 `_RULES.md` 了解 `!IGNORE`, `!INCLUDE` 以及 `@AGGREGATE`, `@CHECK_IGNORE` 等特殊关键字。*
-
-2. **Priority Weighting (优先级加权)**:
-    Use `@CORE` in file headers or docstrings to elevate importance for AI focus.
-    在文件头或文档注释中使用 `@CORE` 提升关键文件的 AI 关注度优先级。
-
-3. **Visibility Awareness (可见性感知)**:
-    Automatically captures `public`/`private`/`protected` modifiers and naming conventions (`_`, `#`, Go Uppercase) to distinguish API boundaries.
-    自动捕捉 `public`/`private`/`protected` 修饰符及命名规范（`_`, `#`, Go 大写），清晰界定 API 边界。
-
-4. **Persistence (持久性)**:
-    Respects user edits; never overwrites creative content.
-    尊重用户修改；绝不覆盖用户的创作内容。
-
-5. **Automation (自动化)**:
-    One-command maintenance (`ndoc all`).
-    一键自动化维护 (`ndoc all`)。
-
-6. **Recursive Deep Scan (递归深度扫描)**:
-    Deep dependency analysis across multi-language manifests and source code.
-    跨多语言配置清单与源码的深度依赖分析。
-
-7. **Multi-Language Support (多语言支持)**:
-    Built-in Tree-sitter integration for polyglot codebases.
-    内置 Tree-sitter 集成，支持多语言混合代码库。
-
-### Supported Languages (支持的语言)
-*   **Python** (`.py`) - AST, Imports & Visibility
-*   **Java** (`.java`) - AST, Packages & Visibility (New!)
-*   **C/C++** (`.cpp`, `.c`, `.h`, `.hpp`) - AST & Includes
-*   **JavaScript/TypeScript** (`.js`, `.ts`, `.jsx`, `.tsx`) - AST, Imports & Private Fields (#)
-*   **Go** (`.go`) - AST, Imports & Exported Symbols
-*   **Rust** (`.rs`) - AST, Imports & Visibility
-*   **Dart** (`.dart`) - AST & Imports (pubspec.yaml)
-*   **C#** (`.cs`, `.csproj`) - AST & Usings (PackageReference)
-*   **CMake** (`.cmake`, `CMakeLists.txt`) - FetchContent & find_package
-*   **Manifests**: `requirements.txt`, `pyproject.toml`, `package.json`, `pubspec.yaml`, `CMakeLists.txt`, `.csproj`
+*   **Semantic Skeleton (`ndoc skeleton`)**:
+    **[NEW in 2.0]** Generates high-density code skeletons (interfaces only), reducing token usage by 70%.
+    **[2.0 新功能]** 生成高密度的代码骨架（仅接口），降低 70% 的 Token 消耗。
 
 ---
 
-## 4. Vision (未来愿景)
-
-We believe that **Documentation is the API for AI Agents**.
-
-Niki-docAI aims to become the standard **Protocol** for how projects expose their internal structure to AI. In the future, we plan to support:
-
-*   **Semantic Search Indexing**: Pre-computed vector embeddings for the codebase.
-*   **Active Architectural Linter**: Preventing "Architecture Drift" before code is committed.
-*   **Deeper Semantic Analysis**: LSP Integration for cross-file references and precise call graphs.
-
-我们相信 **文档是 AI Agent 的 API**。Niki-docAI 旨在成为项目向 AI 暴露其内部结构的标准 **协议**。在未来，我们计划支持：
-
-*   **语义搜索索引**：为代码库预计算向量嵌入 (Vector Embeddings)。
-*   **主动架构 Linter**：在代码提交前防止“架构漂移” (Architecture Drift)。
-*   **深度语义分析**：通过 LSP 集成，实现跨文件引用分析和精准调用图。
-
----
-
-## 5. Installation & Quick Start (安装与快速开始)
+## 4. Installation & Quick Start (安装与快速开始)
 
 ### Installation (安装)
 
@@ -137,73 +86,83 @@ cd nk_doc_ai
 
 # Install / 安装
 pip install .
-
-# For development (Editable mode) / 开发模式安装
-pip install -e .
 ```
 
 ### Quick Start (快速开始)
 
-**1. Basic Usage (基础用法)**
+**1. Initialize (初始化)**
 
 ```bash
 # Initialize Niki-docAI (Create _RULES.md, _SYNTAX.md)
 # 初始化项目（生成配置和语法手册）
 ndoc init
+```
 
-# Generate/Update ALL documentation (Map, Context, Tech, Todo, Deps)
-# 生成/更新所有文档
+**2. Generate Context (生成上下文)**
+
+```bash
+# Generate/Update ALL documentation (Arch + Context + Status + Deps)
+# 一键生成所有文档
 ndoc all
-
-# Start Watch Mode (Auto-update on file change)
-# 启动守护进程（文件变更时自动更新）
-ndoc watch
 ```
 
-**2. Maintenance & Diagnostics (维护与诊断)**
+**3. AI Assistance (AI 辅助)**
 
 ```bash
-# Update Niki-docAI to the latest version
-# 更新 Niki-docAI 到最新版本
-ndoc update
+# Generate context prompt for a specific file (Smart Retrieval)
+# 为特定文件生成 AI 提示词（智能检索模式）
+ndoc prompt src/main.py --focus
 
-# View Project Statistics (File count, Token usage, Context coverage)
-# 查看项目统计（文件数、Token 估算、上下文覆盖率）
-ndoc stats
-
-# Verify documentation artifacts and rules
-# 验证文档完整性与规则合规性
-ndoc verify
-
-# Diagnose environment and configuration health
-# 诊断环境与配置健康度
-ndoc doctor
+# View high-density skeleton of a file
+# 查看文件的高密度骨架
+ndoc skeleton src/utils.py
 ```
 
-**⚠️ Safety Operations (安全操作与警告)**
+**4. Architecture Governance (架构治理)**
 
 ```bash
-# Clean/Reset generated documentation artifacts
-# 清理/重置生成的文档
-# ⚠️ WARNING: Deletes ALL _AI.md, _MAP.md, etc. recursively!
-# ⚠️ 警告：这将递归删除所有的 _AI.md, _MAP.md 等生成文件！
-ndoc clean
-# Use with target to limit scope:
-# ndoc clean src/
+# Check for architecture violations
+# 检查架构违规
+ndoc check
 
-# Force Initialize
-# 强制初始化
-# ⚠️ WARNING: Overwrites _RULES.md and _SYNTAX.md!
-# ⚠️ 警告：这将覆盖现有的 _RULES.md 和 _SYNTAX.md 配置！
-ndoc init --force
+# Detect circular dependencies
+# 检测循环依赖
+ndoc deps
+
+# Analyze impact of current changes
+# 分析当前变更的影响范围
+ndoc impact
 ```
 
-**3. Advanced: Granular Updates (高级：单独更新)**
+---
 
-```bash
-ndoc map      # Update Project Map (_MAP.md)
-ndoc context  # Update Recursive Context (_AI.md)
-ndoc todo     # Scan Todos (_NEXT.md)
-ndoc deps     # Update Dependency Graph (_DEPS.md)
-ndoc tech     # Update Tech Stack (_TECH.md)
+## 5. Configuration (配置)
+
+Configure your project via `_RULES.md`:
+
+```markdown
+## Scanning Rules
+- `!IGNORE`: node_modules, dist, build, .git
+
+## Architecture Rules
+- `!RULE`: @LAYER(core) CANNOT_IMPORT @LAYER(ui)
+- `!RULE`: @FORBID(hardcoded_paths)
 ```
+
+---
+
+## 6. Supported Languages (支持的语言)
+
+Built-in Tree-sitter integration for polyglot codebases:
+*   **Python** (`.py`)
+*   **JavaScript/TypeScript** (`.js`, `.ts`, `.jsx`, `.tsx`)
+*   **Java** (`.java`)
+*   **Go** (`.go`)
+*   **C/C++** (`.cpp`, `.h`)
+*   **C#** (`.cs`)
+*   **Rust** (`.rs`)
+*   **Dart** (`.dart`)
+
+---
+
+*Powered by Niki-docAI Team*
