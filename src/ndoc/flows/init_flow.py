@@ -32,5 +32,11 @@ def run(config: ProjectConfig, force: bool = False) -> bool:
     if syntax_flow.run(config, force=force):
         print("✅ Checked _SYNTAX.md")
         
+    # 3. Ensure _GUIDE.md (Instructions for AI)
+    if config_flow.ensure_guide_file(config.scan.root_path, force=force):
+        print("✅ Created _GUIDE.md (Instructions for AI)")
+    else:
+        print("ℹ️  _GUIDE.md already exists")
+        
     print("\nInitialization complete. You can now run 'ndoc all' to generate documentation.")
     return True

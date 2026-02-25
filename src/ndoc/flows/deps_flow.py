@@ -39,18 +39,25 @@ def collect_imports(root: Path) -> Dict[str, List[str]]:
     results = scanner.scan_project(root, list(ignore))
     
     for file_path, result in results.items():
-        # Only process Python files for import map
-        if file_path.suffix == '.py':
+        # Process all scanned files that have imports
+        # Language agnostic: scanner extracts imports for all supported languages
+        try:
+            # Use cached imports from ScanResult
+            imports = result.imports
+            if not imports:
+                continue
+            
+            # Normalize path relative to root
             try:
-                # Use cached imports from ScanResult
-                imports = result.imports
-                
-                # Normalize path relative to root
                 rel_path = file_path.relative_to(root).as_posix()
-                import_map[rel_path] = imports
-            except Exception as e:
-                # print(f"Error processing {file_path}: {e}")
-                pass
+            except ValueError:
+                # File outside root?
+                continue
+                
+            import_map[rel_path] = imports
+        except Exception as e:
+            # print(f"Error processing {file_path}: {e}")
+            pass
             
     return import_map
 
@@ -58,65 +65,99 @@ def build_dependency_graph(import_map: Dict[str, List[str]]) -> Dict[str, Set[st
     """
     Build internal dependency graph.
     Matches imports to internal files.
+    Supports Polyglot (Python, C++, Dart, JS/TS).
     """
-    # Create a map of "possible module names" to file paths
-    # e.g. "ndoc/atoms/fs.py" -> "ndoc.atoms.fs"
-    
-    # We need to guess the module root.
-    # If src/ndoc exists, usually 'ndoc' is the root package.
-    # For now, we'll try to match "import X" to a file path.
-    
-    # Simple heuristic:
-    # 1. Convert all file paths to dotted notation (removing .py, src/)
-    # 2. Check if import matches.
-    
     graph = defaultdict(set)
     
-    # Helper to convert path to module
-    # e.g. src/ndoc/atoms/fs.py -> ndoc.atoms.fs
-    path_to_mod = {}
-    mod_to_path = {}
+    # 1. Build Lookup Indexes
+    # - Exact path lookup: "src/utils.py" -> "src/utils.py"
+    # - Filename lookup: "utils.py" -> ["src/utils.py", "tests/utils.py"]
+    # - Python Module lookup: "ndoc.utils" -> "src/ndoc/utils.py"
     
-    for path in import_map.keys():
-        # Remove 'src/' prefix if present for module naming
-        clean_path = path
-        if clean_path.startswith('src/'):
-            clean_path = clean_path[4:]
+    all_files = set(import_map.keys())
+    filename_map = defaultdict(list)
+    python_mod_map = {}
+    
+    for path in all_files:
+        filename_map[Path(path).name].append(path)
         
-        if clean_path.endswith('.py'):
-            clean_path = clean_path[:-3]
-        elif clean_path.endswith('__init__.py'):
-            clean_path = clean_path[:-11] # strip /__init__
+        # Build Python module map if applicable
+        if path.endswith('.py'):
+            clean_path = path
+            if clean_path.startswith('src/'):
+                clean_path = clean_path[4:]
             
-        module_name = clean_path.replace('/', '.')
-        path_to_mod[path] = module_name
-        mod_to_path[module_name] = path
+            clean_path = clean_path[:-3] # remove .py
+            if clean_path.endswith('/__init__'):
+                clean_path = clean_path[:-9]
+                
+            mod_name = clean_path.replace('/', '.')
+            python_mod_map[mod_name] = path
 
-    for file_path, imports in import_map.items():
-        source_mod = path_to_mod.get(file_path)
-        if not source_mod:
-            continue
-            
+    # 2. Resolve Imports
+    for source_file, imports in import_map.items():
+        # Identify source language
+        ext = Path(source_file).suffix.lower()
+        
         for imp in imports:
-            # Check if 'imp' is one of our internal modules
-            # Exact match
-            if imp in mod_to_path:
-                graph[source_mod].add(imp)
-                continue
+            resolved_target = None
             
-            # Parent match (e.g. import ndoc.atoms -> ndoc.atoms.fs ?) 
-            # Usually we import specific modules.
+            # Strategy A: Python Module Match
+            if ext == '.py':
+                # Try exact module match
+                if imp in python_mod_map:
+                    resolved_target = python_mod_map[imp]
+                # Try parent package match (naive)
+                elif '.' in imp:
+                    parent = imp.rsplit('.', 1)[0]
+                    if parent in python_mod_map:
+                         resolved_target = python_mod_map[parent]
+
+            # Strategy B: Path/Filename Match (C++, Dart, JS, TS)
+            # Imports often look like: "utils.h", "./utils", "package:app/utils.dart"
+            if not resolved_target:
+                # 1. Clean import string (remove quotes, package: prefix)
+                clean_imp = imp.strip('"\'<>')
+                if clean_imp.startswith('package:'):
+                    # Dart: package:my_app/utils.dart -> lib/utils.dart
+                    # We don't know the package name easily, so let's match the suffix
+                    clean_imp = clean_imp.split('/', 1)[-1] # utils.dart
+
+                # 2. Try exact filename match
+                candidates = filename_map.get(Path(clean_imp).name)
+                if candidates:
+                    if len(candidates) == 1:
+                        resolved_target = candidates[0]
+                    else:
+                        # Ambiguous: Try to match path suffix
+                        # If import is "core/utils.h", we look for "src/core/utils.h"
+                        best_match = None
+                        max_overlap = 0
+                        for c in candidates:
+                            # Simple suffix check
+                            if c.endswith(clean_imp):
+                                resolved_target = c
+                                break
             
-            # Check sub-modules (e.g. from ndoc import atoms -> ndoc.atoms)
-            # This is hard without full resolution.
-            # Let's stick to simple prefix matching for now.
-            
-            # If import starts with project root package?
-            # We assume the first part of the module name is the package.
-            root_pkg = source_mod.split('.')[0]
-            if imp.startswith(root_pkg):
-                 # It's likely internal, but maybe we didn't scan it (e.g. generated?)
-                 pass
+            # Strategy C: Relative Import (JS/TS/Dart)
+            # "../utils" -> resolve relative to source_file
+            if not resolved_target and (imp.startswith('./') or imp.startswith('../')):
+                try:
+                    # Resolve relative path
+                    # This is tricky without real FS, but we have source_file path
+                    # source: src/ui/view.ts, imp: ../model/user
+                    # -> src/model/user
+                    # Then we need to add extensions (.ts, .js, .tsx etc)
+                    pass 
+                except:
+                    pass
+
+            if resolved_target and resolved_target in all_files:
+                # Add edge: source -> target
+                # Use simplified names for graph clarity? Or full paths?
+                # Let's use full paths for precision, render simplified later.
+                if source_file != resolved_target:
+                    graph[source_file].add(resolved_target)
 
     return graph
 

@@ -30,9 +30,18 @@ def run(config: ProjectConfig) -> bool:
     print(f"🧠 Scanning for project memories in {root_path}...")
     
     # 1. Scan all files
+    # Fix: config.scan.extensions instead of include_extensions
+    # Also need to create a proper FileFilter instance
+    # fs.FileFilter expects: ignore_patterns: Set[str], allow_extensions: Set[str]
+    # But wait, fs.FileFilter is a dataclass.
+    # We need to construct it properly.
+    
+    # Let's check fs.py signature again.
+    # @dataclass class FileFilter: ignore_patterns, allow_extensions, spec
+    
     filter_config = fs.FileFilter(
         ignore_patterns=set(config.scan.ignore_patterns),
-        allow_extensions=set(config.scan.include_extensions)
+        allow_extensions=set(config.scan.extensions)
     )
     
     decisions = []

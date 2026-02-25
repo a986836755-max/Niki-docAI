@@ -1,0 +1,360 @@
+{
+  "rules": {
+    "<!-- NIKI_AUTO_MEMORIES_START": [
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\editors\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\editors\\vscode\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\editors\\vscode\\out\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\editors\\vscode\\src\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\samples\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\scripts\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\ndoc\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\ndoc\\atoms\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\ndoc\\flows\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\ndoc\\models\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\ndoc\\parsing\\ast\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\ndoc\\parsing\\deps\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\ndoc\\parsing\\langs\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\niki_doc_ai.egg-info\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\tests\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\tests\\fixtures\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "NIKI_AUTO_MEMORIES_START"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n\n<!-- NIKI_AUTO_MEMORIES_START -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\tools\\_AI.md",
+        "weight": 1
+      }
+    ],
+    "<!-- Add local rules here": [
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "Add",
+            "local",
+            "rules",
+            "here"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n<!-- Add local rules here -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\ndoc\\brain\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "Add",
+            "local",
+            "rules",
+            "here"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n<!-- Add local rules here -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\ndoc\\core\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "Add",
+            "local",
+            "rules",
+            "here"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n<!-- Add local rules here -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\ndoc\\interfaces\\_AI.md",
+        "weight": 1
+      },
+      {
+        "tag": {
+          "name": "!RULE",
+          "args": [
+            "<!--",
+            "Add",
+            "local",
+            "rules",
+            "here"
+          ],
+          "line": 3,
+          "raw": "## !RULE\n<!-- Add local rules here -->",
+          "attributes": {}
+        },
+        "source_file": "E:\\work\\appcodes\\nk_doc_ai\\src\\ndoc\\parsing\\_AI.md",
+        "weight": 1
+      }
+    ]
+  },
+  "keywords": {
+    "<!--": [
+      "<!-- Add local rules here",
+      "<!-- NIKI_AUTO_MEMORIES_START"
+    ],
+    "niki_auto_memories_start": [
+      "<!-- NIKI_AUTO_MEMORIES_START"
+    ],
+    "local": [
+      "<!-- Add local rules here"
+    ],
+    "rules": [
+      "<!-- Add local rules here"
+    ],
+    "here": [
+      "<!-- Add local rules here"
+    ]
+  }
+}

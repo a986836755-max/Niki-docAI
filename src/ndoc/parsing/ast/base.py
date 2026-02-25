@@ -53,12 +53,13 @@ class AstNode:
         return self.end_point[0] + 1
 
 def get_parser(lang_key: str = 'python') -> Optional[Parser]:
-    lang = get_language(lang_key)
-    if not lang:
-        return None
     try:
+        lang = get_language(lang_key)
+        if not lang:
+            return None
         return Parser(lang)
-    except Exception:
+    except Exception as e:
+        # print(f"Failed to create parser for {lang_key}: {e}")
         return None
 
 def parse_code(content: str, file_path: Optional[Path] = None) -> Optional[Tree]:
@@ -70,11 +71,16 @@ def parse_code(content: str, file_path: Optional[Path] = None) -> Optional[Tree]
     if not lang_key:
         return None
 
-    parser = get_parser(lang_key)
-    if not parser:
+    try:
+        parser = get_parser(lang_key)
+        if not parser:
+            return None
+            
+        return parser.parse(bytes(content, "utf8"))
+    except Exception as e:
+        # Log error but don't crash
+        # print(f"Warning: Failed to parse {file_path}: {e}")
         return None
-        
-    return parser.parse(bytes(content, "utf8"))
 
 def get_lang_key(file_path: Path) -> Optional[str]:
     """

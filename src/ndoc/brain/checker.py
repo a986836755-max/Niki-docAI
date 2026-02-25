@@ -54,27 +54,43 @@ def check_file(file: FileContext, index: SemanticIndex) -> List[Violation]:
         # Use the first entry as the definition of the rule
         rule_tag = entries[0].tag
         
+        # Helper to access attributes safely (dict or object)
+        def get_attr(obj, key):
+            if isinstance(obj, dict):
+                return obj.get("attributes", {}).get(key)
+            return obj.attributes.get(key)
+            
+        def get_name(obj):
+            if isinstance(obj, dict):
+                return obj.get("name")
+            return obj.name
+            
+        def get_args(obj):
+            if isinstance(obj, dict):
+                return obj.get("args", [])
+            return obj.args
+        
         # Avoid checking same rule multiple times
         if rule_key in checked_rules:
             continue
         checked_rules.add(rule_key)
         
         # 1. Check FORBID
-        if "FORBID" in rule_tag.attributes:
-            forbidden_tag = rule_tag.attributes["FORBID"]
+        forbidden_tag = get_attr(rule_tag, "FORBID")
+        if forbidden_tag:
             # Check if file has this tag
             for ft in file.tags:
                 if ft.name == forbidden_tag or (ft.name.startswith("@") and ft.name[1:] == forbidden_tag):
                     violations.append(Violation(
                         file_path=str(file.path),
-                        rule_name=rule_tag.name,
+                        rule_name=get_name(rule_tag),
                         message=f"Rule '{rule_key}' forbids tag '{forbidden_tag}'",
-                        severity="ERROR" if "CRITICAL" in rule_tag.attributes else "WARNING"
+                        severity="ERROR" if get_attr(rule_tag, "CRITICAL") else "WARNING"
                     ))
                     
         # 2. Check REQUIRE
-        if "REQUIRE" in rule_tag.attributes:
-            required_tag = rule_tag.attributes["REQUIRE"]
+        required_tag = get_attr(rule_tag, "REQUIRE")
+        if required_tag:
             has_tag = False
             for ft in file.tags:
                 if ft.name == required_tag or (ft.name.startswith("@") and ft.name[1:] == required_tag):
@@ -84,19 +100,20 @@ def check_file(file: FileContext, index: SemanticIndex) -> List[Violation]:
             if not has_tag:
                 violations.append(Violation(
                     file_path=str(file.path),
-                    rule_name=rule_tag.name,
+                    rule_name=get_name(rule_tag),
                     message=f"Rule '{rule_key}' requires tag '{required_tag}'",
-                    severity="ERROR" if "CRITICAL" in rule_tag.attributes else "WARNING"
+                    severity="ERROR" if get_attr(rule_tag, "CRITICAL") else "WARNING"
                 ))
 
         # 3. Check LAYER (Architecture Guard)
         # Format: !RULE: @LAYER(source) CANNOT_IMPORT @LAYER(target)
-        if rule_tag.name == "!RULE" and rule_tag.args and "CANNOT_IMPORT" in rule_tag.args:
+        if get_name(rule_tag) == "!RULE" and get_args(rule_tag) and "CANNOT_IMPORT" in get_args(rule_tag):
             # Parse args: ['@LAYER(brain)', 'CANNOT_IMPORT', '@LAYER(interfaces)']
             try:
-                idx = rule_tag.args.index("CANNOT_IMPORT")
-                source_layer = rule_tag.args[idx-1]
-                target_layer = rule_tag.args[idx+1]
+                args = get_args(rule_tag)
+                idx = args.index("CANNOT_IMPORT")
+                source_layer = args[idx-1]
+                target_layer = args[idx+1]
                 
                 # Check if current file belongs to source_layer
                 # Assuming layer is defined by directory name or @LAYER tag
@@ -107,7 +124,7 @@ def check_file(file: FileContext, index: SemanticIndex) -> List[Violation]:
                         if _import_in_layer(imp, target_layer):
                             violations.append(Violation(
                                 file_path=str(file.path),
-                                rule_name=rule_tag.name,
+                                rule_name=get_name(rule_tag),
                                 message=f"Layer violation: '{source_layer}' cannot import '{target_layer}' (found '{imp}')",
                                 severity="ERROR"
                             ))
