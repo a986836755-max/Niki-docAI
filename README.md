@@ -3,7 +3,7 @@
 > **Context Ops & Architecture Guard for AI-Assisted Development**
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.9+-green.svg)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/Status-Beta-orange.svg)]()
 
 [**中文文档**](README_zh.md) | [**English**](README.md)
@@ -49,7 +49,7 @@ Niki-docAI provides a suite of tools to automate "Context Ops":
     **[NEW in 2.0]** Enforce architecture rules (e.g., Layering) defined in `_RULES.md` using `!RULE`. Prevents "Architecture Drift" before it happens.
 
 *   **Circular Dependency Detection (`ndoc deps`)**:
-    **[NEW in 2.0]** Detects and reports circular dependencies in your codebase using Tarjan's algorithm.
+    **[NEW in 2.0]** Detects and reports circular dependencies in your codebase using Tarjan's algorithm. Supports scoped dependency analysis for specific modules.
 
 *   **Intelligent Retrieval (`ndoc prompt --focus`)**:
     **[NEW in 2.0]** Uses **Vector Database (ChromaDB)** to semantic search related context, enabling AI to "recall" relevant code even if it's not open.
@@ -60,110 +60,109 @@ Niki-docAI provides a suite of tools to automate "Context Ops":
 *   **Semantic Skeleton (`ndoc skeleton`)**:
     **[NEW in 2.0]** Generates high-density code skeletons (interfaces only), reducing token usage by 70%.
 
+*   **Data Registry (`ndoc data`)**:
+    **[NEW in 2.0]** Auto-extracts `dataclass`, `TypedDict`, `Enum`, `struct`, and `model` definitions into `_DATA.md`, creating a centralized data dictionary.
+
+*   **Quality Gates (`ndoc lint` / `ndoc typecheck`)**:
+    **[NEW in 2.0]** Integrated quality checks defined in `_RULES.md`, allowing you to run project-specific linting and type checking commands via a unified interface.
+
+*   **Memory Consolidation (`ndoc lesson`)**:
+    **[NEW in 2.0]** Extracts `@LESSON` tags from code comments into `_LESSONS.md`, serving as a project knowledge base and preventing repeat mistakes.
+
+*   **System Diagnostics (`ndoc doctor`)**:
+    **[NEW in 2.0]** Comprehensive environment check including OS, Python version, dependencies, Tree-sitter language bindings, and project configuration health.
+
 ---
 
-## 4. Installation & Quick Start
+## 4. Integration Guide (How to Use in Your Project)
 
-### Installation
+Niki-docAI consists of two parts: the **Core Tool (Python CLI)** and the **IDE Extension**.
 
+### Step 1: Install Core Tool (Python CLI)
+
+The `ndoc` CLI is the brain of the operation. It must be installed in your environment.
+
+**Option A: Install from Source (Recommended for Beta)**
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/nk_doc_ai.git
+git clone https://github.com/niki/nk_doc_ai.git
 cd nk_doc_ai
 
-# Install (recommended)
-python -m pip install .
+# Install package
+pip install .
 ```
 
-On first run, `ndoc` will auto-create a user-level shim under `~/.ndoc/bin` and try to persist it to PATH.
-
-If `ndoc` is not found after install, use the module entry:
-
+**Option B: Install via Pip (Future)**
 ```bash
-python -m ndoc all
+pip install niki-doc-ai
 ```
 
-### Self-Contained Release
+### Step 2: Install IDE Extension (VS Code)
+
+The VS Code extension provides real-time integration (LSP) and context visualization.
+
+1.  Navigate to `editors/vscode`.
+2.  Package the extension:
+    ```bash
+    npm install
+    npx vsce package
+    ```
+3.  Install the generated `.vsix` file in VS Code:
+    *   Press `Ctrl+Shift+P` (Cmd+Shift+P on Mac).
+    *   Type `Extensions: Install from VSIX...`.
+    *   Select `nk-doc-ai-vscode-x.x.x.vsix`.
+
+*Note: The extension will automatically find the `ndoc` command if it's in your PATH or configured via `ndoc.pythonPath`.*
+
+### Step 3: Initialize Your Project
+
+1.  Open your target project in VS Code.
+2.  Open the terminal and run:
+    ```bash
+    ndoc init
+    ```
+    This creates the `.ndoc` configuration directory and essential files:
+    *   `_RULES.md`: Architecture rules and lint commands.
+    *   `_SYNTAX.md`: Documentation syntax guide.
+
+### Step 4: Generate Context
+
+Run the full generation command to index your codebase:
 
 ```bash
-tools/packaging/build.sh
-```
-
-Output:
-
-- `dist/ndoc` (macOS/Linux)
-- `dist/ndoc.exe` (Windows)
-
-### Quick Start
-
-**1. Initialize**
-
-```bash
-# Initialize Niki-docAI (Create _RULES.md, _SYNTAX.md)
-ndoc init
-```
-
-**2. Generate Context**
-
-```bash
-# Generate/Update ALL documentation (Arch + Context + Status + Deps)
 ndoc all
 ```
 
-**3. AI Assistance**
+You will see new files generated in your project root:
+*   `_MAP.md`: Project structure map.
+*   `_ARCH.md`: Architecture overview.
+*   `_DEPS.md`: Dependency graph.
+*   `_AI.md`: Recursive context files in each directory.
 
-```bash
-# Generate context prompt for a specific file (Smart Retrieval)
-ndoc prompt src/main.py --focus
+### Step 5: Configure Rules (Optional)
 
-# View high-density skeleton of a file
-ndoc skeleton src/utils.py
-```
-
-**4. Architecture Governance**
-
-```bash
-# Check for architecture violations
-ndoc check
-
-# Detect circular dependencies
-ndoc deps
-# View scoped dependencies for a specific module
-ndoc deps src/core
-
-# Analyze impact of current changes
-ndoc impact
-```
-
----
-
-## 5. Configuration
-
-Configure your project via `_RULES.md`:
+Edit `_RULES.md` to define your project's specific constraints:
 
 ```markdown
-## Scanning Rules
-- `!IGNORE`: node_modules, dist, build, .git
-
-## Architecture Rules
-- `!RULE`: @LAYER(core) CANNOT_IMPORT @LAYER(ui)
-- `!RULE`: @FORBID(hardcoded_paths)
+## !RULE
+<!-- Example: Enforce Layering -->
+<!-- !RULE: @LAYER(core) CANNOT_IMPORT @LAYER(ui) -->
 ```
 
----
-
-## 6. Supported Languages
-
-Built-in Tree-sitter integration for polyglot codebases:
-*   **Python** (`.py`)
-*   **JavaScript/TypeScript** (`.js`, `.ts`, `.jsx`, `.tsx`)
-*   **Java** (`.java`)
-*   **Go** (`.go`)
-*   **C/C++** (`.cpp`, `.h`)
-*   **C#** (`.cs`)
-*   **Rust** (`.rs`)
-*   **Dart** (`.dart`)
+Then run `ndoc check` to validate your code against these rules.
 
 ---
 
-*Powered by Niki-docAI Team*
+## 5. Development (Dogfooding)
+
+To develop Niki-docAI itself:
+
+1.  Open this repository in VS Code.
+2.  Run `ndoc init` (we eat our own dogfood!).
+3.  Use the "Launch Extension" debug configuration to test the VS Code extension.
+
+---
+
+## License
+
+MIT

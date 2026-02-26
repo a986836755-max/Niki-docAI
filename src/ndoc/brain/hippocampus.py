@@ -1,12 +1,3 @@
-# <NIKI_AUTO_HEADER_START>
-# ------------------------------------------------------------------------------
-# 🧠 Niki-docAI Context (Auto-Generated)
-#
-# [Local Rules] (_AI.md)
-# *   **Dynamic Capability Loading**: `capabilities.py` implements the "Kernel + Plugins" architecture. Do not hardcode...
-# *   **Decoupled Text Processing**: 所有纯文本级别的清洗和标签提取逻辑必须放在 `text_utils.py` 中，禁止在 `scanner.py` 中直接操作原始正则，以避免循环引用和逻辑冗余。
-# ------------------------------------------------------------------------------
-# <NIKI_AUTO_HEADER_END>
 """
 Atoms: Hippocampus (Observation Buffer & Heatmap).
 原子能力：海马体（观察者缓冲区 & 热力图）。

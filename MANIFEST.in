@@ -1,0 +1,5 @@
+include README.md
+include README_zh.md
+include requirements.txt
+include src/ndoc/parsing/_LANGS.json
+recursive-include src/ndoc/parsing/langs/bin *.dll

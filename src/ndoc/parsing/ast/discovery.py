@@ -1,11 +1,3 @@
-# <NIKI_AUTO_HEADER_START>
-# ------------------------------------------------------------------------------
-# 🧠 Niki-docAI Context (Auto-Generated)
-#
-# [Local Rules] (_AI.md)
-# *   **Centralized Language Access**: All AST operations must obtain language instances via `base.get_language()` or `...
-# ------------------------------------------------------------------------------
-# <NIKI_AUTO_HEADER_END>
 """
 Atoms: AST Symbol Discovery.
 代码发现逻辑：查找调用与导入。

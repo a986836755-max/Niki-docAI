@@ -1,11 +1,3 @@
-# <NIKI_AUTO_HEADER_START>
-# ------------------------------------------------------------------------------
-# 🧠 Niki-docAI Context (Auto-Generated)
-#
-# [Local Rules] (_AI.md)
-# *   **Centralized Language Access**: All AST operations must obtain language instances via `base.get_language()` or `...
-# ------------------------------------------------------------------------------
-# <NIKI_AUTO_HEADER_END>
 """
 Atoms: AST Parsing Base.
 基础解析能力：Tree-sitter 初始化与核心解析。
@@ -59,7 +51,7 @@ def get_parser(lang_key: str = 'python') -> Optional[Parser]:
             return None
         return Parser(lang)
     except Exception as e:
-        # print(f"Failed to create parser for {lang_key}: {e}")
+        print(f"Failed to create parser for {lang_key}: {e}")
         return None
 
 def parse_code(content: str, file_path: Optional[Path] = None) -> Optional[Tree]:

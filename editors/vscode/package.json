@@ -2,7 +2,7 @@
   "name": "nk-doc-ai-vscode",
   "displayName": "Niki-docAI VS Code Extension",
   "description": "IDE Integration for Niki-docAI: Context-Aware Memory & Thinking Interface",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "niki",
   "repository": {
     "type": "git",

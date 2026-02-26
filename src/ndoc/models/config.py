@@ -1,3 +1,11 @@
+# <NIKI_AUTO_HEADER_START>
+# ------------------------------------------------------------------------------
+# 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# - POD Only: Models must be Plain Old Data (dataclasses/pydantic). No business logic methods allowed.
+# ------------------------------------------------------------------------------
+# <NIKI_AUTO_HEADER_END>
 """
 Models: Configuration definitions.
 数据模型：配置定义。
@@ -23,7 +31,9 @@ class ScanConfig:
         ".vscode",
         "dist",
         "build",
-        "ndoc_legacy" # Explicitly ignore legacy
+        "ndoc_legacy",
+        ".DS_Store",
+        "Thumbs.db"
     ])
     # 允许的文件扩展名 (Allowed extensions), Empty means all
     extensions: List[str] = field(default_factory=list)

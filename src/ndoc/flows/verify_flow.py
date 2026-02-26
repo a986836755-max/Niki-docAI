@@ -3,9 +3,8 @@
 # 🧠 Niki-docAI Context (Auto-Generated)
 #
 # [Local Rules] (_AI.md)
-# *   **Dynamic Capability Loading**: New flows (like `capability_flow.py`) must be registered in `entry.py` to ensure ...
-# *   **Auto-Provisioning**: `capability_flow` acts as the project's "immune system", proactively detecting and install...
-# *   **Doctor Integration**: `doctor_flow` should reuse the `CapabilityManager` logic to verify system health, rather ...
+# *   **RULE**: @LAYER(core) CANNOT_IMPORT @LAYER(ui) --> [context_flow.py:198](context_flow.py#L198)
+# *   **RULE**: @FORBID(hardcoded_paths) --> [context_flow.py:199](context_flow.py#L199)
 # ------------------------------------------------------------------------------
 # <NIKI_AUTO_HEADER_END>
 """
@@ -17,7 +16,9 @@ from ndoc.models.config import ProjectConfig
 from ..core import fs, io
 from ..parsing import scanner
 from ..core.logger import logger
+from ..core.cli import ndoc_command
 
+@ndoc_command(name="verify", help="Verify documentation artifacts", group="Diagnostics")
 def run(config: ProjectConfig, 
         fs_module=fs, 
         io_module=io, 

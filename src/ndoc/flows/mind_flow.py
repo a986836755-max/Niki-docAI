@@ -1,6 +1,10 @@
 # <NIKI_AUTO_HEADER_START>
 # ------------------------------------------------------------------------------
 # 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# *   **RULE**: @LAYER(core) CANNOT_IMPORT @LAYER(ui) --> [context_flow.py:198](context_flow.py#L198)
+# *   **RULE**: @FORBID(hardcoded_paths) --> [context_flow.py:199](context_flow.py#L199)
 # ------------------------------------------------------------------------------
 # <NIKI_AUTO_HEADER_END>
 """
@@ -13,7 +17,9 @@ from collections import defaultdict
 from ..models.config import ProjectConfig
 from ..parsing import scanner
 from ..core import fs, io
+from ..core.cli import ndoc_command
 
+@ndoc_command(name="mind", help="Manage Mind Maps", group="Granular")
 def run(config: ProjectConfig) -> bool:
     """
     Scan project for @INTENT tags and generate _MIND.md.

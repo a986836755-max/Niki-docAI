@@ -1,0 +1,24 @@
+# Context: packaging
+> @CONTEXT: Local | packaging | @TAGS: @LOCAL
+> 最后更新 (Last Updated): 2026-02-26 18:10:31
+
+## !RULE
+<!-- Add local rules here. Examples: -->
+<!-- !RULE: @LAYER(core) CANNOT_IMPORT @LAYER(ui) -->
+<!-- !RULE: @FORBID(hardcoded_paths) -->
+
+<!-- NIKI_AUTO_MEMORIES_START -->
+
+<!-- NIKI_AUTO_MEMORIES_END -->
+
+<!-- NIKI_AUTO_Context_START -->
+## @STRUCTURE
+*   **[README.md](README.md#L1)**: Self-Contained Release
+*   **[build.ps1](build.ps1#L1)**
+*   **[build.sh](build.sh#L1)**
+*   **[ndoc_entry.py](ndoc_entry.py#L1)** @DEP: ndoc.entry
+*   **[requirements-packaging.txt](requirements-packaging.txt#L1)**
+*   **[run_pyinstaller.py](run_pyinstaller.py#L1)** @DEP: PyInstaller.__main__, pathlib, sys
+    *   `@API`
+        *   `VAL->` VAR **pkg_dir**` = Path(__file__).resolve().parents[2] / ".ndoc" / "packaging_l...`
+<!-- NIKI_AUTO_Context_END -->

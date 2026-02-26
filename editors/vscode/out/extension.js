@@ -53,6 +53,34 @@ function activate(context) {
                 // If we found local source, we likely need PYTHONPATH too if not installed
                 // But let's assume if it's in workspace, user configured environment.
             }
+            else {
+                // Try to check if 'ndoc' is installed
+                // We rely on the LanguageClient startup failure to detect missing ndoc.
+                // However, we can proactively check here to offer a better UX.
+                const cp = require('child_process');
+                try {
+                    // Try to run 'python -m ndoc --help' to see if it's installed
+                    cp.execSync(`${serverExecutable} -m ndoc --help`, { env: env });
+                }
+                catch (e) {
+                    // Not installed! Prompt user to install.
+                    vscode_1.window.showWarningMessage("Niki-docAI Core (ndoc) is not installed. Install now?", "Install").then(selection => {
+                        if (selection === "Install") {
+                            const term = vscode_1.window.createTerminal("Niki-docAI Installer");
+                            term.show();
+                            // Install from PyPI (future) or Git
+                            term.sendText(`${serverExecutable} -m pip install git+https://github.com/niki/nk_doc_ai.git`);
+                            // After install, we should restart client? 
+                            // Or just tell user to reload window.
+                            vscode_1.window.showInformationMessage("Installing Niki-docAI... Please reload window after completion.", "Reload").then(s => {
+                                if (s === "Reload") {
+                                    vscode_1.commands.executeCommand('workbench.action.reloadWindow');
+                                }
+                            });
+                        }
+                    });
+                }
+            }
         }
     }
     const serverOptions = {
@@ -72,39 +100,92 @@ function activate(context) {
         ],
         synchronize: {
             fileEvents: vscode_1.workspace.createFileSystemWatcher('**/.clientrc')
+        },
+        // Handle server start failure
+        errorHandler: {
+            error: (error, message, count) => {
+                return { action: 2 }; // Shutdown
+            },
+            closed: () => {
+                // If server crashes or fails to start
+                vscode_1.window.showErrorMessage("Niki-docAI Core (ndoc) not found or crashed.", "Install ndoc").then(selection => {
+                    if (selection === "Install ndoc") {
+                        const term = vscode_1.window.createTerminal("Niki-docAI Installer");
+                        term.show();
+                        term.sendText(`${serverExecutable} -m pip install niki-doc-ai`); // Future: pip install niki-doc-ai
+                        // For now, guide them to repo? Or use local install if we are in the repo?
+                        // Assuming pip install . if in repo, but extension doesn't know context.
+                    }
+                });
+                return { action: 1 }; // Do not restart
+            }
         }
     };
     client = new node_1.LanguageClient('ndocLSP', 'Niki-docAI LSP', serverOptions, clientOptions);
-    client.start();
+    client.start().catch(e => {
+        vscode_1.window.showErrorMessage(`Niki-docAI Failed to Start: ${e}. Is 'ndoc' installed?`, "Install Guide").then(s => {
+            if (s === "Install Guide") {
+                // Open URL
+                vscode_1.commands.executeCommand('vscode.open', vscode_1.Uri.parse('https://github.com/niki/nk_doc_ai#installation'));
+            }
+        });
+    });
     vscode_1.window.showInformationMessage('🧠 Niki-docAI Thinking Interface Active');
     // Register custom commands
-    context.subscriptions.push(vscode_1.commands.registerCommand('ndoc.showContext', async () => {
-        const editor = vscode_1.window.activeTextEditor;
+    context.subscriptions.push(vscode_1.commands.registerCommand('ndoc.showContext', async (uri) => {
+        let editor = vscode_1.window.activeTextEditor;
+        // If URI is passed (e.g. from CodeLens), try to find that document
+        if (uri) {
+            const doc = vscode_1.workspace.textDocuments.find(d => d.uri.toString() === uri);
+            if (doc) {
+                // If the document is not active, we might need to show it, 
+                // but usually CodeLens is clicked on an active editor.
+            }
+        }
         if (!editor) {
             vscode_1.window.showErrorMessage('No active editor');
             return;
         }
-        const uri = editor.document.uri.toString();
+        // We can reuse the hover logic or fetch context via a new request
+        // For simplicity, let's just trigger the Hover manually or show a QuickPick with info
+        // BUT, since we want to show the full context, let's execute a command on the server
+        // Actually, we can't easily "trigger hover" programmatically at a specific position from here without more work.
+        // Let's just show an Information Message for now, or an Output Channel
+        const outputChannel = vscode_1.window.createOutputChannel("Niki-docAI Context");
+        outputChannel.show(true);
+        outputChannel.appendLine("Fetching context...");
         try {
             // Call the custom command on the server
+            // Note: client.sendRequest('workspace/executeCommand', ...) is the standard way
             const result = await client.sendRequest('workspace/executeCommand', {
                 command: 'ndoc.getThinkingContext',
-                arguments: [uri]
+                arguments: [editor.document.uri.toString()]
             });
+            outputChannel.clear();
             if (result) {
-                // Show in a new output channel or virtual document
-                const channel = vscode_1.window.createOutputChannel("Niki Context");
-                channel.clear();
-                channel.append(result);
-                channel.show(true);
+                outputChannel.appendLine("🧠 Niki-docAI Context Rules:");
+                outputChannel.appendLine(`File: ${editor.document.uri.fsPath}`);
+                outputChannel.appendLine("========================================");
+                outputChannel.appendLine(result);
+                outputChannel.appendLine("========================================");
+                outputChannel.appendLine("(You can copy this context to your AI Assistant)");
             }
             else {
-                vscode_1.window.showInformationMessage('No context found for this file.');
+                outputChannel.appendLine("No context found or error occurred.");
             }
         }
         catch (e) {
-            vscode_1.window.showErrorMessage(`Error fetching context: ${e}`);
+            outputChannel.appendLine(`Error fetching context: ${e}`);
         }
+    }));
+    context.subscriptions.push(vscode_1.commands.registerCommand('ndoc.restartServer', async () => {
+        if (!client) {
+            vscode_1.window.showErrorMessage('Niki-docAI LSP is not running');
+            return;
+        }
+        await client.stop();
+        client.start();
+        vscode_1.window.showInformationMessage('Niki-docAI LSP restarted');
     }));
 }
 function deactivate() {

@@ -3,9 +3,8 @@
 # 🧠 Niki-docAI Context (Auto-Generated)
 #
 # [Local Rules] (_AI.md)
-# *   **Dynamic Capability Loading**: New flows (like `capability_flow.py`) must be registered in `entry.py` to ensure ...
-# *   **Auto-Provisioning**: `capability_flow` acts as the project's "immune system", proactively detecting and install...
-# *   **Doctor Integration**: `doctor_flow` should reuse the `CapabilityManager` logic to verify system health, rather ...
+# *   **RULE**: @LAYER(core) CANNOT_IMPORT @LAYER(ui) --> [context_flow.py:198](context_flow.py#L198)
+# *   **RULE**: @FORBID(hardcoded_paths) --> [context_flow.py:199](context_flow.py#L199)
 # ------------------------------------------------------------------------------
 # <NIKI_AUTO_HEADER_END>
 """
@@ -14,7 +13,9 @@ Flow: Initialization.
 """
 from ndoc.models.config import ProjectConfig
 from ndoc.flows import config_flow, syntax_flow
+from ..core.cli import ndoc_command
 
+@ndoc_command(name="init", help="Initialize project structure (Create _RULES.md, _SYNTAX.md)", group="Core")
 def run(config: ProjectConfig, force: bool = False) -> bool:
     """
     执行初始化 (Execute Init).

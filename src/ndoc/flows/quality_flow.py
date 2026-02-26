@@ -1,3 +1,12 @@
+# <NIKI_AUTO_HEADER_START>
+# ------------------------------------------------------------------------------
+# 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# *   **RULE**: @LAYER(core) CANNOT_IMPORT @LAYER(ui) --> [context_flow.py:198](context_flow.py#L198)
+# *   **RULE**: @FORBID(hardcoded_paths) --> [context_flow.py:199](context_flow.py#L199)
+# ------------------------------------------------------------------------------
+# <NIKI_AUTO_HEADER_END>
 """
 Flow: Quality Gates.
 业务流：执行 lint 与 typecheck 命令。
@@ -10,6 +19,7 @@ from typing import List
 
 from ndoc.models.config import ProjectConfig
 from ..core.logger import logger
+from ..core.cli import ndoc_command
 
 def _run_commands(label: str, commands: List[str], root_path: Path) -> bool:
     if not commands:
@@ -40,8 +50,12 @@ def _run_commands(label: str, commands: List[str], root_path: Path) -> bool:
     logger.info(f"{label} completed")
     return True
 
+@ndoc_command(name="lint", help="Run lint commands defined in _RULES.md", group="Diagnostics")
 def run_lint(config: ProjectConfig) -> bool:
+    """Run lint commands."""
     return _run_commands("lint", config.lint_commands, config.scan.root_path)
 
+@ndoc_command(name="typecheck", help="Run typecheck commands defined in _RULES.md", group="Diagnostics")
 def run_typecheck(config: ProjectConfig) -> bool:
+    """Run typecheck commands."""
     return _run_commands("typecheck", config.typecheck_commands, config.scan.root_path)

@@ -3,9 +3,8 @@
 # 🧠 Niki-docAI Context (Auto-Generated)
 #
 # [Local Rules] (_AI.md)
-# *   **Dynamic Capability Loading**: New flows (like `capability_flow.py`) must be registered in `entry.py` to ensure ...
-# *   **Auto-Provisioning**: `capability_flow` acts as the project's "immune system", proactively detecting and install...
-# *   **Doctor Integration**: `doctor_flow` should reuse the `CapabilityManager` logic to verify system health, rather ...
+# *   **RULE**: @LAYER(core) CANNOT_IMPORT @LAYER(ui) --> [context_flow.py:198](context_flow.py#L198)
+# *   **RULE**: @FORBID(hardcoded_paths) --> [context_flow.py:199](context_flow.py#L199)
 # ------------------------------------------------------------------------------
 # <NIKI_AUTO_HEADER_END>
 """
@@ -18,7 +17,9 @@ from typing import List, Dict
 from ..core import fs, io
 from ..parsing import scanner
 from ..models.config import ProjectConfig
+from ..core.cli import ndoc_command
 
+@ndoc_command(name="archive", help="Archive completed tasks and extract memory", group="Diagnostics")
 def run(config: ProjectConfig) -> bool:
     """
     Execute Archive Flow.
@@ -137,7 +138,7 @@ def run(config: ProjectConfig) -> bool:
 
     # Update VectorDB
     if vdb and docs_to_embed:
-        print(f"🧠 Embedding {len(docs_to_embed)} knowledge fragments into VectorDB...")
+        print(f"🧠 Syncing {len(docs_to_embed)} knowledge fragments to VectorDB...")
         vdb.add_documents(docs_to_embed, metas_to_embed, ids_to_embed)
 
     # 2. Generate Content

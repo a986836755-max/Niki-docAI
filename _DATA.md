@@ -1,10 +1,154 @@
 # Data Registry
 > @CONTEXT: Global | _DATA.md | @TAGS: @DATA @MODELS
-> 最后更新 (Last Updated): 2026-02-26 12:28:21
+> 最后更新 (Last Updated): 2026-02-26 20:35:10
 
 > **Goal**: 集中展示项目中的核心数据结构 (Dataclasses, Enums, TypedDicts)。强化 "Logic as Data" 原则。
 
-*No data structures detected yet.*
+## Enums
+*   **ActionType** ([src/ndoc/brain/hippocampus.py](src/ndoc/brain/hippocampus.py))
+    ```python
+    OPEN = 1
+    EDIT = 5  # Higher weight
+    SAVE = 2
+    CLOSE = 0
+    ```
+*   **ServiceStatus** ([samples/sample_csharp.cs](samples/sample_csharp.cs))
+    ```python
+    public enum ServiceStatus
+    Idle,
+    Running,
+    Error
+    ```
+
+## Dataclasses
+*   **AstNode** ([src/ndoc/parsing/ast/base.py](src/ndoc/parsing/ast/base.py)) - *通用 AST 节点数据结构 (Generic AST Node Data).*
+    ```python
+    type: str
+    text: str
+    start_point: tuple[int, int]  # (row, col)
+    end_point: tuple[int, int]
+    children: list['...
+    ```
+*   **CommandInfo** ([src/ndoc/core/cli.py](src/ndoc/core/cli.py))
+    ```python
+    name: str
+    help: str
+    handler: Callable
+    group: str = "General"
+    ```
+*   **DataDefinition** ([src/ndoc/flows/data_flow.py](src/ndoc/flows/data_flow.py))
+    ```python
+    name: str
+    type: str  # dataclass, enum, typeddict
+    path: str
+    docstring: str
+    fields: List[str]
+    ```
+*   **DirectoryContext** ([src/ndoc/models/context.py](src/ndoc/models/context.py)) - *目录上下文 (Directory Context).*
+    ```python
+    path: Path
+    files: List[FileContext] = field(default_factory=list)
+    subdirs: List[Path] = field(default_factory=list)
+    ```
+*   **FileContext** ([src/ndoc/models/context.py](src/ndoc/models/context.py)) - *文件上下文 (File Context).*
+    ```python
+    path: Path
+    rel_path: str
+    content: Optional[str] = None
+    tags: List[Tag] = field(default_factory=...
+    ```
+*   **FileFilter** ([src/ndoc/core/fs.py](src/ndoc/core/fs.py)) - *文件过滤器配置 (File Filter Configuration).*
+    ```python
+    ignore_patterns: Set[str] = field(default_factory=set)
+    allow_extensions: Set[str] = field(default_factory=set)
+    ```
+*   **Hippocampus** ([src/ndoc/brain/hippocampus.py](src/ndoc/brain/hippocampus.py)) - *Short-term memory buffer.*
+    ```python
+    buffer: Deque[Observation] = field(default_factory=lambda: deque(maxlen=100))
+    ```
+*   **IndexEntry** ([src/ndoc/brain/index.py](src/ndoc/brain/index.py))
+    ```python
+    tag: Tag
+    source_file: str
+    weight: int = 1
+    ```
+*   **MapContext** ([src/ndoc/models/map.py](src/ndoc/models/map.py))
+    ```python
+    root: Path
+    ignore_patterns: List[str]
+    ```
+*   **Observation** ([src/ndoc/brain/hippocampus.py](src/ndoc/brain/hippocampus.py))
+    ```python
+    file_path: str
+    action: ActionType
+    timestamp: float = field(default_factory=time.time)
+    ```
+*   **ProjectConfig** ([src/ndoc/models/config.py](src/ndoc/models/config.py)) - *项目全局配置 (Global Project Configuration).*
+    ```python
+    scan: ScanConfig
+    lint_commands: List[str] = field(default_factory=list)
+    typecheck_commands: List[str] = fiel...
+    ```
+*   **ScanConfig** ([src/ndoc/models/config.py](src/ndoc/models/config.py)) - *扫描配置 (Configuration for file scanning).*
+    ```python
+    root_path: Path
+    ignore_patterns: List[str] = field(default_factory=l...
+    ```
+*   **ScanResult** ([src/ndoc/models/scan.py](src/ndoc/models/scan.py)) - *扫描结果 (Scan Result).*
+    ```python
+    tags: List[Tag] = field(default_factory=list)
+    sections: Dict[str, Section] = field(default_factory=dict)
+    symbols:...
+    ```
+*   **Section** ([src/ndoc/models/context.py](src/ndoc/models/context.py)) - *文档片段 (Document Section).*
+    ```python
+    name: str
+    content: str
+    raw: str
+    start_pos: int
+    ```
+*   **SemanticIndex** ([src/ndoc/brain/index.py](src/ndoc/brain/index.py))
+    ```python
+    rules: Dict[str, List[IndexEntry]] = field(default_factory=dict)
+    keywords: Dict[str, Set[str]] = field(default_factory=dic...
+    ```
+*   **Symbol** ([src/ndoc/models/symbol.py](src/ndoc/models/symbol.py)) - *代码符号 (Code Symbol).*
+    ```python
+    name: str
+    kind: str # 'class' | 'function' | 'method'
+    line: int
+    docstring: Optional...
+    ```
+*   **Tag** ([src/ndoc/models/symbol.py](src/ndoc/models/symbol.py)) - *文档/代码标签 (Documentation/Code Tag).*
+    ```python
+    Supports attributes: !RULE[CRITICAL], @ADR[CONF=0.8]
+    name: str
+    args: List[str] = field(default_fac...
+    ```
+*   **TodoItem** ([src/ndoc/models/status.py](src/ndoc/models/status.py))
+    ```python
+    file_path: Path
+    line: int
+    type: str  # TODO, FIXME, etc.
+    content: str
+    task_id: Optional[str] = None
+    ```
+*   **TokenRule** ([src/ndoc/models/scan.py](src/ndoc/models/scan.py)) - *词法分析规则 (Lexical Analysis Rule).*
+    ```python
+    name: str
+    pattern: Pattern
+    group_map: Dict[str, int]  # Map logical names to regex groups
+    ```
+*   **Violation** ([src/ndoc/brain/checker.py](src/ndoc/brain/checker.py))
+    ```python
+    file_path: str
+    rule_name: str
+    message: str
+    line: int = 0
+    character: int = 0
+    severity: str = "ERROR"
+    ```
+
 
 ---
 *Generated by Niki-docAI*

@@ -1,8 +1,3 @@
-# <NIKI_AUTO_HEADER_START>
-# ------------------------------------------------------------------------------
-# 🧠 Niki-docAI Context (Auto-Generated)
-# ------------------------------------------------------------------------------
-# <NIKI_AUTO_HEADER_END>
 """
 Atoms: Vector Database (ChromaDB Wrapper).
 原子能力：向量数据库。
@@ -43,16 +38,52 @@ class VectorDB:
     def add_documents(self, documents: List[str], metadatas: List[Dict[str, Any]], ids: List[str]):
         """
         Add or update documents in the vector store.
+        Uses a simple hash check to avoid re-embedding existing documents.
         """
         if not self.collection:
             return
             
         try:
-            self.collection.upsert(
-                documents=documents,
-                metadatas=metadatas,
-                ids=ids
-            )
+            import hashlib
+            
+            # 1. Get existing records
+            existing = self.collection.get(ids=ids, include=['metadatas', 'documents'])
+            existing_map = {}
+            if existing['ids']:
+                for id, doc, meta in zip(existing['ids'], existing['documents'], existing['metadatas']):
+                    existing_map[id] = (doc, meta)
+            
+            new_docs = []
+            new_metas = []
+            new_ids = []
+            
+            for doc, meta, doc_id in zip(documents, metadatas, ids):
+                # Calculate hash of content
+                content_hash = hashlib.md5(doc.encode('utf-8')).hexdigest()
+                meta['hash'] = content_hash
+                
+                # Check if exists and hash matches
+                if doc_id in existing_map:
+                    ex_doc, ex_meta = existing_map[doc_id]
+                    # If hash in metadata matches, skip
+                    if ex_meta and ex_meta.get('hash') == content_hash:
+                        continue
+                        
+                new_docs.append(doc)
+                new_metas.append(meta)
+                new_ids.append(doc_id)
+            
+            if new_docs:
+                # print(f"🧠 VectorDB: Upserting {len(new_docs)} new/changed documents...")
+                self.collection.upsert(
+                    documents=new_docs,
+                    metadatas=new_metas,
+                    ids=new_ids
+                )
+            else:
+                # print(f"🧠 VectorDB: All {len(documents)} documents up-to-date.")
+                pass
+                
         except Exception as e:
             print(f"⚠️ VectorDB upsert failed: {e}")
 

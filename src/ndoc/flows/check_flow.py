@@ -3,8 +3,8 @@
 # 🧠 Niki-docAI Context (Auto-Generated)
 #
 # [Local Rules] (_AI.md)
-# *   **Dynamic Capability Loading**: `capabilities.py` implements the "Kernel + Plugins" architecture. Do not hardcode...
-# *   **Decoupled Text Processing**: 所有纯文本级别的清洗和标签提取逻辑必须放在 `text_utils.py` 中，禁止在 `scanner.py` 中直接操作原始正则，以避免循环引用和逻辑冗余。
+# *   **RULE**: @LAYER(core) CANNOT_IMPORT @LAYER(ui) --> [context_flow.py:198](context_flow.py#L198)
+# *   **RULE**: @FORBID(hardcoded_paths) --> [context_flow.py:199](context_flow.py#L199)
 # ------------------------------------------------------------------------------
 # <NIKI_AUTO_HEADER_END>
 """
@@ -18,6 +18,7 @@ from ..models.config import ProjectConfig
 from ..models.context import FileContext
 from ..brain import checker, index
 from ..core import fs, io
+from ..core.cli import ndoc_command
 from ..parsing import scanner
 
 def _to_context(scan_result: scanner.ScanResult, path: Path, root: Path) -> FileContext:
@@ -41,6 +42,7 @@ def _to_context(scan_result: scanner.ScanResult, path: Path, root: Path) -> File
         memories=scan_result.memories
     )
 
+@ndoc_command(name="check", help="Check code for constraint violations (!RULE)", group="Diagnostics")
 def run(config: ProjectConfig, target: Optional[str] = None) -> bool:
     """
     Run the constraint checker.

@@ -1,10 +1,11 @@
 # Context: brain
 > @CONTEXT: Local | brain | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-02-26 12:27:55
+> 最后更新 (Last Updated): 2026-02-26 20:34:57
 
 ## !RULE
-<!-- Add local rules here -->
-*   **Violation Location**: `checker.Violation` 必须携带 `line` 与 `character`，以便 LSP 精确标注诊断位置。
+<!-- Add local rules here. Examples: -->
+<!-- !RULE: @LAYER(core) CANNOT_IMPORT @LAYER(ui) -->
+<!-- !RULE: @FORBID(hardcoded_paths) -->
 
 <!-- NIKI_AUTO_MEMORIES_START -->
 
@@ -12,11 +13,64 @@
 
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
-*   **[__init__.py](__init__.py#L1)**: Brain: Intelligence Layer. @DEP: .cache, .checker, .hippocampus, .index, .llm @DEP: .index, .llm, .checker, .hippocampus, .cache
-*   **[cache.py](cache.py#L1)**: <NIKI_AUTO_HEADER_START> @DEP: hashlib, json, pathlib, sqlite3, typing @DEP: sqlite3, typing, hashlib, json, pathlib
-*   **[checker.py](checker.py#L1)**: <NIKI_AUTO_HEADER_START> @DEP: ..models.context, ..models.symbol, .index, dataclasses, pathlib, ... @DEP: .index, ..models.context, typing, ..models.symbol, dataclasses, pathlib
-*   **[hippocampus.py](hippocampus.py#L1)**: <NIKI_AUTO_HEADER_START> @DEP: collections, dataclasses, enum, pathlib, time, ... @DEP: typing, time, enum, dataclasses, collections, pathlib
-*   **[index.py](index.py#L1)**: <NIKI_AUTO_HEADER_START> @DEP: ..models.context, ..models.symbol, dataclasses, json, os, ... @DEP: ..models.context, typing, ..models.symbol, dataclasses, json, pathlib, os
-*   **[llm.py](llm.py#L1)**: <NIKI_AUTO_HEADER_START> @DEP: json, os, typing, urllib @DEP: typing, json, urllib, os
-*   **[vectordb.py](vectordb.py#L1)**: <NIKI_AUTO_HEADER_START> @DEP: ..core.capabilities, chromadb, chromadb.config, os, pathlib, ... @DEP: ..core.capabilities, chromadb.config, typing, chromadb, pathlib, os
+*   **[__init__.py](__init__.py#L1)**: Brain: Intelligence Layer. @DEP: ..core.cache, .checker, .hippocampus, .index
+*   **[checker.py](checker.py#L1)**: Atoms: Constraint Checker (Prefrontal Cortex). @DEP: ..models.context, ..models.symbol, .index, dataclasses, pathlib, ...
+    *   `@API`
+        *   `PUB:` CLS **Violation**
+            *   `VAL->` VAR **file_path**`: str`
+            *   `VAL->` VAR **rule_name**`: str`
+            *   `VAL->` VAR **message**`: str`
+            *   `VAL->` VAR **line**`: int = 0`
+            *   `VAL->` VAR **character**`: int = 0`
+            *   `VAL->` VAR **severity**`: str = "ERROR"`
+        *   `PRV:` FUN _find_import_line`(content: Optional[str], import_name: str) -> int`
+        *   `PUB:` FUN **check_file**`(file: FileContext, index: SemanticIndex) -> List[Violation]`
+        *   `PUB:` FUN **get_attr**`(obj, key)`
+        *   `PUB:` FUN **get_name**`(obj)`
+        *   `PUB:` FUN **get_args**`(obj)`
+        *   `PRV:` FUN _file_in_layer`(file: FileContext, layer_def: str) -> bool`
+        *   `PRV:` FUN _import_in_layer`(import_name: str, layer_def: str) -> bool`
+        *   `PUB:` FUN **check_all**`(files: List[FileContext], index: SemanticIndex) -> List[Violation]`
+*   **[hippocampus.py](hippocampus.py#L1)**: Atoms: Hippocampus (Observation Buffer & Heatmap). @DEP: collections, dataclasses, enum, pathlib, time, ...
+    *   `@API`
+        *   `PUB:` CLS **ActionType**
+            *   `VAL->` VAR **OPEN**` = 1`
+            *   `VAL->` VAR **EDIT**` = 5`
+            *   `VAL->` VAR **SAVE**` = 2`
+            *   `VAL->` VAR **CLOSE**` = 0`
+        *   `PUB:` CLS **Observation**
+            *   `VAL->` VAR **file_path**`: str`
+            *   `VAL->` VAR **action**`: ActionType`
+            *   `VAL->` VAR **timestamp**`: float = field(default_factory=time.time)`
+        *   `PUB:` CLS **Hippocampus**
+            *   `VAL->` VAR **buffer**`: Deque[Observation] = field(default_factory=lambda: deque(maxlen=100))`
+            *   `VAL->` VAR **decay_rate**`: float = 0.95`
+            *   `PUB:` MET **record**`(self, file_path: str, action: ActionType)`
+            *   `PUB:` MET **get_file_heat**`(self, now: float = None) -> Dict[str, float]`
+            *   `PUB:` MET **get_tag_heat**`(self, file_tags_map: Dict[str, List[str]], now: float = None) -> Dict[str, float]`
+*   **[index.py](index.py#L1)**: Atoms: Semantic Index (Thalamus). @DEP: ..models.context, ..models.symbol, dataclasses, json, os, ...
+    *   `@API`
+        *   `PUB:` CLS **IndexEntry**
+            *   `VAL->` VAR **tag**`: Tag`
+            *   `VAL->` VAR **source_file**`: str`
+            *   `VAL->` VAR **weight**`: int = 1`
+        *   `PUB:` CLS **SemanticIndex**
+            *   `VAL->` VAR **rules**`: Dict[str, List[IndexEntry]] = field(default_factory=dict)`
+            *   `VAL->` VAR **keywords**`: Dict[str, Set[str]] = field(default_factory=dict)`
+            *   `PUB:` MET **save**`(self, path: Path)`
+            *   `PUB:` CLM **load**`(cls, path: Path) -> 'SemanticIndex'`
+        *   `PUB:` FUN **build_index**`(files: List[FileContext]) -> SemanticIndex`
+        *   `PUB:` FUN **calculate_distance**`(source_path: str, target_path: str) -> int`
+*   **[ingest.py](ingest.py#L1)**: Brain: Context Ingestion. @DEP: ..core, ..models.config, ..models.symbol, .vectordb, datetime, ...
+    *   `@API`
+        *   `PUB:` FUN **ingest_context_file**`( file_path: Path, root_path: Path, vectordb: VectorDB, tags: List[Tag] = None ) -> None`
+*   **[vectordb.py](vectordb.py#L1)**: Atoms: Vector Database (ChromaDB Wrapper). @DEP: ..core.capabilities, chromadb, chromadb.config, hashlib, os, ...
+    *   `@API`
+        *   `PUB:` CLS **VectorDB**
+            *   `PRV:` MET __init__`(self, root_path: Path)`
+            *   `PRV:` MET _init_db`(self)`
+            *   `PUB:` MET **add_documents**`(self, documents: List[str], metadatas: List[Dict[str, Any]], ids: List[str])`
+            *   `PUB:` MET **query**`(self, query_text: str, n_results: int = 5) -> List[Dict[str, Any]]`
+            *   `PUB:` MET **search**`(self, query_text: str, n_results: int = 5) -> List[Dict[str, Any]]`
+            *   `PUB:` MET **delete**`(self, ids: List[str])`
 <!-- NIKI_AUTO_Context_END -->

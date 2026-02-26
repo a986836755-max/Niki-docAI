@@ -1,12 +1,3 @@
-# <NIKI_AUTO_HEADER_START>
-# ------------------------------------------------------------------------------
-# 🧠 Niki-docAI Context (Auto-Generated)
-#
-# [Local Rules] (_AI.md)
-# - LSP 适配：所有 IDE 插件相关的语义能力通过 `ndoc.lsp_server` 暴露。
-# - 架构感知：IDE 插件应优先使用 `_MAP.md` 和 `_AI.md` 进行语义增强，而非仅依赖语法树。
-# ------------------------------------------------------------------------------
-# <NIKI_AUTO_HEADER_END>
 # ------------------------------------------------------------------------------
 # 🧠 Niki-docAI Context (Auto-Generated)
 #
@@ -35,6 +26,7 @@ setup(
             "ndoc=ndoc.entry:main",
         ],
     },
+    include_package_data=True,
     python_requires=">=3.9",
     classifiers=[
         "Development Status :: 4 - Beta",

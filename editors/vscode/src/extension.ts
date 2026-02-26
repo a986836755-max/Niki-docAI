@@ -56,11 +56,37 @@ export function activate(context: ExtensionContext) {
                  serverArgs = [localEntry, 'server'];
                  // If we found local source, we likely need PYTHONPATH too if not installed
                  // But let's assume if it's in workspace, user configured environment.
+            } else {
+                 // Try to check if 'ndoc' is installed
+                 // We rely on the LanguageClient startup failure to detect missing ndoc.
+                 // However, we can proactively check here to offer a better UX.
+                 const cp = require('child_process');
+                 try {
+                     // Try to run 'python -m ndoc --help' to see if it's installed
+                     cp.execSync(`${serverExecutable} -m ndoc --help`, { env: env });
+                 } catch (e) {
+                     // Not installed! Prompt user to install.
+                     window.showWarningMessage("Niki-docAI Core (ndoc) is not installed. Install now?", "Install").then(selection => {
+                        if (selection === "Install") {
+                            const term = window.createTerminal("Niki-docAI Installer");
+                            term.show();
+                            // Install from PyPI (future) or Git
+                            term.sendText(`${serverExecutable} -m pip install git+https://github.com/niki/nk_doc_ai.git`); 
+                            // After install, we should restart client? 
+                            // Or just tell user to reload window.
+                            window.showInformationMessage("Installing Niki-docAI... Please reload window after completion.", "Reload").then(s => {
+                                if (s === "Reload") {
+                                    commands.executeCommand('workbench.action.reloadWindow');
+                                }
+                            });
+                        }
+                     });
+                 }
             }
         }
     }
 
-        const serverOptions: ServerOptions = {
+    const serverOptions: ServerOptions = {
         command: serverExecutable,
         args: [...serverArgs, '--stdio'], // Explicitly add --stdio for clarity
         options: { env: env }, // Pass the environment with PYTHONPATH
@@ -78,6 +104,25 @@ export function activate(context: ExtensionContext) {
         ],
         synchronize: {
             fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
+        },
+        // Handle server start failure
+        errorHandler: {
+            error: (error, message, count) => {
+                return { action: 2 }; // Shutdown
+            },
+            closed: () => {
+                // If server crashes or fails to start
+                 window.showErrorMessage("Niki-docAI Core (ndoc) not found or crashed.", "Install ndoc").then(selection => {
+                    if (selection === "Install ndoc") {
+                        const term = window.createTerminal("Niki-docAI Installer");
+                        term.show();
+                        term.sendText(`${serverExecutable} -m pip install niki-doc-ai`); // Future: pip install niki-doc-ai
+                        // For now, guide them to repo? Or use local install if we are in the repo?
+                        // Assuming pip install . if in repo, but extension doesn't know context.
+                    }
+                });
+                return { action: 1 }; // Do not restart
+            }
         }
     };
 
@@ -88,7 +133,14 @@ export function activate(context: ExtensionContext) {
         clientOptions
     );
 
-    client.start();
+    client.start().catch(e => {
+         window.showErrorMessage(`Niki-docAI Failed to Start: ${e}. Is 'ndoc' installed?`, "Install Guide").then(s => {
+             if (s === "Install Guide") {
+                 // Open URL
+                 commands.executeCommand('vscode.open', Uri.parse('https://github.com/niki/nk_doc_ai#installation'));
+             }
+         });
+    });
     
     window.showInformationMessage('🧠 Niki-docAI Thinking Interface Active');
 

@@ -15,7 +15,7 @@ class TestClass:
 
 def test_scan_file_content_mixed():
     # Simulate a python file scan
-    result = scan_file_content(SAMPLE_CONTENT, file_path=Path("test.py"))
+    result = scan_file_content(SAMPLE_CONTENT, path=Path("test.py"))
     
     # 1. Tags (Regex)
     assert len(result.tags) == 1
@@ -34,7 +34,7 @@ def test_scan_file_content_mixed():
 def test_scan_file_content_text_only():
     # Simulate non-python file
     content = "# @NOTE just a note"
-    result = scan_file_content(content, file_path=Path("test.txt"))
+    result = scan_file_content(content, path=Path("test.txt"))
     
     assert len(result.tags) == 1
     assert result.tags[0].name == "@NOTE"

@@ -3,8 +3,8 @@
 # 🧠 Niki-docAI Context (Auto-Generated)
 #
 # [Local Rules] (_AI.md)
-# *   **Impact Analysis**: This module performs reverse dependency analysis.
-# *   **Graph Theory**: Uses BFS on the transposed dependency graph.
+# *   **RULE**: @LAYER(core) CANNOT_IMPORT @LAYER(ui) --> [context_flow.py:198](context_flow.py#L198)
+# *   **RULE**: @FORBID(hardcoded_paths) --> [context_flow.py:199](context_flow.py#L199)
 # ------------------------------------------------------------------------------
 # <NIKI_AUTO_HEADER_END>
 """
@@ -17,8 +17,12 @@ from typing import List, Set, Dict, Optional
 from collections import defaultdict, deque
 
 from ..models.config import ProjectConfig
-from .deps_flow import collect_imports, build_dependency_graph
+from ..parsing.deps.builder import collect_imports, build_dependency_graph
 from ..parsing import scanner
+from ..core.cli import ndoc_command
+from ..core.templates import render_document
+from ..core import io
+from datetime import datetime
 
 def get_changed_files(root: Path) -> List[str]:
     """
@@ -84,6 +88,7 @@ def find_impacted_nodes(changed_modules: List[str], rev_graph: Dict[str, Set[str
                 
     return impacted
 
+@ndoc_command(name="impact", help="Analyze impact of changed files (Git aware)", group="Analysis")
 def run(config: ProjectConfig) -> bool:
     """
     Run Impact Analysis.
@@ -103,7 +108,7 @@ def run(config: ProjectConfig) -> bool:
         print(" ...")
 
     # 1. Collect Imports
-    from .deps_flow import collect_imports
+    # from .deps_flow import collect_imports
     import_map = collect_imports(root, config)
     
     # 2. Build Dependency Graph
@@ -134,48 +139,29 @@ def run(config: ProjectConfig) -> bool:
     rev_graph = build_reverse_graph(graph)
     
     # 5. Analyze Impact
-    impacted = find_impacted_nodes(changed_modules, rev_graph)
+    impacted_modules = find_impacted_nodes(changed_modules, rev_graph)
     
-    # 6. Categorize Impact
-    direct_impact = set()
-    indirect_impact = set()
-    entry_points = set()
-    tests = set()
+    if not impacted_modules:
+        print("No downstream impact detected.")
+        return True
+        
+    print(f"⚠️  Impact Detected: {len(impacted_modules)} modules affected.")
     
-    for mod in impacted:
-        # Is direct?
-        is_direct = any(mod in rev_graph.get(c, set()) for c in changed_modules)
-        
-        if is_direct:
-            direct_impact.add(mod)
-        else:
-            indirect_impact.add(mod)
-            
-        # Is test?
-        if 'test' in mod or 'tests.' in mod:
-            tests.add(mod)
-            
-        # Is entry point? (Heuristic: main, app, cli, or no dependents)
-        # Check forward graph: does anyone import this?
-        # Actually, entry point means no one imports it (it's a leaf in reverse graph, root in forward)
-        # Wait, if no one imports it, it won't be in rev_graph keys unless it was a source in original graph.
-        # Let's check: if mod is not a key in rev_graph (no dependents)
-        if mod not in rev_graph: 
-            entry_points.add(mod)
-
-    print(f"\n=== Impact Analysis ===")
-    print(f"Directly Impacted: {len(direct_impact)}")
-    for m in sorted(list(direct_impact))[:5]:
-        print(f" - {m}")
-        
-    print(f"Indirectly Impacted: {len(indirect_impact)}")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    print(f"\n=== Recommended Tests ({len(tests)}) ===")
-    for t in sorted(list(tests)):
-        print(f" [TEST] {t}")
-        
-    print(f"\n=== Affected Entry Points ({len(entry_points)}) ===")
-    for e in sorted(list(entry_points)):
-        print(f" [ENTRY] {e}")
-        
+    changed_list = "\n".join([f"- `{f}`" for f in sorted(changed_files)])
+    impacted_list = "\n".join([f"- `{m}`" for m in sorted(impacted_modules)])
+    
+    report = render_document(
+        "impact.md.tpl",
+        title="Impact Analysis Report",
+        context="Impact | Git Changes",
+        tags="",
+        timestamp=timestamp,
+        changed_files_list=changed_list,
+        impacted_modules_list=impacted_list
+    )
+    
+    print("\n" + report)
+    
     return True

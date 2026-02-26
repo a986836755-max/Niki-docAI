@@ -1,11 +1,3 @@
-# <NIKI_AUTO_HEADER_START>
-# ------------------------------------------------------------------------------
-# 🧠 Niki-docAI Context (Auto-Generated)
-#
-# [Local Rules] (_AI.md)
-# *   **Centralized Language Access**: All AST operations must obtain language instances via `base.get_language()` or `...
-# ------------------------------------------------------------------------------
-# <NIKI_AUTO_HEADER_END>
 """
 Atoms: AST Parsing (Tree-sitter Wrapper).
 原子能力：AST 解析 (Tree-sitter 封装)。

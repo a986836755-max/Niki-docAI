@@ -1,15 +1,3 @@
-# <NIKI_AUTO_HEADER_START>
-# ------------------------------------------------------------------------------
-# 🧠 Niki-docAI Context (Auto-Generated)
-#
-# [Local Rules] (_AI.md)
-# *   **Proactive Capability Check**: `entry.py` serves as the primary gatekeeper. It must invoke `capability_flow` to ...
-# *   **Dynamic Watchdog**: `daemon.py` monitors file system events. When a new file type is detected (e.g., a `.rs` fi...
-# *   **CLI Robustness**: All CLI commands (including `lsp`) must handle missing capabilities gracefully, either by att...
-# *   **LSP Protocol Integrity**: `entry.py`'s `server` command MUST NOT print anything to `stdout` other than JSON-RPC...
-# *   **Context Awareness**: `lsp_server.py` implements "Thinking Context" via `textDocument/hover`, aggregating rules ...
-# ------------------------------------------------------------------------------
-# <NIKI_AUTO_HEADER_END>
 """
 Entry Point: CLI Execution.
 入口：CLI 执行。
@@ -20,6 +8,10 @@ import logging
 from pathlib import Path
 from ndoc.core.logger import logger, set_log_level
 from ndoc.core.bootstrap import ensure_cli_environment
+from ndoc.core.cli import CommandRegistry
+
+# Ensure environment is set up BEFORE importing flows that might depend on it
+ensure_cli_environment()
 
 # 添加 src 到 sys.path 以便直接运行
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -36,6 +28,7 @@ from ndoc.models.config import ProjectConfig, ScanConfig
 from ndoc import lsp_server
 from ndoc.flows import (
     context_flow, 
+    map_flow,
     config_flow, 
     syntax_flow, 
     doctor_flow, 
@@ -67,7 +60,6 @@ def main():
     """
     CLI 主入口 (CLI Main Entry).
     """
-    ensure_cli_environment()
     description = """
 Niki-docAI 2.0 (Rebirth) - AI Context Ops Toolchain
 
@@ -103,7 +95,7 @@ Diagnostics (诊断与维护):
               Usage: ndoc check [target]
   verify    : Verify documentation artifacts.
   doctor    : Diagnose environment and configuration health.
-  stats     : Show project statistics (Merged into status).
+  stats     : Update project statistics (_STATS.md).
   lint      : Run lint commands defined in _RULES.md.
   typecheck : Run typecheck commands defined in _RULES.md.
   
@@ -124,7 +116,16 @@ Granular Updates (单独更新):
         description=description,
         formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("command", choices=["map", "context", "todo", "deps", "symbols", "data", "inject", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "archive", "lsp", "prompt", "server", "check", "arch", "status", "help", "adr", "mind", "lesson", "impact", "skeleton", "search", "lint", "typecheck"], help="Command to execute")
+    
+    # Dynamically build choices from registry
+    commands = CommandRegistry.get_commands()
+    command_names = [cmd.name for cmd in commands]
+    # Add special commands that might not be flows or need custom handling
+    special_commands = ["all", "watch", "server", "skeleton", "lsp", "stats"] 
+    all_choices = list(set(command_names + special_commands))
+    all_choices.sort()
+
+    parser.add_argument("command", choices=all_choices, help="Command to execute")
     parser.add_argument("target", nargs="?", help="Target file or directory (for clean command)")
     parser.add_argument("--root", default=".", help="Project root directory (Default: current dir)")
     parser.add_argument("--file", "-f", help="Specific file for prompt context generation")
@@ -152,121 +153,45 @@ Granular Updates (单独更新):
         # set_log_level(logging.DEBUG if getattr(args, 'verbose', False) else logging.INFO)
         logger.info(f"Starting Niki-docAI 2.0 in {root_path}")
     
-    # 0. Handle Self-Update (No Config Needed)
-    if args.command == "update":
-        if update_flow.run():
-            sys.exit(0)
-        else:
-            sys.exit(1)
-
+    # 0. Special Handlers (Pre-Config)
     if args.command == "server":
-        # Do not print to stdout as it breaks LSP protocol
-        # We also need to ignore --stdio flag if present
         sys.stderr.write("Starting Niki-docAI LSP Server...\n")
         lsp_server.run()
         sys.exit(0)
 
-
-    # 1. Ensure Configuration Files Exist (Documentation as Configuration)
-    # Skip ensures for doctor command to diagnose raw state
-    # Also skip for init, as init handles it explicitly
-    if args.command not in ["doctor", "init", "server"]:
-        config_flow.ensure_rules_file(root_path)
-        syntax_flow.run(ProjectConfig(scan=ScanConfig(root_path=root_path))) # Ensure syntax manual
-
-
-    # 2. Load Configuration
-    config = config_flow.load_project_config(root_path)
-    
-    success = True
-    
-    if args.command == "init":
-        if init_flow.run(config, force=args.force):
-            # Check capabilities on init as well
-            capability_flow.run(config, auto_install=True)
-            sys.exit(0)
-        else:
+    if args.command == "skeleton":
+        if not args.target:
+            print("❌ Error: 'skeleton' command requires a file path.")
             sys.exit(1)
-            
-    if args.command == "check":
-        if check_flow.run(config, target=args.target):
-            sys.exit(0)
-        else:
+        path = Path(args.target)
+        if not path.exists():
+            print(f"❌ Error: File not found: {path}")
             sys.exit(1)
-
-    if args.command == "clean":
-        if clean_flow.run(config, target=args.target, force=args.force):
-            sys.exit(0)
-        else:
-            sys.exit(1)
-
-    if args.command == "doctor":
-        if doctor_flow.run(config):
-            sys.exit(0)
-        else:
-            sys.exit(1)
-
-    if args.command == "todo":
-        print("⚠️  'todo' command is deprecated. Using 'status' instead.")
-        ok_status = status_flow.run(config)
-        ok_next = status_flow.update_next_file(config)
-        sys.exit(0 if ok_status and ok_next else 1)
-
-    if args.command == "stats":
-        print("⚠️  'stats' command is deprecated. Using 'status' instead.")
-        ok_status = status_flow.run(config)
-        ok_stats = status_flow.update_stats_file(config, force=True)
-        sys.exit(0 if ok_status and ok_stats else 1)
-            
-    if args.command == "verify":
-        if verify_flow.run(config):
-            sys.exit(0)
-        else:
-            sys.exit(1)
-            
-    if args.command == "lint":
-        if quality_flow.run_lint(config):
-            sys.exit(0)
-        else:
-            sys.exit(1)
-            
-    if args.command == "typecheck":
-        if quality_flow.run_typecheck(config):
-            sys.exit(0)
-        else:
-            sys.exit(1)
-
-    if args.command == "prompt":
-        # target can be the second argument
-        target_file = args.target
-        if not target_file:
-            print("❌ Error: Please specify a target file for prompt generation.")
-            print("Usage: ndoc prompt <file_path> [--skeleton] [--focus]")
-            sys.exit(1)
-            
-        use_skeleton = "--skeleton" in sys.argv
-        use_focus = "--focus" in sys.argv
-        print(prompt_flow.get_context_prompt(target_file, config, focus=use_focus, use_skeleton=use_skeleton))
+        from ndoc.core import io
+        content = io.read_text(path)
+        if content:
+            print(skeleton.generate_skeleton(content, str(path)))
         sys.exit(0)
-
-    # For 'server' command, we handle it early to avoid any stdout pollution
-    # if args.command == "server":
-    #    # Do not print to stdout as it breaks LSP protocol
-    #    # We also need to ignore --stdio flag if present
-    #    sys.stderr.write("Starting Niki-docAI LSP Server...\n")
-    #    lsp_server.run()
-    #    sys.exit(0)
 
     if args.command == "lsp":
         if not args.target:
             print("❌ Error: Missing symbol name. Usage: ndoc lsp <symbol_name>")
             sys.exit(1)
         
-        from ndoc.atoms import lsp, fs
+        from ndoc.interfaces import lsp
+        from ndoc.core import fs
         print(f"🔍 Searching for symbol: {args.target}")
+        
+        # Load config for LSP
+        # 1. Ensure Configuration Files Exist (Documentation as Configuration)
+        if args.command not in ["doctor", "init"]:
+            config_flow.ensure_rules_file(root_path)
+            syntax_flow.run(ProjectConfig(scan=ScanConfig(root_path=root_path))) # Ensure syntax manual
+        config = config_flow.load_project_config(root_path)
+
         lsp_service = lsp.get_service(root_path)
         files = list(fs.walk_files(root_path, config.scan.ignore_patterns))
-        lsp_service.index_project(files)
+        lsp_service.index_project(files, config=config)
         
         # Find Definitions
         defs = lsp_service.find_definitions(args.target)
@@ -284,107 +209,80 @@ Granular Updates (单独更新):
             print(f"  - {rel}:{r['line']}  -> {r['content']}")
         sys.exit(0)
 
-    if args.command == "inject":
-        inject_flow.run(config, args.target)
-        sys.exit(0)
+    # 1. Ensure Configuration Files Exist (Documentation as Configuration)
+    if args.command not in ["doctor", "init", "server"]:
+        config_flow.ensure_rules_file(root_path)
+        syntax_flow.run(ProjectConfig(scan=ScanConfig(root_path=root_path))) # Ensure syntax manual
+
+    # 2. Load Configuration
+    config = config_flow.load_project_config(root_path)
     
-    if args.command in ["arch", "all"]:
-        print("Running Arch Flow...")
-        if arch_flow.run(config):
-            print("✅ Architecture Overview updated successfully.")
-        else:
-            print("❌ Architecture Overview update failed.")
-            success = False
-
-    if args.command in ["context", "all"]:
-        print("Running Context Flow...")
-        if context_flow.run(config):
-            print("✅ Context updated successfully.")
-        else:
-            print("❌ Context update failed.")
-            success = False
-
-    if args.command in ["status", "all"]:
-        print("Running Status Flow...")
-        if status_flow.run(config):
-            print("✅ Status Board updated successfully.")
-        else:
-            print("❌ Status Board update failed.")
-            success = False
-
-    if args.command in ["archive", "all"]:
-        # Archive is part of 'all' to maintain _MEMORY.md automatically
-        print("Running Archive Flow...")
-        if archive_flow.run(config):
-            print("✅ Archive completed successfully.")
-        else:
-            if args.command == "archive": # Only fail if explicitly requested
-                print("❌ Archive failed.")
-                success = False
-            else:
-                print("ℹ️ Archive skipped or failed (non-critical for 'all').")
-
-    if args.command in ["data", "all"]:
-        print("Running Data Flow...")
-        if data_flow.run(config):
-            print("✅ Data Registry updated successfully.")
-        else:
-            print("❌ Data Registry update failed.")
-            success = False
-
-    elif args.command == "adr":
-        adr_flow.run(config)
-    elif args.command == "mind":
-        mind_flow.run(config)
-    elif args.command == "lesson":
-        lesson_flow.run(config)
-    elif args.command == "deps":
-        # Pass target if provided (for scoped dependency graph)
-        deps_flow.run(config, target=args.target)
-    elif args.command == "impact":
-        impact_flow.run(config)
-    elif args.command == "skeleton":
-        if not args.target:
-            print("❌ Error: 'skeleton' command requires a file path.")
-            sys.exit(1)
-        path = Path(args.target)
-        if not path.exists():
-            print(f"❌ Error: File not found: {path}")
-            sys.exit(1)
-        from ndoc.core import io
-        content = io.read_text(path)
-        if content:
-            print(skeleton.generate_skeleton(content, str(path)))
-        sys.exit(0)
-
-    elif args.command == "search":
-        if not args.target:
-            print("❌ Error: Please provide a search query.")
-            print("Usage: ndoc search \"query string\"")
-            sys.exit(1)
-        if search_flow.run(config, args.target):
-            sys.exit(0)
-        else:
-            sys.exit(1)
-
-    # Legacy Commands (Redirect or Deprecated)
-    if args.command == "map":
-        print("⚠️  'map' command is deprecated. Using 'arch' instead.")
-        arch_flow.run(config)
-    # if args.command == "deps": # Now a first-class command
-    #     print("⚠️  'deps' command is deprecated. Using 'arch' instead.")
-    #     arch_flow.run(config)
-    if args.command == "tech":
-        print("⚠️  'tech' command is deprecated. Using 'arch' instead.")
-        arch_flow.run(config)
-    if args.command == "symbols":
-        print("⚠️  'symbols' command is deprecated. Using 'arch' instead.")
-        arch_flow.run(config)
-
-    if not success:
-        sys.exit(1)
+    # 3. Dynamic Dispatch
+    handler = CommandRegistry.get_handler(args.command)
+    if handler:
+        # Check signature to pass arguments correctly
+        import inspect
+        sig = inspect.signature(handler)
+        kwargs = {}
+        
+        if "config" in sig.parameters:
+            kwargs["config"] = config
+        if "target" in sig.parameters and args.target:
+            kwargs["target"] = args.target
+        if "query" in sig.parameters and args.target: # Search uses target as query
+            kwargs["query"] = args.target
+        if "file_path" in sig.parameters and args.target: # Prompt uses target as file_path
+            kwargs["file_path"] = args.target
+        if "force" in sig.parameters:
+            kwargs["force"] = args.force
+        if "auto_install" in sig.parameters:
+            # For init/caps, usually true or passed via args? 
+            # Let's assume True for init context if not specified
+            kwargs["auto_install"] = True
+        if "focus" in sig.parameters:
+            kwargs["focus"] = args.focus
             
-    if args.command == "watch":
+        try:
+            success = handler(**kwargs)
+            if not success:
+                sys.exit(1)
+            sys.exit(0)
+        except TypeError as e:
+            logger.error(f"Command signature mismatch: {e}")
+            sys.exit(1)
+
+    # 4. Handle Special/Composite Commands
+    success = True
+    
+    if args.command == "all":
+        # Sequence of commands to run
+        sequence = ["map", "arch", "context", "status", "data", "deps", "archive"]
+        
+        for cmd_name in sequence:
+            handler = CommandRegistry.get_handler(cmd_name)
+            if handler:
+                print(f"Running {cmd_name.title()} Flow...")
+                try:
+                    if not handler(config=config):
+                        print(f"❌ {cmd_name.title()} failed.")
+                        success = False
+                    else:
+                        print(f"✅ {cmd_name.title()} updated successfully.")
+                except Exception as e:
+                    print(f"❌ {cmd_name.title()} crashed: {e}")
+                    success = False
+    
+    elif args.command == "stats":
+        # Re-use status flow logic but with force=True
+        # We can call status_flow.update_stats_file directly if exposed, 
+        # or just run status flow.
+        # But status flow main entry point updates both TODOs and Stats.
+        # Let's keep it simple and just run status flow.
+        handler = CommandRegistry.get_handler("status")
+        if handler:
+            success = handler(config=config)
+
+    elif args.command == "watch":
         start_watch_mode(config)
             
     if not success:

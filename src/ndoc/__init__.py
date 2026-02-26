@@ -1,15 +1,12 @@
-# <NIKI_AUTO_HEADER_START>
-# ------------------------------------------------------------------------------
-# 🧠 Niki-docAI Context (Auto-Generated)
-#
-# [Local Rules] (_AI.md)
-# *   **Proactive Capability Check**: `entry.py` serves as the primary gatekeeper. It must invoke `capability_flow` to ...
-# *   **Dynamic Watchdog**: `daemon.py` monitors file system events. When a new file type is detected (e.g., a `.rs` fi...
-# *   **CLI Robustness**: All CLI commands (including `lsp`) must handle missing capabilities gracefully, either by att...
-# *   **LSP Protocol Integrity**: `entry.py`'s `server` command MUST NOT print anything to `stdout` other than JSON-RPC...
-# *   **Context Awareness**: `lsp_server.py` implements "Thinking Context" via `textDocument/hover`, aggregating rules ...
-# ------------------------------------------------------------------------------
-# <NIKI_AUTO_HEADER_END>
 """
 Niki-docAI Source Root.
 """
+
+# Automatically initialize environment on package import
+# This ensures spawned processes (multiprocessing) have correct paths
+try:
+    from .core.bootstrap import ensure_cli_environment
+    ensure_cli_environment()
+except ImportError:
+    # Avoid circular import issues during setup/install if dependencies are missing
+    pass

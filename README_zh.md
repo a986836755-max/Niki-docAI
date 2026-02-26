@@ -3,7 +3,7 @@
 > **面向 AI 辅助开发的上下文运维与架构守护工具**
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.9+-green.svg)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/Status-Beta-orange.svg)]()
 
 [**中文文档**](README_zh.md) | [**English**](README.md)
@@ -60,110 +60,91 @@ Niki-docAI 提供了一套工具来自动化“上下文运维”：
 *   **语义骨架 (`ndoc skeleton`)**:
     **[2.0 新功能]** 生成高密度的代码骨架（仅接口），降低 70% 的 Token 消耗。
 
+*   **数据注册表 (`ndoc data`)**:
+    **[2.0 新功能]** 自动提取 `dataclass`, `TypedDict`, `Enum`, `struct`, 和 `model` 定义到 `_DATA.md`，建立统一数据字典。
+
+*   **质量门禁 (`ndoc lint` / `ndoc typecheck`)**:
+    **[2.0 新功能]** 集成 `_RULES.md` 中定义的质量检查命令，提供统一的调用接口。
+
+*   **经验固化 (`ndoc lesson`)**:
+    **[2.0 新功能]** 从代码注释中提取 `@LESSON` 标签到 `_LESSONS.md`，形成项目知识库，避免重复犯错。
+
+*   **系统诊断 (`ndoc doctor`)**:
+    **[2.0 新功能]** 全面的环境检查，包括 OS、Python 版本、依赖项、Tree-sitter 语言绑定和项目配置健康状况。
+
 ---
 
-## 4. 安装与快速开始
+## 4. 🚀 一键安装指南
 
-### 安装
-
-```bash
-# 克隆仓库
-git clone https://github.com/your-org/nk_doc_ai.git
-cd nk_doc_ai
-
-# 安装（推荐）
-python -m pip install .
+### Windows (PowerShell)
+```powershell
+.\install.ps1
 ```
 
-首次运行会自动在 `~/.ndoc/bin` 生成 shim 并尝试写入 PATH。
-
-如果安装后找不到 `ndoc`，可以使用模块入口：
-
+### Linux / macOS
 ```bash
-python -m ndoc all
+chmod +x install.sh
+./install.sh
 ```
 
-### 自包含发行包
+此脚本会自动执行以下操作：
+1.  检测并使用合适的 Python 版本。
+2.  安装 `ndoc` 核心工具。
+3.  检测 VS Code 并自动安装 Niki-docAI 插件。
+
+---
+
+## 5. 快速开始
+
+### 初始化项目
+
+1.  在 VS Code 中打开你的目标项目。
+2.  打开终端运行：
+    ```bash
+    ndoc init
+    ```
+    这将创建 `.ndoc` 配置目录和必要文件：
+    *   `_RULES.md`: 架构规则与 Lint 命令。
+    *   `_SYNTAX.md`: 文档语法指南。
+
+### 生成上下文
+
+运行全量生成命令来索引你的代码库：
 
 ```bash
-tools/packaging/build.sh
-```
-
-输出：
-
-- `dist/ndoc` (macOS/Linux)
-- `dist/ndoc.exe` (Windows)
-
-### 快速开始
-
-**1. 初始化 (Initialize)**
-
-```bash
-# 初始化项目（生成配置和语法手册）
-ndoc init
-```
-
-**2. 生成上下文 (Generate Context)**
-
-```bash
-# 一键生成/更新所有文档 (架构 + 上下文 + 状态 + 依赖)
 ndoc all
 ```
 
-**3. AI 辅助 (AI Assistance)**
+你将在项目根目录看到生成的文件：
+*   `_MAP.md`: 项目结构地图。
+*   `_ARCH.md`: 架构概览。
+*   `_DEPS.md`: 依赖关系图。
+*   `_AI.md`: 各目录的递归上下文文件。
 
-```bash
-# 为特定文件生成 AI 提示词（智能检索模式）
-ndoc prompt src/main.py --focus
+### 配置规则 (可选)
 
-# 查看文件的高密度骨架
-ndoc skeleton src/utils.py
-```
-
-**4. 架构治理 (Architecture Governance)**
-
-```bash
-# 检查架构违规
-ndoc check
-
-# 检测循环依赖
-ndoc deps
-# 查看特定模块的局部依赖
-ndoc deps src/core
-
-# 分析当前变更的影响范围
-ndoc impact
-```
-
----
-
-## 5. 配置 (Configuration)
-
-通过 `_RULES.md` 配置你的项目：
+编辑 `_RULES.md` 定义你的项目特定约束：
 
 ```markdown
-## 扫描规则 (Scanning Rules)
-- `!IGNORE`: node_modules, dist, build, .git
-
-## 架构规则 (Architecture Rules)
-- `!RULE`: @LAYER(core) CANNOT_IMPORT @LAYER(ui)
-- `!RULE`: @FORBID(hardcoded_paths)
+## !RULE
+<!-- 示例：强制分层 -->
+<!-- !RULE: @LAYER(core) CANNOT_IMPORT @LAYER(ui) -->
 ```
 
----
-
-## 6. 支持的语言
-
-内置 Tree-sitter 解析器，支持多语言混合项目：
-*   **Python** (`.py`)
-*   **JavaScript/TypeScript** (`.js`, `.ts`, `.jsx`, `.tsx`)
-*   **Java** (`.java`)
-*   **Go** (`.go`)
-*   **C/C++** (`.cpp`, `.h`)
-*   **C#** (`.cs`)
-*   **Rust** (`.rs`)
-*   **Dart** (`.dart`)
+然后运行 `ndoc check` 来验证代码是否符合规则。
 
 ---
 
-*Powered by Niki-docAI Team*
+## 6. 开发 (吃狗粮)
+
+要开发 Niki-docAI 本身：
+
+1.  在 VS Code 中打开本仓库。
+2.  运行 `ndoc init` (我们吃自己的狗粮！)。
+3.  使用 "Launch Extension" 调试配置来测试 VS Code 插件。
+
+---
+
+## License
+
+MIT

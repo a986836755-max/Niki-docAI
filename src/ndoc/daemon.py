@@ -1,15 +1,3 @@
-# <NIKI_AUTO_HEADER_START>
-# ------------------------------------------------------------------------------
-# 🧠 Niki-docAI Context (Auto-Generated)
-#
-# [Local Rules] (_AI.md)
-# *   **Proactive Capability Check**: `entry.py` serves as the primary gatekeeper. It must invoke `capability_flow` to ...
-# *   **Dynamic Watchdog**: `daemon.py` monitors file system events. When a new file type is detected (e.g., a `.rs` fi...
-# *   **CLI Robustness**: All CLI commands (including `lsp`) must handle missing capabilities gracefully, either by att...
-# *   **LSP Protocol Integrity**: `entry.py`'s `server` command MUST NOT print anything to `stdout` other than JSON-RPC...
-# *   **Context Awareness**: `lsp_server.py` implements "Thinking Context" via `textDocument/hover`, aggregating rules ...
-# ------------------------------------------------------------------------------
-# <NIKI_AUTO_HEADER_END>
 """
 Daemon: Live Context Watcher.
 守护进程：实时上下文监听器。
@@ -27,6 +15,7 @@ from ndoc.models.config import ProjectConfig
 from ndoc.flows import map_flow, context_flow, status_flow, data_flow, deps_flow, archive_flow, capability_flow, arch_flow
 from ndoc.brain.hippocampus import Hippocampus, ActionType
 from ndoc.core.logger import logger
+from ndoc.interfaces import lsp
 
 class DocChangeHandler(FileSystemEventHandler):
     """
@@ -41,6 +30,8 @@ class DocChangeHandler(FileSystemEventHandler):
         self.dirty_paths: Set[Path] = set()
         self.needs_structure_update = False
         self.hippocampus = Hippocampus() # Short-term memory
+        # Get LSP Service instance
+        self.lsp_service = lsp.get_service(config.scan.root_path)
 
     def on_any_event(self, event: FileSystemEvent):
         # 1. Ignore directories (watchdog sends dir events, but we care about files mostly)
@@ -121,6 +112,13 @@ class DocChangeHandler(FileSystemEventHandler):
             # 2. Update Context for changed files/dirs
             processed_dirs = set()
             for path in current_dirty_paths:
+                # Update LSP Index
+                try:
+                    self.lsp_service.update_file(path)
+                    self.lsp_service.invalidate_context_cache(path)
+                except Exception as e:
+                    logger.warning(f"Failed to update LSP for {path}: {e}")
+                
                 # Find nearest _AI.md parent
                 d = path if path.is_dir() else path.parent
                 

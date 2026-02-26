@@ -1,14 +1,3 @@
-# <NIKI_AUTO_HEADER_START>
-# ------------------------------------------------------------------------------
-# 🧠 Niki-docAI Context (Auto-Generated)
-#
-# [Local Rules] (_AI.md)
-# *   **Dynamic Capability Loading**: `capabilities.py` implements the "Kernel + Plugins" architecture. Do not hardcode...
-# *   **Decoupled Text Processing**: 所有纯文本级别的清洗和标签提取逻辑必须放在 `text_utils.py` 中，禁止在 `scanner.py` 中直接操作原始正则，以避免循环引用和逻辑冗余。
-# *   **Enhanced Symbol Context**: `scanner.py` 在重建缓存符号时必须确保 `path` 属性被正确填充，否则会导致下游 CLI 工具 (如 `lsp` 指令) 在解析相对路径时崩溃。
-# *   **LSP Service Hotness**: `lsp.py` 提供轻量级引用计数。该计数基于全局词频统计，虽然不是 100% 精确的定义引用，但在大规模 codebase 中能有效反映符号的“热度”和影响力。
-# ------------------------------------------------------------------------------
-# <NIKI_AUTO_HEADER_END>
 """
 Atoms: Capability Manager.
 能力管理：负责按需加载和安装语言解析器等插件。
@@ -427,6 +416,7 @@ class CapabilityManager:
         # 0. Try loading custom DLL first (e.g. for Dart)
         if lang_name == 'dart':
             try:
+                import ctypes
                 from pathlib import Path
                 # Assuming dll is in ../parsing/langs/bin/ relative to this file?
                 # This file is src/ndoc/core/capabilities.py
@@ -438,16 +428,17 @@ class CapabilityManager:
                 
                 if dll_path.exists():
                     try:
-                        if hasattr(TS_Language, "load"):
-                            return TS_Language.load(str(dll_path))
-                    except Exception:
-                        pass
-                    try:
-                        return TS_Language(str(dll_path), 'dart')
-                    except Exception:
-                        return None
+                        # Use ctypes to get the pointer from DLL
+                        lib = ctypes.cdll.LoadLibrary(str(dll_path))
+                        func = getattr(lib, f"tree_sitter_{lang_name}")
+                        func.restype = ctypes.c_void_p
+                        ptr = func()
+                        if ptr:
+                            return TS_Language(ptr)
+                    except Exception as e:
+                        print(f"--> Warning: Failed to load custom {lang_name} DLL via ctypes: {e}")
             except Exception as e:
-                print(f"--> Warning: Failed to load custom Dart DLL: {e}")
+                print(f"--> Warning: Failed to load custom {lang_name} DLL: {e}")
 
         try:
             # Dynamic import: import tree_sitter_{lang_name}

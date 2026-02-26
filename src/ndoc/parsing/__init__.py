@@ -1,3 +1,12 @@
+# <NIKI_AUTO_HEADER_START>
+# ------------------------------------------------------------------------------
+# 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# - DOD Architecture: `scanner.py` (Engine) MUST NOT contain business logic. It delegates to `extractors.py` (Pure Logi...
+# - Pure Extractors: Functions in `extractors.py` must be pure (no side effects, no I/O).
+# ------------------------------------------------------------------------------
+# <NIKI_AUTO_HEADER_END>
 """
 Parsing: Code Analysis & Extraction.
 感知层：代码解析与提取。

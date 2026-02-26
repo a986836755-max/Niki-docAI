@@ -1,12 +1,3 @@
-# <NIKI_AUTO_HEADER_START>
-# ------------------------------------------------------------------------------
-# 🧠 Niki-docAI Context (Auto-Generated)
-#
-# [Local Rules] (_AI.md)
-# *   **Skeleton Generation**: This module generates semantic skeletons from ASTs.
-# *   **No Logic**: It should strictly ignore function bodies and implementation details.
-# ------------------------------------------------------------------------------
-# <NIKI_AUTO_HEADER_END>
 """
 Atoms: Semantic Skeleton Generator.
 原子能力：代码语义骨架生成。

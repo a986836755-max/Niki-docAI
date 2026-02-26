@@ -1,6 +1,10 @@
 # <NIKI_AUTO_HEADER_START>
 # ------------------------------------------------------------------------------
 # 🧠 Niki-docAI Context (Auto-Generated)
+#
+# [Local Rules] (_AI.md)
+# - DOD Architecture: `scanner.py` (Engine) MUST NOT contain business logic. It delegates to `extractors.py` (Pure Logi...
+# - Pure Extractors: Functions in `extractors.py` must be pure (no side effects, no I/O).
 # ------------------------------------------------------------------------------
 # <NIKI_AUTO_HEADER_END>
 """
@@ -180,8 +184,7 @@ def extract_definitions(content: str, path: Path) -> List[str]:
     if ts_lang:
         try:
             from tree_sitter import Parser
-            parser = Parser()
-            parser.set_language(ts_lang)
+            parser = Parser(ts_lang)
             tree = parser.parse(bytes(content, "utf8"))
             
             defs = []
