@@ -22,7 +22,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(os.getcwd()) / "src"))
 
-from ndoc.atoms import ast, queries
+from ndoc.parsing import ast
 
 def test_python_parsing():
     code = """

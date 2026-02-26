@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath("src"))
 if 'ndoc' in sys.modules:
     del sys.modules['ndoc']
 
-from ndoc.atoms.capabilities import CapabilityManager
+from ndoc.core.capabilities import CapabilityManager
 from unittest.mock import patch, MagicMock
 
 class TestCapabilityManager(unittest.TestCase):

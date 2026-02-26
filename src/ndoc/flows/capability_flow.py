@@ -14,7 +14,8 @@ Flow: Capability Auto-Discovery and Installation.
 """
 from typing import Set
 from pathlib import Path
-from ..atoms import fs, capabilities, langs
+from ..core import fs, capabilities
+from ..parsing import langs
 from ..models.config import ProjectConfig
 
 def run(config: ProjectConfig, auto_install: bool = True) -> bool:

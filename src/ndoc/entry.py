@@ -16,10 +16,21 @@ Entry Point: CLI Execution.
 """
 import argparse
 import sys
+import logging
 from pathlib import Path
+from ndoc.core.logger import logger, set_log_level
+from ndoc.core.bootstrap import ensure_cli_environment
 
 # 添加 src 到 sys.path 以便直接运行
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# --- LOGGING SUPPRESSION ---
+# Prevent pygls and other libraries from spamming stdout/stderr during CLI execution
+# unless we are explicitly running the server.
+logging.getLogger("pygls").setLevel(logging.WARNING)
+logging.getLogger("lsprotocol").setLevel(logging.WARNING)
+logging.getLogger("chromadb").setLevel(logging.WARNING)
+# ---------------------------
 
 from ndoc.models.config import ProjectConfig, ScanConfig
 from ndoc import lsp_server
@@ -31,9 +42,7 @@ from ndoc.flows import (
     init_flow, 
     verify_flow, 
     clean_flow, 
-    stats_flow, 
     update_flow, 
-    plan_flow, 
     archive_flow, 
     data_flow, 
     capability_flow, 
@@ -47,15 +56,18 @@ from ndoc.flows import (
     lesson_flow,
     deps_flow,
     impact_flow,
+    search_flow,
+    quality_flow,
 )
 from ndoc.daemon import start_watch_mode
-from ndoc.atoms import io
+from ndoc.core import io
 from ndoc.parsing.ast import skeleton
 
 def main():
     """
     CLI 主入口 (CLI Main Entry).
     """
+    ensure_cli_environment()
     description = """
 Niki-docAI 2.0 (Rebirth) - AI Context Ops Toolchain
 
@@ -79,6 +91,12 @@ Analysis & Insights (分析与洞察):
   impact    : Analyze impact of changed files (Git aware).
   skeleton  : Generate semantic skeleton of a file.
               Usage: ndoc skeleton <file_path>
+  
+  prompt    : Generate semantic context prompt for AI (Vector Search).
+              Usage: ndoc prompt <file> [--focus] [--skeleton]
+              
+  search    : Search codebase using natural language.
+              Usage: ndoc search "query string"
 
 Diagnostics (诊断与维护):
   check     : Check code for constraint violations (!RULE).
@@ -86,9 +104,8 @@ Diagnostics (诊断与维护):
   verify    : Verify documentation artifacts.
   doctor    : Diagnose environment and configuration health.
   stats     : Show project statistics (Merged into status).
-  
-  plan      : Plan and split an objective into tasks (LLM required).
-              Usage: ndoc plan "Your Objective"
+  lint      : Run lint commands defined in _RULES.md.
+  typecheck : Run typecheck commands defined in _RULES.md.
   
   archive   : Archive completed tasks and extract memory.
 
@@ -107,11 +124,12 @@ Granular Updates (单独更新):
         description=description,
         formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("command", choices=["map", "context", "todo", "deps", "symbols", "data", "inject", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "plan", "archive", "lsp", "prompt", "server", "check", "arch", "status", "help", "adr", "mind", "lesson", "impact", "skeleton"], help="Command to execute")
+    parser.add_argument("command", choices=["map", "context", "todo", "deps", "symbols", "data", "inject", "all", "watch", "doctor", "init", "verify", "clean", "stats", "update", "archive", "lsp", "prompt", "server", "check", "arch", "status", "help", "adr", "mind", "lesson", "impact", "skeleton", "search", "lint", "typecheck"], help="Command to execute")
     parser.add_argument("target", nargs="?", help="Target file or directory (for clean command)")
     parser.add_argument("--root", default=".", help="Project root directory (Default: current dir)")
     parser.add_argument("--file", "-f", help="Specific file for prompt context generation")
     parser.add_argument("--force", action="store_true", help="⚠️ Force execution (DANGER: Overwrite configs in init, Delete without confirm in clean)")
+    parser.add_argument("--focus", action="store_true", help="Enable Focus Mode (Vector Search) for prompt command")
     parser.add_argument("--dry-run", action="store_true", help="Preview changes without writing to disk")
     # Add --stdio argument to satisfy VS Code LSP client
     parser.add_argument("--stdio", action="store_true", help="Run in stdio mode (LSP Server)")
@@ -130,7 +148,9 @@ Granular Updates (单独更新):
         print("⚠️  DRY RUN MODE: No changes will be written to disk.")
     
     if args.command != "server":
-        print(f"Starting Niki-docAI 2.0 in {root_path}")
+        # Set log level based on args
+        # set_log_level(logging.DEBUG if getattr(args, 'verbose', False) else logging.INFO)
+        logger.info(f"Starting Niki-docAI 2.0 in {root_path}")
     
     # 0. Handle Self-Update (No Config Needed)
     if args.command == "update":
@@ -174,15 +194,6 @@ Granular Updates (单独更新):
         else:
             sys.exit(1)
 
-    if args.command == "plan":
-        if not args.target:
-            print("❌ Error: 'plan' command requires an objective. Usage: ndoc plan \"Objective\"")
-            sys.exit(1)
-        if plan_flow.run(config, args.target):
-            sys.exit(0)
-        else:
-            sys.exit(1)
-            
     if args.command == "clean":
         if clean_flow.run(config, target=args.target, force=args.force):
             sys.exit(0)
@@ -195,14 +206,32 @@ Granular Updates (单独更新):
         else:
             sys.exit(1)
 
+    if args.command == "todo":
+        print("⚠️  'todo' command is deprecated. Using 'status' instead.")
+        ok_status = status_flow.run(config)
+        ok_next = status_flow.update_next_file(config)
+        sys.exit(0 if ok_status and ok_next else 1)
+
     if args.command == "stats":
-        if stats_flow.run(config, force=True):
+        print("⚠️  'stats' command is deprecated. Using 'status' instead.")
+        ok_status = status_flow.run(config)
+        ok_stats = status_flow.update_stats_file(config, force=True)
+        sys.exit(0 if ok_status and ok_stats else 1)
+            
+    if args.command == "verify":
+        if verify_flow.run(config):
             sys.exit(0)
         else:
             sys.exit(1)
             
-    if args.command == "verify":
-        if verify_flow.run(config):
+    if args.command == "lint":
+        if quality_flow.run_lint(config):
+            sys.exit(0)
+        else:
+            sys.exit(1)
+            
+    if args.command == "typecheck":
+        if quality_flow.run_typecheck(config):
             sys.exit(0)
         else:
             sys.exit(1)
@@ -310,7 +339,8 @@ Granular Updates (单独更新):
     elif args.command == "lesson":
         lesson_flow.run(config)
     elif args.command == "deps":
-        deps_flow.run(config)
+        # Pass target if provided (for scoped dependency graph)
+        deps_flow.run(config, target=args.target)
     elif args.command == "impact":
         impact_flow.run(config)
     elif args.command == "skeleton":
@@ -321,11 +351,21 @@ Granular Updates (单独更新):
         if not path.exists():
             print(f"❌ Error: File not found: {path}")
             sys.exit(1)
-        from ndoc.atoms import io
+        from ndoc.core import io
         content = io.read_text(path)
         if content:
             print(skeleton.generate_skeleton(content, str(path)))
         sys.exit(0)
+
+    elif args.command == "search":
+        if not args.target:
+            print("❌ Error: Please provide a search query.")
+            print("Usage: ndoc search \"query string\"")
+            sys.exit(1)
+        if search_flow.run(config, args.target):
+            sys.exit(0)
+        else:
+            sys.exit(1)
 
     # Legacy Commands (Redirect or Deprecated)
     if args.command == "map":
@@ -337,9 +377,6 @@ Granular Updates (单独更新):
     if args.command == "tech":
         print("⚠️  'tech' command is deprecated. Using 'arch' instead.")
         arch_flow.run(config)
-    if args.command == "todo":
-        print("⚠️  'todo' command is deprecated. Using 'status' instead.")
-        status_flow.run(config)
     if args.command == "symbols":
         print("⚠️  'symbols' command is deprecated. Using 'arch' instead.")
         arch_flow.run(config)

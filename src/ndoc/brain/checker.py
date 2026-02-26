@@ -26,7 +26,17 @@ class Violation:
     file_path: str
     rule_name: str
     message: str
-    severity: str = "ERROR" # ERROR, WARNING
+    line: int = 0
+    character: int = 0
+    severity: str = "ERROR"
+
+def _find_import_line(content: Optional[str], import_name: str) -> int:
+    if not content or not import_name:
+        return 0
+    for i, line in enumerate(content.splitlines()):
+        if import_name in line:
+            return i + 1
+    return 0
 
 def check_file(file: FileContext, index: SemanticIndex) -> List[Violation]:
     """
@@ -78,13 +88,15 @@ def check_file(file: FileContext, index: SemanticIndex) -> List[Violation]:
         # 1. Check FORBID
         forbidden_tag = get_attr(rule_tag, "FORBID")
         if forbidden_tag:
-            # Check if file has this tag
             for ft in file.tags:
                 if ft.name == forbidden_tag or (ft.name.startswith("@") and ft.name[1:] == forbidden_tag):
+                    line_no = ft.line if ft.line > 0 else 0
                     violations.append(Violation(
                         file_path=str(file.path),
                         rule_name=get_name(rule_tag),
                         message=f"Rule '{rule_key}' forbids tag '{forbidden_tag}'",
+                        line=line_no,
+                        character=0,
                         severity="ERROR" if get_attr(rule_tag, "CRITICAL") else "WARNING"
                     ))
                     
@@ -102,6 +114,8 @@ def check_file(file: FileContext, index: SemanticIndex) -> List[Violation]:
                     file_path=str(file.path),
                     rule_name=get_name(rule_tag),
                     message=f"Rule '{rule_key}' requires tag '{required_tag}'",
+                    line=0,
+                    character=0,
                     severity="ERROR" if get_attr(rule_tag, "CRITICAL") else "WARNING"
                 ))
 
@@ -122,10 +136,13 @@ def check_file(file: FileContext, index: SemanticIndex) -> List[Violation]:
                     for imp in file.imports:
                         # Convert import to layer (heuristic)
                         if _import_in_layer(imp, target_layer):
+                            line_no = _find_import_line(file.content, imp)
                             violations.append(Violation(
                                 file_path=str(file.path),
                                 rule_name=get_name(rule_tag),
                                 message=f"Layer violation: '{source_layer}' cannot import '{target_layer}' (found '{imp}')",
+                                line=line_no,
+                                character=0,
                                 severity="ERROR"
                             ))
             except (ValueError, IndexError):

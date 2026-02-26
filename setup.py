@@ -26,6 +26,7 @@ setup(
     install_requires=[
         "watchdog>=6.0.0",
         "tree-sitter>=0.23.2",
+        "tree-sitter-dart>=0.0.1; platform_system != \"Windows\"",
         "colorama>=0.4.6",
         "pathspec>=0.12.1",
     ],

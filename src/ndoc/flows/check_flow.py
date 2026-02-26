@@ -26,13 +26,17 @@ def _to_context(scan_result: scanner.ScanResult, path: Path, root: Path) -> File
         rel = str(path.relative_to(root))
     except ValueError:
         rel = str(path)
-        
+    
+    content = io.read_text(path)
+
     return FileContext(
         path=path,
         rel_path=rel,
+        content=content,
         tags=scan_result.tags,
         sections=scan_result.sections,
         symbols=scan_result.symbols,
+        imports=scan_result.imports,
         docstring=scan_result.docstring,
         memories=scan_result.memories
     )

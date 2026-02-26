@@ -17,7 +17,8 @@ from dataclasses import dataclass
 from typing import List, Callable, Dict
 from concurrent.futures import ThreadPoolExecutor
 
-from ..atoms import fs, io, scanner
+from ..core import fs, io
+from ..parsing import scanner
 from ..models.config import ProjectConfig
 
 # --- Data Structures (Pipeline Config) ---
@@ -159,6 +160,22 @@ def run(config: ProjectConfig) -> bool:
     else:
         # Update body
         success = io.update_section(map_file, start_marker, end_marker, tree_content)
+        
+        if not success:
+            print(f"⚠️  Markers not found in {map_file.name}. Overwriting file to ensure structure...")
+            # Fallback: Overwrite entire file if markers are missing
+            # This ensures "Map generation always comes with markers"
+            template = f"""# Project Map
+> @CONTEXT: Map | Project Structure
+> 最后更新 (Last Updated): {timestamp}
+
+## @STRUCTURE
+{start_marker}
+{tree_content}
+{end_marker}
+"""
+            return io.write_text(map_file, template)
+
         # Update header timestamp
         if success:
             io.update_header_timestamp(map_file)

@@ -16,165 +16,191 @@ import re
 from pathlib import Path
 from typing import List, Optional
 
-from ..atoms import io, scanner, index
+from ..core import io
+from ..core.logger import logger
+from ..parsing import scanner
+from ..brain import index
 from ..parsing.ast import skeleton
-from ..brain.vectordb import VectorDB
+# from ..brain.vectordb import VectorDB # Runtime import
 from ..models.config import ProjectConfig
 
-# --- Markers ---
 RULE_MARKER = "## !RULE"
 CTX_START = "<!-- NIKI_CTX_START -->"
 
-def get_context_prompt(file_path: Path, config: ProjectConfig, focus: bool = False, use_skeleton: bool = False) -> str:
+# --- Condensation Logic ---
+
+def extract_syntax_summary(root: Path) -> str:
+    """
+    Extract condensed syntax definition from _SYNTAX.md.
+    Only retains @TAGS and their short descriptions.
+    """
+    syntax_path = root / "_SYNTAX.md"
+    if not syntax_path.exists():
+        return ""
+        
+    content = io.read_text(syntax_path)
+    lines = content.splitlines()
+    summary = []
+    
+    in_tags_section = False
+    for line in lines:
+        line = line.strip()
+        if line.startswith("## @TAGS") or line.startswith("### @TAGS"):
+            in_tags_section = True
+            summary.append("## 3. Syntax Reference (Condensed)")
+            continue
+            
+        if in_tags_section:
+            if line.startswith("## ") and not line.startswith("## @"): # New major section
+                break
+                
+            # Extract list items: - `@TAG`: **Meaning**. Description
+            # We want: @TAG: Meaning
+            if line.startswith("- `") or line.startswith("* `"):
+                # Regex to extract tag and meaning
+                # - `@API`: **Public**. ...
+                match = re.match(r"[-*]\s+`(@[A-Z_]+)`:\s*\*\*([^*]+)\*\*", line)
+                if match:
+                    tag, meaning = match.groups()
+                    summary.append(f"- {tag}: {meaning}")
+                    
+    return "\n".join(summary)
+
+def extract_global_rules(root: Path) -> str:
+    """
+    Extract critical global rules from _RULES.md.
+    Only retains !RULE, !CONST, !LIMIT lines.
+    """
+    rules_path = root / "_RULES.md"
+    if not rules_path.exists():
+        return ""
+        
+    content = io.read_text(rules_path)
+    lines = content.splitlines()
+    summary = []
+    summary.append("## 1. Critical Constraints (Global)")
+    
+    for line in lines:
+        line = line.strip()
+        # Filter for strict rules
+        if line.startswith("- `!RULE`") or line.startswith("- `!CONST`") or line.startswith("- `!LIMIT`"):
+            summary.append(line)
+        # Also support plain text format if used: - !RULE: ...
+        elif line.startswith("- !RULE") or line.startswith("- !CONST"):
+            summary.append(line)
+            
+    if len(summary) == 1: # Only header
+        return ""
+        
+    return "\n".join(summary)
+
+def get_context_prompt(file_path: str, config: ProjectConfig, focus: bool = False, use_skeleton: bool = False) -> str:
     """
     生成针对特定文件的上下文 Prompt。
     支持 Focus Mode: 只返回最相关的 5% 上下文。
-    支持 Skeleton Mode: 返回代码骨架而非全文。
     """
     root = config.scan.root_path
-    target_path = Path(file_path).resolve()
+    target = root / file_path
     
-    content = ""
-    
-    # Skeleton Logic
-    if use_skeleton:
-        if target_path.exists():
-            raw_content = io.read_text(target_path)
-            if raw_content:
-                skel = skeleton.generate_skeleton(raw_content, str(target_path))
-                content += f"### Skeleton of {target_path.name}\n```python\n{skel}\n```\n\n"
-        else:
-            content += f"### Skeleton of {target_path.name}\n(File not found)\n\n"
-    
-    # 1. Basic Path Context (Legacy logic)
-    # ... (Keep existing logic if focus is False, or merge it)
-    
-    if not focus:
-        # Legacy full context mode
-        return content + _get_full_context(target_path, root)
-        
-    # 2. Focus Mode (Thalamus Routing)
-    # Scan all files to build index (In real app, load from cache)
-    # For now, we do a quick scan of _AI.md files and _SYNTAX.md
-    
-    # Try VectorDB First
-    vectordb = VectorDB(root)
-    relevant_rules = []
-    
-    if vectordb.collection:
-        # If VectorDB is active, use it for semantic retrieval
-        # Query using the file content (first 2000 chars as query)
-        query_text = ""
-        if target_path.exists():
-            query_text = io.read_text(target_path)[:2000]
-            
-        if query_text:
-            results = vectordb.query(query_text, n_results=3)
-            if results:
-                relevant_rules.append(f"### Related Context (Vector Search)")
-                for item in results:
-                    path = item['metadata'].get('path', 'Unknown')
-                    # Convert to relative path
-                    try:
-                        rel_p = str(Path(path).relative_to(root))
-                    except:
-                        rel_p = str(path)
-                        
-                    # Extract document content (It's the _AI.md content)
-                    doc_content = item['document']
-                    # Maybe truncate?
-                    relevant_rules.append(f"#### From {rel_p}\n{doc_content[:1000]}...\n")
+    if not target.exists():
+        return f"Error: File not found: {file_path}"
 
-    # If VectorDB yielded nothing or not available, fallback to legacy index logic
-    # (or combine them)
+    target_path = target.resolve()
     
-    # Gather all _AI.md files
-    ai_files = list(root.rglob("_AI.md"))
-    scanned_contexts = []
-    
-    for f in ai_files:
-        # Scan and convert to FileContext
-        res = scanner.scan_file(f, root)
-        # Use helper from check_flow (duplicated for now, or move to common)
-        # We'll just construct a lightweight context object for index
-        from ..models.context import FileContext
-        try:
-            rel = str(f.relative_to(root))
-        except ValueError:
-            rel = str(f)
-            
-        ctx = FileContext(
-            path=f,
-            rel_path=rel,
-            tags=res.tags,
-            memories=res.memories
-        )
-        scanned_contexts.append(ctx)
-        
-    # Build Index
-    # Try loading from disk first
-    cache_dir = root / ".ndoc" / "cache"
-    index_file = cache_dir / "index.json"
-    if index_file.exists():
-        semantic_index = index.SemanticIndex.load(index_file)
+    # 1. Target Code (Skeleton or Full)
+    target_section = ""
+    if target_path.exists():
+        raw_content = io.read_text(target_path)
+        if raw_content:
+            if use_skeleton:
+                skel = skeleton.generate_skeleton(raw_content, str(target_path))
+                target_section = f"## 4. Target Code (Skeleton)\nFile: {target_path.relative_to(root)}\n```python\n{skel}\n```"
+            else:
+                # Limit size if too large?
+                target_section = f"## 4. Target Code\nFile: {target_path.relative_to(root)}\n```\n{raw_content}\n```"
     else:
-        semantic_index = index.build_index(scanned_contexts)
-        semantic_index.save(index_file)
+        target_section = f"## 4. Target Code\n(File not found: {target_path.name})"
+
+    # 2. Global Rules (Condensed)
+    global_rules = extract_global_rules(root)
     
-    # a. Always include _SYNTAX.md (The Language)
-    syntax_path = root / "_SYNTAX.md"
-    if syntax_path.exists():
-        relevant_rules.append(f"### Project Syntax\n{io.read_text(syntax_path)[:2000]}...") # Truncate
-        
-    # b. Find nearest _AI.md (Local Context)
-    # ... (Keep existing nearest logic as high priority)
+    # 3. Syntax (Condensed)
+    syntax_summary = extract_syntax_summary(root)
+    
+    # 4. Domain Context (Nearest _AI.md)
+    domain_context = ""
     current = target_path.parent if target_path.is_file() else target_path
+    
+    # Find nearest _AI.md
+    ai_path = None
     while current != root.parent:
-        ai_path = current / "_AI.md"
-        if ai_path.exists():
-            dist = index.calculate_distance(str(target_path), str(ai_path))
-            content = io.read_text(ai_path)
-            # Simple heuristic: If distance is small, include it
-            if dist <= 2: 
-                relevant_rules.append(f"### Context (Dist={dist})\n{content}")
-            break # Only nearest one for now in focus mode
+        candidate = current / "_AI.md"
+        if candidate.exists():
+            ai_path = candidate
+            break
         current = current.parent
         
-    # c. Query Semantic Index (Hippocampus)
-    # Find rules related to keywords in the target file
-    
-    # 3. Vector Search (Semantic Context)
-    try:
-        from ..brain.vectordb import VectorDB
-        vdb = VectorDB(root)
-        # Use filename + summary as query
-        query = f"{target_path.name} context"
-        # Get more candidates, then filter
-        results = vdb.query(query, n_results=5)
+    if ai_path:
+        # Extract !RULE and @DOMAIN from local context
+        ai_content = io.read_text(ai_path)
+        lines = ai_content.splitlines()
+        filtered_lines = []
+        filtered_lines.append(f"## 2. Domain Context ({ai_path.relative_to(root)})")
         
-        if results:
-            relevant_rules.append("### Semantic Context (Vector Search)")
-            # Dedup based on source
-            seen_sources = set()
-            
-            for res in results:
-                meta = res.get('metadata', {})
-                src = meta.get('source', 'unknown')
+        # Extract local rules and domain definition
+        for line in lines:
+            line = line.strip()
+            if "!RULE" in line or "!CONST" in line:
+                filtered_lines.append(line)
+            elif "@DOMAIN" in line or "@OVERVIEW" in line:
+                filtered_lines.append(line)
+            # Also include memory/auto-detected rules
+            elif "**RULE**:" in line: # Auto-detected rules format
+                filtered_lines.append(line)
                 
-                # Avoid self-reference
-                if str(src) in str(target_path):
-                    continue
-                    
-                if src in seen_sources:
-                    continue
-                seen_sources.add(src)
-                
-                doc = res.get('document', '')
-                relevant_rules.append(f"#### From {src}\n{doc}")
-    except Exception:
-        pass
+        domain_context = "\n".join(filtered_lines)
+
+    # 5. Related APIs (Imports) - Placeholder for now
+    # Ideally we scan target_path imports, find their _AI.md, and extract @API signatures.
+    # This requires running scanner on target_path first.
+    related_apis = ""
+    # TODO: Implement dependency API extraction
     
-    return "\n\n".join(relevant_rules)
+    # Assemble
+    parts = [
+        f"# Context for {target_path.name}",
+        global_rules,
+        domain_context,
+        syntax_summary,
+        related_apis,
+        target_section
+    ]
+    
+    if focus:
+        # Use Vector DB to find relevant snippets
+        from ..brain.vectordb import VectorDB
+        db = VectorDB(root)
+        
+        related_snippets = []
+        if db.collection:
+            # Query using file content or name
+            query = target_path.name
+            if target_path.exists() and io.read_text(target_path):
+                query = io.read_text(target_path)[:500] # Use first 500 chars
+                
+            results = db.search(query, n_results=5)
+            if results:
+                related_snippets.append("## 5. Related Context (Semantic Search)")
+                for res in results:
+                    path = res.get('id', 'unknown')
+                    content = res.get('document', '')
+                    # Truncate content
+                    preview = content[:300] + "..." if len(content) > 300 else content
+                    related_snippets.append(f"### {path}\n```\n{preview}\n```")
+        
+        parts.insert(4, "\n".join(related_snippets))
+
+    return "\n\n".join([p for p in parts if p])
 
 def _get_full_context(file_path: Path, root: Path) -> str:
     """

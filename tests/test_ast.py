@@ -1,5 +1,5 @@
 import pytest
-from ndoc.atoms.ast import parse_code, extract_symbols
+from ndoc.parsing.ast import parse_code, extract_symbols
 from ndoc.models.context import Symbol
 
 SAMPLE_CODE = """
@@ -75,7 +75,7 @@ def test_extract_symbols_basic():
     assert func.parent is None
 
 def test_extract_complex_api():
-    from ndoc.atoms.io import read_text
+    from ndoc.core.io import read_text
     from pathlib import Path
     
     fixture_path = Path(__file__).parent / "fixtures" / "complex_api.py"

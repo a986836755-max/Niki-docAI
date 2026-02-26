@@ -18,7 +18,9 @@ from pathlib import Path
 from typing import List, Dict, Any
 from dataclasses import dataclass
 
-from ..atoms import fs, io, scanner, ast
+from ..core import fs, io
+from ..core.logger import logger
+from ..parsing import scanner, ast
 from ..models.config import ProjectConfig
 from ..models.context import Symbol
 
@@ -40,7 +42,7 @@ def run(config: ProjectConfig) -> bool:
     print(f"Generating Data Registry in {root_path}...")
     
     # 1. Collect all relevant source files
-    extensions = set(config.scan.extensions) if config.scan.extensions else {'.py', '.cs', '.ts', '.js', '.go', '.rs'}
+    extensions = set(config.scan.extensions) if config.scan.extensions else {'.py', '.cs', '.ts', '.js', '.go', '.rs', '.cpp', '.h', '.hpp', '.dart', '.fbs'}
     ignore = set(config.scan.ignore_patterns) | {'.git', '__pycache__', 'venv', 'tests'}
     source_files = list(fs.walk_files(root_path, ignore_patterns=list(ignore), extensions=extensions))
     
@@ -83,6 +85,24 @@ def run(config: ProjectConfig) -> bool:
                         # For now, let's just stick to struct/enum/record for C#
                         pass
 
+                elif ext in ['.cpp', '.h', '.hpp']:
+                    if sym.kind in ['struct_specifier', 'struct']:
+                        is_data = True
+                        data_type = "struct"
+                    elif sym.kind == 'class_specifier':
+                         # Treat as data if name ends with Info/Data/Struct?
+                         pass
+
+                elif ext == '.dart':
+                    if sym.kind in ['class_definition', 'mixin_definition']:
+                         is_data = True
+                         data_type = "model" # Dart models are usually classes
+
+                elif ext == '.fbs':
+                    if sym.kind in ['table_definition', 'struct_definition', 'enum_definition']:
+                        is_data = True
+                        data_type = sym.kind.replace('_definition', '')
+
                 if is_data:
                     # Extract fields from body if possible
                     fields = []
@@ -105,8 +125,9 @@ def run(config: ProjectConfig) -> bool:
                         docstring=sym.docstring,
                         fields=fields[:10]
                     ))
+
         except Exception as e:
-            print(f"Error scanning {file_path} for data: {e}")
+            logger.error(f"Error scanning {file_path} for data: {e}")
 
     # 2. Generate Content
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

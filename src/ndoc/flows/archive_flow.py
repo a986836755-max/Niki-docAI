@@ -15,7 +15,8 @@ Flow: Project Archiving & Memory.
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict
-from ..atoms import io, fs, scanner
+from ..core import fs, io
+from ..parsing import scanner
 from ..models.config import ProjectConfig
 
 def run(config: ProjectConfig) -> bool:

@@ -14,7 +14,7 @@ Flow: Syntax Manual Sync.
 """
 from pathlib import Path
 from ndoc.models.config import ProjectConfig
-from ndoc.atoms import io
+from ..core import io
 
 SYNTAX_TEMPLATE = r"""# PROJECT SYNTAX
 > @CONTEXT: DSL 定义 | @TAGS: @SYNTAX @OP

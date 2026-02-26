@@ -74,7 +74,14 @@ def find_imports(tree: Tree, lang_key: str = 'python') -> List[str]:
     
     imports = []
     for capture in results:
+        # print(f"DEBUG: capture={capture['name']} node={capture['node'].type} text={capture['node'].text.decode('utf8')}")
         if capture['name'] == 'import':
             node = capture['node']
-            imports.append(node.text.decode('utf8').strip())
+            raw_text = node.text.decode('utf8').strip()
+            # Use language-specific cleaner if available
+            if lang_def and hasattr(lang_def, 'clean_import'):
+                clean_text = lang_def.clean_import(raw_text)
+                imports.append(clean_text)
+            else:
+                imports.append(raw_text)
     return list(set(imports))

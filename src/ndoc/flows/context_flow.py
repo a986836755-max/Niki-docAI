@@ -14,13 +14,12 @@ Flow: Recursive Context Generation.
 """
 import re
 from pathlib import Path
-from dataclasses import dataclass, field
 from typing import List, Optional
 from datetime import datetime
 
-from ..core import fs, io
-from ..parsing import scanner, ast, deps
-from ..parsing.ast import skeleton
+from ..core import io, fs
+from ..core.logger import logger
+from ..parsing import scanner, universal
 from ..interfaces import lsp
 from ..brain.vectordb import VectorDB
 from ..models.config import ProjectConfig
@@ -61,6 +60,24 @@ def format_file_summary(ctx: FileContext, root: Optional[Path] = None) -> str:
     elif ctx.description:
         summary += f": {ctx.description}"
         
+    # Inject Local Dependencies (@DEP)
+    # We need to access import info. 
+    # ctx is FileContext, which has 'imports' (list of strings) if populated by scanner
+    # But FileContext in models/context.py might not have imports field exposed?
+    # Let's check FileContext definition or assume we can attach it.
+    # Actually context_flow uses scanner.scan_file which returns ScanResult.
+    # We convert ScanResult to FileContext in generate_recursive_context -> process_file
+    
+    # Let's modify summary to include @DEP tags if available
+    if hasattr(ctx, 'imports') and ctx.imports:
+        # Limit to 5 imports to avoid clutter
+        deps_list = sorted(list(set(ctx.imports)))
+        if deps_list:
+            deps_str = ", ".join(deps_list[:5])
+            if len(deps_list) > 5:
+                deps_str += ", ..."
+            summary += f" @DEP: {deps_str}"
+
     return summary
 
 def format_symbol_list(ctx: FileContext, use_skeleton: bool = False) -> str:
@@ -87,7 +104,7 @@ def format_symbol_list(ctx: FileContext, use_skeleton: bool = False) -> str:
     # Sort by line number to keep definition order
     sorted_symbols = sorted(ctx.symbols, key=lambda s: s.line)
     
-    symbol_by_name = {s.name: s for s in sorted_symbols}
+    # symbol_by_name = {s.name: s for s in sorted_symbols}
 
     for sym in sorted_symbols:
         if sym.parent:
@@ -191,7 +208,7 @@ def format_dependencies(ctx: FileContext) -> str:
     """
     try:
         content = io.read_text(ctx.path)
-        imports = deps.extract_dependencies(content, ctx.path)
+        imports = universal.extract_imports(content, ctx.path)
         if not imports:
             return ""
             
@@ -204,7 +221,7 @@ def format_dependencies(ctx: FileContext) -> str:
             deps_str = ", ".join(imports)
         
         return f" @DEP: {deps_str}"
-    except:
+    except Exception:
         return ""
 
 def generate_dir_content(context: DirectoryContext) -> str:
@@ -411,6 +428,7 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
                 tags=scan_result.tags,
                 sections=scan_result.sections,
                 symbols=scan_result.symbols,
+                imports=scan_result.imports, # Pass imports
                 docstring=scan_result.docstring,
                 memories=scan_result.memories,
                 description=scan_result.summary
@@ -476,13 +494,25 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
                 io.write_text(ai_file, template)
             else:
                 # Update Context
+                # First try to update existing section
                 if io.update_section(ai_file, start_marker, end_marker, content):
                     io.update_header_timestamp(ai_file)
                 else:
-                    print(f"Injecting missing Context markers into {ai_file}")
-                    wrapped_content = f"\n\n{start_marker}\n{content}\n{end_marker}\n"
-                    io.append_text(ai_file, wrapped_content)
-                    io.update_header_timestamp(ai_file)
+                    # Markers missing.
+                    # Check if markers actually exist but update_section failed for some reason?
+                    # No, update_section checks for markers.
+                    
+                    # Double check if markers exist in file content to avoid duplication
+                    current_text = io.read_text(ai_file)
+                    if start_marker in current_text and end_marker in current_text:
+                         # Markers exist but regex failed? (Maybe different spacing?)
+                         # Fallback: Try a more lenient regex update or just warn.
+                         logger.warning(f"Markers found but update failed in {ai_file}. Skipping append.")
+                    else:
+                        logger.info(f"Injecting missing Context markers into {ai_file}")
+                        wrapped_content = f"\n\n{start_marker}\n{content}\n{end_marker}\n"
+                        io.append_text(ai_file, wrapped_content)
+                        io.update_header_timestamp(ai_file)
                 
                 # Update Memories
                 if io.update_section(ai_file, mem_start, mem_end, memory_content):
@@ -506,7 +536,7 @@ def process_directory(path: Path, config: ProjectConfig, recursive: bool = True,
                             io.write_text(ai_file, new_content)
                         else:
                             # Fallback: append before context start
-                            wrapped_mem = f"\n{mem_start}\n{memory_content}\n{mem_end}\n"
+                            # wrapped_mem = f"\n{mem_start}\n{memory_content}\n{mem_end}\n"
                             io.update_section(ai_file, start_marker, end_marker, content) # Ensure content is updated
                             # We need to insert mem block.
                             # Let's just rewrite the file if structure is simple enough? No, user edits.
@@ -589,7 +619,7 @@ def run(config: ProjectConfig) -> bool:
     """
     执行 Context 生成流 (Execute Context Flow).
     """
-    print(f"Generating Recursive Context starting from {config.scan.root_path}...")
+    logger.info(f"Generating Recursive Context starting from {config.scan.root_path}...")
     
     # 0. Initialize LSP Index for reference counting
     lsp_service = lsp.get_service(config.scan.root_path)
@@ -605,7 +635,7 @@ def run(config: ProjectConfig) -> bool:
     try:
         test_mapper = run_test_mapping(config)
     except Exception as e:
-        print(f"Warning: Test mapping failed: {e}")
+        logger.warning(f"Test mapping failed: {e}")
         
     process_directory(config.scan.root_path, config, recursive=True, test_mapper=test_mapper, vectordb=vectordb)
     return True
@@ -621,5 +651,5 @@ def update_directory(path: Path, config: ProjectConfig) -> bool:
         process_directory(path, config, recursive=False, vectordb=vectordb)
         return True
     except Exception as e:
-        print(f"Failed to update directory {path}: {e}")
+        logger.error(f"Failed to update directory {path}: {e}")
         return False

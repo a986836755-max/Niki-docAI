@@ -10,30 +10,12 @@
 # ------------------------------------------------------------------------------
 # <NIKI_AUTO_HEADER_END>
 """
-Atoms: Core Building Blocks.
-原子能力层：项目的核心构建块。
-Legacy re-exports for backward compatibility during refactor.
+Atoms: DEPRECATED (Refactoring in progress).
+This module was a 'God Module' re-exporting everything.
+Consumers should import directly from:
+- ndoc.core
+- ndoc.parsing
+- ndoc.brain
+- ndoc.interfaces
 """
-
-# Re-export core modules
-from ..core import fs
-from ..core import io
-from ..core import capabilities
-from ..core.capabilities import CapabilityManager
-from ..core import text_utils
-
-# Re-export parsing modules
-from ..parsing import scanner
-from ..parsing import ast
-from ..parsing import deps
-from ..parsing import langs
-
-# Re-export brain modules
-from ..brain import cache
-from ..brain import checker
-from ..brain import hippocampus
-from ..brain import index
-from ..brain import llm
-
-# Re-export interfaces
-from ..interfaces import lsp
+# Intentionally empty to force direct imports and break circular dependencies.

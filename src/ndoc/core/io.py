@@ -185,28 +185,36 @@ def update_section(path: Path, start_marker: str, end_marker: str, new_content: 
     """
     content = read_text(path)
     if not content:
-        # File doesn't exist or is empty? 
-        # For update_section, usually we expect file to exist.
-        # But if not, maybe we should return False or handle gracefully?
-        # Let's assume it should exist.
         return False
         
+    # Pattern: START_MARKER .* END_MARKER
+    # Use re.DOTALL to match newlines
+    # Use re.escape only for markers to avoid regex issues
     pattern = re.compile(
         f"({re.escape(start_marker)})(.*?)({re.escape(end_marker)})", 
         re.DOTALL
     )
     
-    if not pattern.search(content):
-        # Markers not found. Append? Or fail?
-        # DOD: If markers missing, we can't update section.
-        print(f"⚠️  Markers not found in {path.name}")
+    match = pattern.search(content)
+    if not match:
+        # Markers not found.
+        # print(f"⚠️  Markers not found in {path.name}")
         return False
         
-    # Escape backslashes in new_content for re.sub template
-    safe_new_content = new_content.replace("\\", "\\\\")
-    updated_content = pattern.sub(f"\\1\n{safe_new_content}\n\\3", content)
+    # Construct replacement string
+    # We replace group 2 (inner content)
+    # We must ensure new_content doesn't contain backslashes that re.sub interprets as escapes
     
-    return write_text(path, updated_content)
+    # Using lambda for replacement avoids backslash hell
+    def replacer(m):
+        return f"{m.group(1)}\n{new_content}\n{m.group(3)}"
+        
+    updated_content = pattern.sub(replacer, content)
+    
+    # Only write if changed
+    if updated_content != content:
+        return write_text(path, updated_content)
+    return True
 
 def update_header_timestamp(path: Path) -> bool:
     """

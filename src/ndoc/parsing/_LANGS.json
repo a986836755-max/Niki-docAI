@@ -79,5 +79,14 @@
         "function_nodes": ["function_item"],
         "name_field": "name",
         "docstring_comment_prefix": ["///", "//!", "/**"]
+    },
+    "flatbuffers": {
+        "extensions": [".fbs"],
+        "import_nodes": ["include_statement"],
+        "import_module_field": "path",
+        "class_nodes": ["table_definition", "struct_definition", "enum_definition"],
+        "function_nodes": [],
+        "name_field": "name",
+        "docstring_comment_prefix": ["///", "//"]
     }
 }

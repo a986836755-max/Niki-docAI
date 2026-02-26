@@ -34,6 +34,8 @@ class ProjectConfig:
     项目全局配置 (Global Project Configuration).
     """
     scan: ScanConfig
+    lint_commands: List[str] = field(default_factory=list)
+    typecheck_commands: List[str] = field(default_factory=list)
     # 项目名称 (Project Name)
     name: str = "Project"
     # 版本 (Version)

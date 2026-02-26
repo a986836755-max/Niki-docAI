@@ -79,7 +79,7 @@ def parse_code(content: str, file_path: Optional[Path] = None) -> Optional[Tree]
         return parser.parse(bytes(content, "utf8"))
     except Exception as e:
         # Log error but don't crash
-        # print(f"Warning: Failed to parse {file_path}: {e}")
+        # print(f"Warning: Failed to parse {file_path}: {e!r}")
         return None
 
 def get_lang_key(file_path: Path) -> Optional[str]:

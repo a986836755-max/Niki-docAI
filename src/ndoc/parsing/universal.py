@@ -7,156 +7,163 @@
 Parsing: Universal AST Adapter.
 感知层：通用 AST 适配器，基于 _LANGS.json 驱动多语言解析。
 """
-import json
 import re
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Set
-from ..core import io
+from typing import List, Set, Optional
 from ..core.capabilities import CapabilityManager
+from .langs import get_lang_id_by_ext
 
 # Load language specs
 _LANG_SPECS = {}
 _EXT_MAP = {}
 
-def _load_specs():
-    if _LANG_SPECS:
-        return
-    
-    spec_path = Path(__file__).parent / "_LANGS.json"
-    if not spec_path.exists():
-        return
-        
-    try:
-        content = io.read_text(spec_path)
-        specs = json.loads(content)
-        for lang, config in specs.items():
-            _LANG_SPECS[lang] = config
-            for ext in config.get("extensions", []):
-                _EXT_MAP[ext] = lang
-    except Exception as e:
-        print(f"❌ Failed to load language specs: {e}")
-
-# Initialize specs
-_load_specs()
-
 def get_language_for_file(path: Path) -> Optional[str]:
-    return _EXT_MAP.get(path.suffix.lower())
+    """Get language ID from file extension."""
+    return get_lang_id_by_ext(path.suffix.lower())
+
+# Regex Patterns for Imports
+# Optimized for robust extraction without full AST
+REGEX_PATTERNS = {
+    'python': [
+        r"^\s*import\s+([\w\s,]+)",                   # import os, sys
+        r"^\s*from\s+([\w.]+)\s+import\s+([\w\s,]+)", # from os import path
+        r"^\s*from\s+(\.+)\s+import\s+([\w\s,]+)",    # from . import io
+    ],
+    'dart': [
+        r"^\s*import\s+['\"](.*?)['\"]",              # import 'package:...'
+        r"^\s*export\s+['\"](.*?)['\"]",              # export '...'
+        r"^\s*part\s+['\"](.*?)['\"]",                # part '...'
+    ],
+    'cpp': [
+        r'^\s*#\s*include\s*[<"]([^>"]+)[>"]'         # #include <vector> or "header.h"
+    ],
+    'c_sharp': [
+        r"^\s*using\s+([\w\.]+)\s*;"                  # using System.IO;
+    ],
+    'java': [
+        r"^\s*import\s+([\w\.\*]+)\s*;"               # import java.util.List; or java.io.*;
+    ],
+    'javascript': [
+        r"^\s*import\s+.*\s+from\s+['\"](.*?)['\"]",  # import { x } from 'y'
+        r"^\s*import\s+['\"](.*?)['\"]",              # import 'y'
+        r"require\(['\"](.*?)['\"]\)",                # require('y')
+        r"import\(['\"](.*?)['\"]\)"                  # import('y')
+    ],
+    'typescript': [
+        r"^\s*import\s+.*\s+from\s+['\"](.*?)['\"]",
+        r"^\s*import\s+['\"](.*?)['\"]",
+        r"require\(['\"](.*?)['\"]\)",
+        r"import\(['\"](.*?)['\"]\)"
+    ],
+    'go': [
+        r'^\s*import\s+"([^"]+)"',                    # import "fmt"
+        r'^\s*import\s+\(\s*([\s\S]*?)\s*\)'          # import ( "fmt" \n "os" )
+    ],
+    'rust': [
+        r"^\s*use\s+([\w:]+)(?:::\{.*\})?;",          # use std::io;
+        r"^\s*(?:pub\s+)?mod\s+([\w]+);"              # mod utils; pub mod network;
+    ],
+    'flatbuffers': [
+        r'^\s*include\s+"([^"]+)"\s*;'                # include "other.fbs";
+    ]
+}
+
+def _extract_python_imports(content: str) -> Set[str]:
+    """Specific extractor for Python to handle multi-line imports and relative imports."""
+    imports = set()
+    lines = content.splitlines()
+    
+    for line in lines:
+        line = line.strip()
+        # import x, y
+        m1 = re.match(r"^import\s+([\w\s,]+)", line)
+        if m1:
+            for part in m1.group(1).split(','):
+                imports.add(part.strip())
+            continue
+            
+        # from x import y
+        m2 = re.match(r"^from\s+([\w.]+)\s+import", line)
+        if m2:
+            imports.add(m2.group(1))
+            continue
+
+        # from . import y (Relative)
+        m3 = re.match(r"^from\s+(\.+)\s+import", line)
+        if m3:
+            # We just record '.' or '..' as the dependency for now
+            # The caller (deps_flow) needs to resolve this relative to file path
+            imports.add(m3.group(1)) 
+            continue
+            
+        # from ..core import y
+        m4 = re.match(r"^from\s+(\.+[\w]+)\s+import", line)
+        if m4:
+             imports.add(m4.group(1))
+             continue
+             
+    return imports
+
+def _extract_go_imports(content: str) -> Set[str]:
+    """Specific extractor for Go to handle import blocks."""
+    imports = set()
+    
+    # 1. Remove single-line comments // ...
+    # Be careful not to remove http:// inside strings, but for imports usually safe-ish
+    # Better: process line by line
+    
+    # Single line: import "fmt"
+    for m in re.finditer(r'^\s*import\s+(?:[\w.]+\s+)?"([^"]+)"', content, re.MULTILINE):
+        imports.add(m.group(1))
+        
+    # Block import
+    block_pattern = re.compile(r'^\s*import\s+\(\s*([\s\S]*?)\s*\)', re.MULTILINE)
+    for match in block_pattern.finditer(content):
+        block_content = match.group(1)
+        # Extract strings inside block
+        for line in block_content.splitlines():
+            line = line.strip()
+            if not line or line.startswith('//'):
+                continue
+            # Handle inline comments: "fmt" // comment
+            line = line.split('//')[0]
+            
+            # "path/to/lib" or alias "path/to/lib"
+            # Match strictly "path" at end or alias "path"
+            m_str = re.search(r'(?:[\w.]+\s+)?"([^"]+)"', line)
+            if m_str:
+                imports.add(m_str.group(1))
+                
+    return imports
 
 def extract_imports(content: str, path: Path) -> Set[str]:
     """
     Extract imported modules using regex heuristics based on language specs.
-    (Full AST parsing would be better but requires tree-sitter bindings for all languages)
+    Supports: Python, C++, Dart, Java, C#, JS, TS, Go, Rust.
     """
     lang_name = get_language_for_file(path)
     if not lang_name:
         return set()
+    
+    # 1. Specialized Parsers
+    if lang_name == 'python':
+        return _extract_python_imports(content)
+    if lang_name == 'go':
+        return _extract_go_imports(content)
         
-    # Try Tree-sitter first (for Python only as POC)
-    if lang_name == "python":
-        ts_lang = CapabilityManager.get_language("python", auto_install=False)
-        if ts_lang:
-            try:
-                from tree_sitter import Parser
-                parser = Parser()
-                parser.set_language(ts_lang)
-                tree = parser.parse(bytes(content, "utf8"))
-                
-                imports = set()
-                # Simple query for imports
-                # (import_statement (dotted_name) @import)
-                # (import_from_statement (dotted_name) @from)
-                
-                # Manual traversal for now as query syntax varies by version
-                
-                def visit(node):
-                    if node.type == 'import_statement':
-                         # import X
-                         for child in node.children:
-                             if child.type == 'dotted_name':
-                                 imports.add(content[child.start_byte:child.end_byte])
-                             elif child.type == 'aliased_import':
-                                 # import X as Y
-                                 for sub in child.children:
-                                     if sub.type == 'dotted_name':
-                                         imports.add(content[sub.start_byte:sub.end_byte])
-                                         break
-                    elif node.type == 'import_from_statement':
-                        # from X import Y
-                        module_name = None
-                        for child in node.children:
-                            if child.type == 'dotted_name':
-                                module_name = content[child.start_byte:child.end_byte]
-                                break
-                        if module_name:
-                            imports.add(module_name)
-                    
-                    for child in node.children:
-                        visit(child)
-                        
-                visit(tree.root_node)
-                if imports:
-                    return imports
-            except Exception:
-                # Fallback to regex
-                # print(f"Tree-sitter error: {e}")
-                pass
-
-    spec = _LANG_SPECS.get(lang_name)
-    if not spec:
-        return set()
-        
+    # 2. Generic Regex Parser
+    patterns = REGEX_PATTERNS.get(lang_name, [])
     imports = set()
     
-    # Python
-    if lang_name == "python":
-        # from X import Y
-        for m in re.finditer(r'^\s*from\s+([\w\.]+)', content, re.MULTILINE):
-            imports.add(m.group(1))
-        # import X
-        for m in re.finditer(r'^\s*import\s+([\w\.]+)', content, re.MULTILINE):
-            imports.add(m.group(1))
+    for pattern in patterns:
+        try:
+            for match in re.finditer(pattern, content, re.MULTILINE):
+                # Group 1 is usually the module name/path
+                if match.lastindex and match.lastindex >= 1:
+                    imports.add(match.group(1))
+        except Exception:
+            pass
             
-    # JavaScript / TypeScript
-    elif lang_name in ("javascript", "typescript"):
-        # import ... from "X"
-        for m in re.finditer(r'import\s+.*?from\s+[\'"](.*?)[\'"]', content, re.MULTILINE):
-            imports.add(m.group(1))
-        # require("X")
-        for m in re.finditer(r'require\s*\(\s*[\'"](.*?)[\'"]\s*\)', content, re.MULTILINE):
-            imports.add(m.group(1))
-            
-    # Java
-    elif lang_name == "java":
-        # import X;
-        for m in re.finditer(r'^\s*import\s+([\w\.]+);', content, re.MULTILINE):
-            imports.add(m.group(1))
-            
-    # C#
-    elif lang_name == "c_sharp":
-        # using X;
-        for m in re.finditer(r'^\s*using\s+([\w\.]+);', content, re.MULTILINE):
-            imports.add(m.group(1))
-            
-    # C++
-    elif lang_name == "cpp":
-        # #include <X> or "X"
-        for m in re.finditer(r'^\s*#include\s+[<"](.*?)[\">]', content, re.MULTILINE):
-            imports.add(m.group(1))
-            
-    # Dart
-    elif lang_name == "dart":
-        # import 'X';
-        for m in re.finditer(r"^\s*import\s+['\"](.*?)['\"]", content, re.MULTILINE):
-            imports.add(m.group(1))
-            
-    # Go
-    elif lang_name == "go":
-        # import "X"
-        for m in re.finditer(r'^\s*import\s+"(.*?)"', content, re.MULTILINE):
-            imports.add(m.group(1))
-        # import ( "X" ... )
-        # This is harder with regex, skipping multiline import blocks for now
-        
     return imports
 
 def extract_definitions(content: str, path: Path) -> List[str]:
@@ -239,6 +246,21 @@ def extract_definitions(content: str, path: Path) -> List[str]:
     # C-like (Java, C#, JS, TS, Dart, C++)
     elif lang_name in ("java", "c_sharp", "javascript", "typescript", "dart", "cpp"):
          for m in re.finditer(r'^\s*(?:class|interface|struct|enum|function)\s+(\w+)', content, re.MULTILINE):
+            defs.append(m.group(1))
+
+    # Go
+    elif lang_name == "go":
+        for m in re.finditer(r'^\s*(?:func|type)\s+(\w+)', content, re.MULTILINE):
+            defs.append(m.group(1))
+
+    # Rust
+    elif lang_name == "rust":
+        for m in re.finditer(r'^\s*(?:fn|struct|enum|trait|mod)\s+(\w+)', content, re.MULTILINE):
+            defs.append(m.group(1))
+
+    # FlatBuffers
+    elif lang_name == "flatbuffers":
+        for m in re.finditer(r'^\s*(?:table|struct|enum|union)\s+(\w+)', content, re.MULTILINE):
             defs.append(m.group(1))
             
     return defs

@@ -16,6 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
+from ..core import fs
 
 def _is_git_repo(path: Path) -> bool:
     return (path / ".git").exists()

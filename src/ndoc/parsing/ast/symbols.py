@@ -85,10 +85,13 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
                 decorators.append(deco.text.decode('utf8').strip())
 
         if 'class_def' in captures:
-            node = captures['class_def'][0] if isinstance(captures['class_def'], list) else captures['class_def']
+            node = captures['class_def']
+            if isinstance(node, list): node = node[0]
             kind = 'class'
             if 'name' in captures:
-                name = captures['name'][0].text.decode('utf8')
+                name_node = captures['name']
+                if isinstance(name_node, list): name_node = name_node[0]
+                name = name_node.text.decode('utf8')
             
             if lang_key == 'python':
                 bases_node = node.child_by_field_name('superclasses')
@@ -105,28 +108,38 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
             parent_name = _get_parent_name(node, lang_key)
 
         elif 'struct_def' in captures:
-            node = captures['struct_def'][0] if isinstance(captures['struct_def'], list) else captures['struct_def']
+            node = captures['struct_def']
+            if isinstance(node, list): node = node[0]
             kind = 'struct'
             if 'name' in captures:
-                name = captures['name'][0].text.decode('utf8')
+                name_node = captures['name']
+                if isinstance(name_node, list): name_node = name_node[0]
+                name = name_node.text.decode('utf8')
             parent_name = _get_parent_name(node, lang_key)
 
         elif 'enum_def' in captures:
-            node = captures['enum_def'][0] if isinstance(captures['enum_def'], list) else captures['enum_def']
+            node = captures['enum_def']
+            if isinstance(node, list): node = node[0]
             kind = 'enum'
             if 'name' in captures:
-                name = captures['name'][0].text.decode('utf8')
+                name_node = captures['name']
+                if isinstance(name_node, list): name_node = name_node[0]
+                name = name_node.text.decode('utf8')
             parent_name = _get_parent_name(node, lang_key)
 
         elif 'record_def' in captures:
-            node = captures['record_def'][0] if isinstance(captures['record_def'], list) else captures['record_def']
+            node = captures['record_def']
+            if isinstance(node, list): node = node[0]
             kind = 'record'
             if 'name' in captures:
-                name = captures['name'][0].text.decode('utf8')
+                name_node = captures['name']
+                if isinstance(name_node, list): name_node = name_node[0]
+                name = name_node.text.decode('utf8')
             parent_name = _get_parent_name(node, lang_key)
 
         elif 'func_def' in captures:
-            node = captures['func_def'][0] if isinstance(captures['func_def'], list) else captures['func_def']
+            node = captures['func_def']
+            if isinstance(node, list): node = node[0]
             kind = 'function'
             if _is_async_function(node, lang_key):
                 kind = 'async_function'
@@ -137,7 +150,9 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
                 elif '@staticmethod' in deco_text: kind = 'staticmethod'
             
             if 'name' in captures:
-                name = captures['name'][0].text.decode('utf8')
+                name_node = captures['name']
+                if isinstance(name_node, list): name_node = name_node[0]
+                name = name_node.text.decode('utf8')
                 
             params_node = captures.get('params')[0] if isinstance(captures.get('params'), list) else captures.get('params')
             ret_node = captures.get('ret')[0] if isinstance(captures.get('ret'), list) else captures.get('ret')
@@ -148,20 +163,25 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
             parent_name = _get_parent_name(node, lang_key)
 
         elif 'field_def' in captures:
-            node = captures['field_def'][0] if isinstance(captures['field_def'], list) else captures['field_def']
+            node = captures['field_def']
+            if isinstance(node, list): node = node[0]
             if _is_inside_function(node):
                 continue
             kind = 'variable'
             if 'field_name' in captures:
-                name = captures['field_name'][0].text.decode('utf8')
+                name_node = captures['field_name']
+                if isinstance(name_node, list): name_node = name_node[0]
+                name = name_node.text.decode('utf8')
             
             type_text = ""
             value_text = ""
             if 'field_type' in captures:
-                type_node = captures['field_type'][0] if isinstance(captures['field_type'], list) else captures['field_type']
+                type_node = captures['field_type']
+                if isinstance(type_node, list): type_node = type_node[0]
                 type_text = type_node.text.decode('utf8').strip()
             if 'field_value' in captures:
-                val_node = captures['field_value'][0] if isinstance(captures['field_value'], list) else captures['field_value']
+                val_node = captures['field_value']
+                if isinstance(val_node, list): val_node = val_node[0]
                 value_text = truncate(val_node.text.decode('utf8').strip(), MAX_VALUE_LENGTH)
             
             if type_text and value_text:
@@ -173,20 +193,27 @@ def extract_symbols(tree: Tree, content_bytes: bytes, file_path: Optional[Path] 
             parent_name = _get_parent_name(node, lang_key)
 
         elif 'property_def' in captures:
-            node = captures['property_def'][0] if isinstance(captures['property_def'], list) else captures['property_def']
+            node = captures['property_def']
+            if isinstance(node, list): node = node[0]
             kind = 'property'
             if 'name' in captures:
-                name = captures['name'][0].text.decode('utf8')
-            ret_node = captures.get('ret')[0] if isinstance(captures.get('ret'), list) else captures.get('ret')
+                name_node = captures['name']
+                if isinstance(name_node, list): name_node = name_node[0]
+                name = name_node.text.decode('utf8')
+            ret_node = captures.get('ret')
+            if isinstance(ret_node, list): ret_node = ret_node[0]
             ret_text = ret_node.text.decode('utf8') if ret_node else None
             signature = lang_def.format_signature(None, ret_text)
             parent_name = _get_parent_name(node, lang_key)
 
         elif 'namespace_def' in captures:
-            node = captures['namespace_def'][0] if isinstance(captures['namespace_def'], list) else captures['namespace_def']
+            node = captures['namespace_def']
+            if isinstance(node, list): node = node[0]
             kind = 'namespace'
             if 'name' in captures:
-                name = captures['name'][0].text.decode('utf8')
+                name_node = captures['name']
+                if isinstance(name_node, list): name_node = name_node[0]
+                name = name_node.text.decode('utf8')
             parent_name = None
 
         if node and name:

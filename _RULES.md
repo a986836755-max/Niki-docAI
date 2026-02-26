@@ -18,6 +18,12 @@
 - `MEMORY文档对齐`: 定期更新_MEMORY.md，每当_NEXT.md中一项功能/模块完成，将其归档入_MEMORY.md。
 - `交付即更新`: 在完成代码修改后，习惯性运行 `ndoc all`，确保改动被即时索引。
 
+## Quality Gates (质量门禁)
+> 定义可选的质量门禁命令，使用 `;` 分隔，留空表示不启用。
+
+- `!LINT`: 
+- `!TYPECHECK`: 
+
 ## Special Keywords (特殊关键字)
 > 用于控制特定目录的文档生成行为。
 

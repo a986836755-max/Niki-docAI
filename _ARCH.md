@@ -1,27 +1,36 @@
 # Project Architecture
 > @CONTEXT: Architecture | Space View
-> 最后更新 (Last Updated): 2026-02-25 12:15:33
+> 最后更新 (Last Updated): 2026-02-26 12:27:44
 
 ## 1. Technology Stack
 ### 1. Languages
-*   **Python**: `██████████████░░░░░░` 70.0%
-*   **Markdown**: `████░░░░░░░░░░░░░░░░` 24.6%
-*   **JSON**: `░░░░░░░░░░░░░░░░░░░░` 3.1%
-*   **JavaScript**: `░░░░░░░░░░░░░░░░░░░░` 0.8%
-*   **TypeScript**: `░░░░░░░░░░░░░░░░░░░░` 0.8%
-*   **C#**: `░░░░░░░░░░░░░░░░░░░░` 0.8%
+*   **python**: `█████████████████░░░` 86.4%
+*   **javascript**: `░░░░░░░░░░░░░░░░░░░░` 3.6%
+*   **dart**: `░░░░░░░░░░░░░░░░░░░░` 3.6%
+*   **cpp**: `░░░░░░░░░░░░░░░░░░░░` 2.7%
+*   **rust**: `░░░░░░░░░░░░░░░░░░░░` 1.8%
+*   **typescript**: `░░░░░░░░░░░░░░░░░░░░` 0.9%
+*   **c_sharp**: `░░░░░░░░░░░░░░░░░░░░` 0.9%
 
 
 ## 2. Third-Party Dependencies (BOM)
 ### 🐍 Python (Pip)
-*   `chromadb>=0.4.18`
+*   `chromadb`
+*   `tree-sitter-dart`
 
 ### 📦 Node.js (NPM)
-*   `@types/node (dev: ^18.14.6)`
-*   `@types/vscode (dev: ^1.80.0)`
-*   `@vscode/vsce (dev: ^3.7.1)`
-*   `typescript (dev: ^5.9.3)`
-*   `vscode-languageclient (^9.0.1)`
+*   `@types/node`
+*   `@types/vscode`
+*   `@vscode/vsce`
+*   `nan`
+*   `node-gyp`
+*   `npm-watch`
+*   `tree-sitter-cli`
+*   `typescript`
+*   `vscode-languageclient`
+
+### 🦀 Rust (Cargo)
+*   `tree-sitter`
 
 
 ---

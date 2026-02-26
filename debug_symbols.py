@@ -21,12 +21,12 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path.cwd() / "src"))
 
-from ndoc.atoms.ast import parse_code, extract_symbols, MAX_VALUE_LENGTH
-from ndoc.atoms.io import read_text
+from ndoc.parsing.ast import parse_code, extract_symbols, MAX_VALUE_LENGTH
+from ndoc.core.io import read_text
 
 print(f"DEBUG: MAX_VALUE_LENGTH = {MAX_VALUE_LENGTH}")
 
-file_path = Path("src/ndoc/atoms/deps/stats.py")
+file_path = Path("src/ndoc/parsing/deps/stats.py")
 content = read_text(file_path)
 tree = parse_code(content, file_path)
 symbols = extract_symbols(tree, content.encode("utf-8"), file_path)

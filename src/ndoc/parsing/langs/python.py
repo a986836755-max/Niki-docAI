@@ -65,8 +65,10 @@ class PythonDefinition(LanguageDefinition):
 )
 """
     SCM_IMPORTS = """
-(import_statement) @import
-(import_from_statement) @import
+(import_statement (dotted_name) @import)
+(import_statement (aliased_import name: (dotted_name) @import))
+(import_from_statement module_name: (dotted_name) @import)
+(import_from_statement module_name: (relative_import) @import)
 """
 
     @staticmethod

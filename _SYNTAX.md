@@ -62,6 +62,8 @@
 - `@CONFIG`: **Configuration**. 设置/规则 (Settings/Rules).
 - `@DEPRECATED`: **No**. 请勿使用 (Do not use).
 - `@EXPERIMENTAL`: **WIP**. 不稳定 (Unstable).
+- `!LINT`: **Lint Command**. 质量门禁 lint 命令列表 (Quality gate lint commands).
+- `!TYPECHECK`: **Typecheck Command**. 质量门禁 typecheck 命令列表 (Quality gate typecheck commands).
 
 ### Structural (结构类 - Auto)
 - `@AGGREGATE`: **Recursive**. 包含子目录 (Include subdirs).

@@ -30,6 +30,15 @@ def clean_docstring(raw: str) -> str:
     if not raw:
         return ""
     
+    # Handle Python triple quotes
+    if raw.startswith('"""') or raw.startswith("'''"):
+        if raw.endswith('"""') and len(raw) >= 6:
+            return raw[3:-3].strip()
+        if raw.endswith("'''") and len(raw) >= 6:
+            return raw[3:-3].strip()
+        # Handle cases where quotes might not be perfectly matched or multiline
+        # But usually raw string literal from tree-sitter includes quotes.
+    
     # Handle block comments
     if raw.startswith('/**'):
         lines = raw[3:-2].split('\n')

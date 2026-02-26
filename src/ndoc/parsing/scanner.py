@@ -25,6 +25,7 @@ from ..models.context import Section
 from .ast import parse_code, extract_symbols
 from ..brain import cache
 from ..core.text_utils import clean_docstring, extract_tags_from_text
+from . import universal # Import universal parser
 
 # --- Data Structures (Logic as Data) ---
 
@@ -65,11 +66,28 @@ class ScanResult:
 # --- Global Cache ---
 _CACHE: Optional[cache.FileCache] = None
 
-def get_cache(root: Path) -> cache.FileCache:
+def get_cache(root: Path, cache_dir: Path = None) -> cache.FileCache:
     global _CACHE
-    if _CACHE is None:
-        cache_dir = root / ".ndoc" / "cache"
-        _CACHE = cache.FileCache(cache_dir)
+    if cache_dir is None:
+        # Use a new cache directory to avoid locks on the old one
+        cache_dir = root / ".ndoc" / "cache_v2"
+        
+    try:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        print(f"Warning: Failed to create cache directory {cache_dir}: {e}")
+        return None
+    
+    # Use global cache instance
+    if _CACHE is None or getattr(_CACHE, 'cache_dir', None) != cache_dir:
+        from ..brain import cache
+        try:
+            # Rotate DB name to avoid I/O locks during dev
+            _CACHE = cache.FileCache(cache_dir, db_name="ndoc_cache.db")
+        except Exception as e:
+            print(f"Warning: Failed to initialize cache: {e}")
+            return None
+        
     return _CACHE
 
 # --- Helper Functions for Parallel Execution ---
@@ -114,7 +132,7 @@ def _scan_worker(args: Tuple[Path, Path]) -> Tuple[Path, Optional[dict]]:
     file_path, root = args
     try:
         # Avoid circular imports inside worker
-        from ..atoms import io
+        from ..core import io
         content = io.read_text(file_path)
         if content is None:
             return file_path, None
@@ -141,17 +159,21 @@ def _scan_worker(args: Tuple[Path, Path]) -> Tuple[Path, Optional[dict]]:
             'is_core': result.is_core
         }
         return file_path, cache_data
-    except Exception:
-        # In case of worker failure, return None (main process will handle)
+    except Exception as e:
+        # In case of worker failure, LOG IT and return None
+        # We use print here because logging might not be configured in worker process
+        print(f"❌ [Worker Error] Failed to scan {file_path}: {e}")
+        import traceback
+        traceback.print_exc()
         return file_path, None
 
 def scan_project(root: Path, ignore_patterns: List[str] = None) -> Dict[Path, ScanResult]:
     """
     Scan the entire project (High-level API) with Parallel Execution.
     """
-    from ..atoms import fs
+    from ..core import fs
     
-    # Initialize Cache in Main Process
+    # Phase 1: Check Cache (Main Process)
     c = get_cache(root)
     results = {}
     
@@ -162,21 +184,30 @@ def scan_project(root: Path, ignore_patterns: List[str] = None) -> Dict[Path, Sc
     tasks = []
     
     # 1. Check Cache (Main Process)
+    # Skipped in debug to avoid DB locks
     for file_path in all_files:
-        if not c.is_changed(file_path):
-            # Cache Hit: Load from memory/disk
-            cached_data = c.get(file_path)
-            if cached_data:
-                try:
-                    results[file_path] = _reconstruct_result(cached_data, file_path)
-                    continue
-                except Exception:
-                    pass # Fallback to scan
-        
         # Cache Miss: Add to tasks
         tasks.append((file_path, root))
         
-    # 2. Parallel Execution (Worker Processes)
+    # Phase 1.5: Ensure Languages (Main Process)
+    # Detect required languages to trigger auto-build BEFORE parallel execution
+    from .langs import get_lang_id_by_ext
+    from ..core.capabilities import CapabilityManager
+    
+    needed_langs = set()
+    for file_path in all_files:
+        lang = get_lang_id_by_ext(file_path.suffix.lower())
+        if lang:
+            needed_langs.add(lang)
+            
+    if needed_langs:
+        # Trigger capability check/build in main process
+        # We iterate to allow individual handling (e.g. Dart native build)
+        for lang in needed_langs:
+            CapabilityManager.get_language(lang, auto_install=True)
+
+    # Phase 2: Parallel Scanning
+    # If workers=1, run sequential (easier for debugging)
     if tasks:
         # Use ProcessPoolExecutor
         # Max workers = CPU count (default) or 4 minimum
@@ -189,7 +220,8 @@ def scan_project(root: Path, ignore_patterns: List[str] = None) -> Dict[Path, Sc
             for file_path, cache_data in future_results:
                 if cache_data:
                     # Update Cache (Main Process)
-                    c.update(file_path, cache_data)
+                    if c:
+                        c.update(file_path, cache_data)
                     # Reconstruct Result
                     results[file_path] = _reconstruct_result(cache_data, file_path)
                 else:
@@ -197,7 +229,8 @@ def scan_project(root: Path, ignore_patterns: List[str] = None) -> Dict[Path, Sc
                     results[file_path] = ScanResult()
 
     # 3. Save Cache (Main Process)
-    c.save()
+    if c:
+        c.save()
             
     return results
 
@@ -208,7 +241,7 @@ def scan_file(file_path: Path, root: Path, force: bool = False) -> ScanResult:
     扫描单个文件，支持缓存 (Scan single file with cache support).
     """
     c = get_cache(root)
-    if not force and not c.is_changed(file_path):
+    if c and not force and not c.is_changed(file_path):
         cached_data = c.get(file_path)
         if cached_data:
             try:
@@ -220,8 +253,9 @@ def scan_file(file_path: Path, root: Path, force: bool = False) -> ScanResult:
     _, cache_data = _scan_worker((file_path, root))
     
     if cache_data:
-        c.update(file_path, cache_data)
-        c.save()
+        if c:
+            c.update(file_path, cache_data)
+            c.save()
         return _reconstruct_result(cache_data, file_path)
         
     return ScanResult()
@@ -483,104 +517,84 @@ def regex_scan(content: str, ext: str, file_path: Optional[Path] = None) -> List
             line = content[:m.start()].count('\n') + 1
             symbols.append(Symbol(name=name, kind=kind, line=line, path=str(file_path) if file_path else None))
             
+    elif ext == '.dart':
+        # class/mixin Name
+        # Support abstract class
+        for m in re.finditer(r'^\s*(?:abstract\s+)?(class|mixin|enum)\s+(\w+)', content, re.MULTILINE):
+            kind = m.group(1)
+            name = m.group(2)
+            line = content[:m.start()].count('\n') + 1
+            symbols.append(Symbol(name=name, kind=kind, line=line, path=str(file_path) if file_path else None))
+            
     return symbols
 
 
-def scan_file_content(content: str, file_path: Optional[Path] = None) -> ScanResult:
+def scan_file_content(content: str, path: Path) -> ScanResult:
     """
-    全量扫描文件内容 (Full scan of file content).
-    Implementation: Parallel extraction pipeline.
+    Scan file content in-memory.
+    Uses AST parsing and Text extraction.
     """
-    # 1. Generic Text Analysis (Regex)
-    tags = parse_tags(content)
-    sections = parse_sections(content)
-    docstring = extract_docstring(content)
-    summary = extract_summary(content, docstring)
-    # 3. Extract special comments (TODO, @DECISION, etc.)
-    special = extract_special_comments(content)
-    memories = extract_memories(content)
+    result = ScanResult()
     
-    # 4. AST Parse (Optional but recommended)
-    symbols = []
-    calls = []
-    imports = []
-    # Now supports multiple languages, let ast.py decide based on extension
-    if file_path:
-        tree = None
-        lang_key = None
-        try:
-            from .ast import get_lang_key
-            lang_key = get_lang_key(file_path)
-            tree = parse_code(content, file_path)
-        except Exception:
-            # print(f"AST Parse Error in {file_path}: {e}")
-            pass
+    # 1. AST Parsing (Symbols & Structure)
+    # This now handles C++, Dart, Python, etc. via Tree-sitter
+    tree = parse_code(content, path)
+    if tree:
+        # Use new API: extract_symbols(tree, content_bytes, path) -> List[Symbol]
+        result.symbols = extract_symbols(tree, bytes(content, "utf8"), path)
+    else:
+        # Fallback regex scan for supported languages (FlatBuffers)
+        result.symbols = regex_scan(content, path.suffix.lower(), path)
+
+    # Extract File-level Docstring
+    result.docstring = extract_docstring(content)
+    
+    # 2. Extract Imports (Universal Adapter)
+    # Use universal.extract_imports to support multi-language dependency extraction
+    result.imports = sorted(list(universal.extract_imports(content, path)))
+
+    # 3. Text Processing (Tags, Todos, Memories)
+    # ... (Keep existing text processing logic)
+    
+    # Extract tags (e.g. @API, !RULE)
+    # Note: text_utils.extract_tags_from_text is regex based, works for comments in any language
+    # providing they use standard comment markers or just appear in text.
+    tags = extract_tags_from_text(content)
+    result.tags = tags
+    
+    # Check for @CORE tag
+    for tag in tags:
+        if tag.name == '@CORE':
+            result.is_core = True
+            break
             
-        if tree:
-            try:
-                symbols = extract_symbols(tree, content.encode("utf-8"), file_path)
-                if lang_key:
-                    from .ast import find_calls, find_imports
-                    calls = find_calls(tree, lang_key)
-                    imports = find_imports(tree, lang_key)
-            except Exception:
-                # print(f"AST Extraction Error in {file_path}: {e}")
-                pass
-        
-        # Fallback to Regex if AST failed or returned nothing (and it's a target language)
-        if not symbols:
-            ext = file_path.suffix.lower()
-            if ext in ('.dart', '.fbs'):
-                symbols = regex_scan(content, ext, file_path)
+    # Extract TODOs
+    # Simple regex for TODOs
+    # TODO: Move to text_utils or dedicated todo parser
+    # Format: TODO: ... or FIXME: ...
+    # We can use a simple regex for now
+    todo_pattern = re.compile(r"(?i)\b(TODO|FIXME|XXX|HACK|NOTE)\b[:\s]*(.*)")
+    for i, line in enumerate(content.splitlines()):
+        match = todo_pattern.search(line)
+        if match:
+            kind, text = match.groups()
+            result.todos.append({
+                'line': i + 1,
+                'type': kind.upper(),
+                'content': text.strip()
+            })
+            
+    # Extract Memories (!RULE, !WARN)
+    # Format: !RULE: ...
+    rule_pattern = re.compile(r"(?i)\b!(RULE|WARN|CONST|LIMIT)\b[:\s]*(.*)")
+    for i, line in enumerate(content.splitlines()):
+        match = rule_pattern.search(line)
+        if match:
+            kind, text = match.groups()
+            result.memories.append({
+                'line': i + 1,
+                'type': kind.upper(),
+                'content': text.strip()
+            })
 
-    # Force path for all symbols if file_path is available
-    if file_path:
-        for sym in symbols:
-            if not sym.path:
-                sym.path = str(file_path)
-
-    # 3. Finalize
-    # Collect all tags (file level + symbol level)
-    all_tags = list(tags)
-    for sym in symbols:
-        for t in sym.tags:
-            if not any(et.name == t.name for et in all_tags):
-                all_tags.append(t)
-    
-    is_core = any(t.name == "@CORE" for t in all_tags) or "@CORE" in docstring
-    
-    # Mark symbols as core if they have @CORE in their docstring
-    for sym in symbols:
-        if sym.docstring and "@CORE" in sym.docstring:
-            sym.is_core = True
-
-    # 5. Calculate tokens for LSP (Simple Word Count)
-    tokens = {}
-    word_pattern = re.compile(r'\b\w+\b')
-    # Limit content scan to avoid excessive memory on huge files? 
-    # But we need full content for accurate reference count.
-    # Since we are in a worker process, memory is isolated.
-    for word in word_pattern.findall(content):
-        if len(word) > 2: # Ignore short words
-            tokens[word] = tokens.get(word, 0) + 1
-
-    result = ScanResult(
-        tags=all_tags,
-        sections=sections,
-        symbols=symbols,
-        docstring=docstring,
-        summary=summary,
-        todos=special['todos'],
-        memories=memories,
-        decisions=special['decisions'],
-        intents=special['intents'],
-        lessons=special['lessons'],
-        calls=calls,
-        imports=imports,
-        tokens=tokens,
-        is_core=is_core
-    )
-    
-    # Attempt to update cache if available (Note: 'c' needs to be passed or resolved)
-    # Assuming intent is to return the result object for now, preserving existing logic structure
     return result

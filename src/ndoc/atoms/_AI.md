@@ -1,6 +1,6 @@
 # Context: atoms
 > @CONTEXT: Local | atoms | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-02-25 12:15:48
+> 最后更新 (Last Updated): 2026-02-26 12:27:54
 
 ## !RULE
 
@@ -14,5 +14,5 @@
 
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
-*   **[__init__.py](__init__.py#L1)**: <NIKI_AUTO_HEADER_START> @DEP: core.capabilities, parsing, interfaces, brain, core
+*   **[__init__.py](__init__.py#L1)**: <NIKI_AUTO_HEADER_START>
 <!-- NIKI_AUTO_Context_END -->

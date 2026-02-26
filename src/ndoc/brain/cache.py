@@ -23,20 +23,34 @@ class FileCache:
     """
     Manages persistent cache for file scan results using SQLite.
     """
-    def __init__(self, cache_dir: Path):
+    def __init__(self, cache_dir: Path, db_name: str = "ndoc_cache.db"):
         self.cache_dir = cache_dir
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.db_path = cache_dir / "scan_cache.db"
+        self.db_path = cache_dir / db_name
         self._conn = None
         self._cursor = None
         self._connect()
         self._init_db()
 
     def _connect(self):
-        self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
-        # Enable WAL mode for better concurrency support and performance
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._cursor = self._conn.cursor()
+        """Connect to SQLite database."""
+        try:
+            self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False, timeout=10.0)
+            # Use default journal mode to avoid I/O errors on some Windows setups
+            self._conn.execute("PRAGMA journal_mode=DELETE")
+            self._cursor = self._conn.cursor()
+        except sqlite3.OperationalError as e:
+            print(f"Cache DB error: {e}, recreating...")
+            if self._conn:
+                try: self._conn.close()
+                except: pass
+            if self.db_path.exists():
+                try:
+                    self.db_path.unlink()
+                except Exception:
+                    pass
+            self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False, timeout=10.0)
+            self._cursor = self._conn.cursor()
 
     def _init_db(self):
         self._cursor.execute("""

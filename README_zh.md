@@ -71,9 +71,28 @@ Niki-docAI 提供了一套工具来自动化“上下文运维”：
 git clone https://github.com/your-org/nk_doc_ai.git
 cd nk_doc_ai
 
-# 安装
-pip install .
+# 安装（推荐）
+python -m pip install .
 ```
+
+首次运行会自动在 `~/.ndoc/bin` 生成 shim 并尝试写入 PATH。
+
+如果安装后找不到 `ndoc`，可以使用模块入口：
+
+```bash
+python -m ndoc all
+```
+
+### 自包含发行包
+
+```bash
+tools/packaging/build.sh
+```
+
+输出：
+
+- `dist/ndoc` (macOS/Linux)
+- `dist/ndoc.exe` (Windows)
 
 ### 快速开始
 
@@ -109,6 +128,8 @@ ndoc check
 
 # 检测循环依赖
 ndoc deps
+# 查看特定模块的局部依赖
+ndoc deps src/core
 
 # 分析当前变更的影响范围
 ndoc impact

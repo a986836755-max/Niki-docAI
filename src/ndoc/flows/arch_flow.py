@@ -17,11 +17,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Set
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
 
 from ..core import fs, io
-from ..parsing import scanner, deps, universal
+from ..core.logger import logger
+from ..parsing import scanner, deps
 from ..models.config import ProjectConfig
+from . import deps_flow
 
 # --- MAP LOGIC ---
 
@@ -65,7 +66,7 @@ def build_tree_lines(current_path: Path, root: Path, ignore_patterns: List[str],
     for entry in entries:
         if entry.is_dir():
             lines.append(format_dir_entry(entry.name, level))
-            if level < 2: # Limit depth for Arch view
+            if level < 3: # Limit depth for Arch view
                 lines.extend(build_tree_lines(entry, root, ignore_patterns, level + 1, summary_cache))
         else:
             lines.append(format_file_entry(entry, root, level, summary_cache))
@@ -74,87 +75,112 @@ def build_tree_lines(current_path: Path, root: Path, ignore_patterns: List[str],
 
 # --- DEPS LOGIC ---
 
-def analyze_dependencies(root: Path, ignore_patterns: List[str]) -> Dict[str, Set[str]]:
-    """
-    Analyze internal dependencies (Module A -> Module B).
-    Returns a graph: { "ndoc.core": {"ndoc.utils"}, ... }
-    """
-    # 1. Map files to modules
-    module_graph = defaultdict(set)
-    file_to_module = {}
-    
-    for path in fs.walk_files(root, ignore_patterns):
-        # Support all languages defined in _LANGS.json
-        lang = universal.get_language_for_file(path)
-        if not lang:
-            continue
-            
-        # Determine module name (Generic logic)
-        try:
-            rel = path.relative_to(root)
-            # Remove src/ prefix if exists for cleaner module names
-            if rel.parts[0] == "src":
-                rel = rel.relative_to("src")
-                
-            parts = rel.parts
-            if len(parts) > 1:
-                # ndoc/core/fs.py -> ndoc.core
-                # editors/vscode/src/extension.ts -> editors.vscode
-                module = ".".join(parts[:2])
-            else:
-                module = parts[0].rsplit('.', 1)[0]
-            
-            file_to_module[path] = module
-        except ValueError:
-            continue
+# DEPRECATED: analyze_dependencies is now delegated to deps_flow.py
+# The following functions (analyze_dependencies, calculate_metrics, generate_instability_table, 
+# generate_dependency_matrix, build_dependency_report) are kept for compatibility if needed 
+# but arch_flow should use deps_flow.
 
-    # 2. Extract imports
-    for path, current_module in file_to_module.items():
-        try:
-            content = io.read_text(path)
-            if not content:
-                continue
+def build_dependency_report(root: Path, config: ProjectConfig) -> str:
+    """
+    Delegate dependency reporting to deps_flow.
+    """
+    # 1. Collect Imports (Enhanced)
+    import_map = deps_flow.collect_imports(root, config)
+    
+    # 2. Build Graph (Enhanced)
+    graph = deps_flow.build_dependency_graph(import_map)
+    
+    # 3. Calculate Metrics (Local implementation for now, or move to deps_flow?)
+    # Let's use local metric calculation but on the better graph.
+    # Note: graph keys are file paths now, not modules.
+    # We need to aggregate file graph to module graph for Arch View.
+    
+    module_graph = defaultdict(set)
+    
+    for src_file, targets in graph.items():
+        src_mod = _get_module_name(Path(src_file))
+        if not src_mod: continue
+        
+        for tgt_file in targets:
+            tgt_mod = _get_module_name(Path(tgt_file))
+            if tgt_mod and tgt_mod != src_mod:
+                module_graph[src_mod].add(tgt_mod)
                 
-            # Use universal adapter to extract imports
-            imports = universal.extract_imports(content, path)
+    metrics = calculate_metrics(module_graph)
+    
+    # 4. Table
+    table = generate_instability_table(metrics)
+    
+    # 5. Graph (Mermaid)
+    # Layered by I value
+    stable = [m for m, v in metrics.items() if v["i"] < 0.3]
+    hub = [m for m, v in metrics.items() if 0.3 <= v["i"] <= 0.7]
+    volatile = [m for m, v in metrics.items() if v["i"] > 0.7]
+    
+    graph_lines = ["graph TD"]
+    # Styles
+    graph_lines.append("    classDef stable fill:#2ecc71,stroke:#27ae60,color:white;")
+    graph_lines.append("    classDef hub fill:#f1c40f,stroke:#f39c12,color:black;")
+    graph_lines.append("    classDef volatile fill:#e74c3c,stroke:#c0392b,color:white;")
+    
+    # Subgraphs
+    if volatile:
+        graph_lines.append('    subgraph "Volatile Zone (I > 0.7)"')
+        for m in volatile:
+            graph_lines.append(f"        {m.replace('.', '_')}['{m}']:::volatile")
+        graph_lines.append("    end")
+        
+    if hub:
+        graph_lines.append('    subgraph "Hub Zone (0.3 < I < 0.7)"')
+        for m in hub:
+            graph_lines.append(f"        {m.replace('.', '_')}['{m}']:::hub")
+        graph_lines.append("    end")
+        
+    if stable:
+        graph_lines.append('    subgraph "Stable Zone (I < 0.3)"')
+        for m in stable:
+            graph_lines.append(f"        {m.replace('.', '_')}['{m}']:::stable")
+        graph_lines.append("    end")
+        
+    # Edges
+    for src, targets in module_graph.items():
+        for dst in targets:
+            graph_lines.append(f"    {src.replace('.', '_')} --> {dst.replace('.', '_')}")
             
-            for imported_name in imports:
-                # Check if imported_name matches any of our known modules
-                # e.g. 'ndoc.core.fs' matches 'ndoc.core'
-                
-                # Simple prefix match against known modules
-                # We need to normalize imported names to potential module names
-                # Python: from ndoc.core import fs -> ndoc.core
-                # JS: import ... from './utils' -> relative
-                
-                # Handle Relative Imports (Generic)
-                if imported_name.startswith('.'):
-                    # Resolve relative path? Too complex without full context
-                    continue
-                    
-                # Handle Absolute Imports
-                # Try to match against keys in file_to_module values
-                # This is O(N*M), optimize?
-                # Optimization: Create a set of known modules
-                
-                # Check if import starts with any known module prefix
-                # e.g. import 'ndoc.core' starts with 'ndoc'
-                
-                # Heuristic: split by dot or slash
-                parts = imported_name.replace('/', '.').split('.')
-                if len(parts) >= 1:
-                    candidate = parts[0]
-                    if len(parts) >= 2:
-                        candidate = f"{parts[0]}.{parts[1]}"
-                        
-                    # If candidate is a known internal module
-                    if candidate in file_to_module.values() and candidate != current_module:
-                        module_graph[current_module].add(candidate)
-                        
-        except Exception:
-            pass
+    mermaid = "\n".join(graph_lines)
+    
+    # 6. Matrix
+    sorted_modules = sorted(metrics.keys())
+    matrix = generate_dependency_matrix(module_graph, sorted_modules)
+    
+    return f"""## 1. Instability Metrics
+{table}
+
+## 2. Layered Topology
+```mermaid
+{mermaid}
+```
+
+## 3. Dependency Matrix
+{matrix}
+"""
+
+def _get_module_name(path: Path) -> str:
+    """Helper to convert file path to module name."""
+    try:
+        # Remove src/ prefix if exists
+        parts = path.parts
+        if parts[0] == "src":
+            parts = parts[1:]
             
-    return module_graph
+        if len(parts) > 1:
+            # ndoc/core/fs.py -> ndoc.core
+            return ".".join(parts[:2])
+        else:
+            # root_file.py -> root_file
+            return parts[0].rsplit('.', 1)[0]
+    except Exception:
+        return ""
 
 def calculate_metrics(graph: Dict[str, Set[str]]) -> Dict[str, Dict[str, float]]:
     """
@@ -225,69 +251,10 @@ def generate_dependency_matrix(graph: Dict[str, Set[str]], modules: List[str]) -
         
     return "\n".join(lines)
 
-def build_dependency_report(root: Path, ignore_patterns: List[str]) -> str:
-    # 1. Analyze
-    graph = analyze_dependencies(root, ignore_patterns)
-    metrics = calculate_metrics(graph)
-    
-    # 2. Table
-    table = generate_instability_table(metrics)
-    
-    # 3. Graph (Mermaid)
-    # Layered by I value
-    stable = [m for m, v in metrics.items() if v["i"] < 0.3]
-    hub = [m for m, v in metrics.items() if 0.3 <= v["i"] <= 0.7]
-    volatile = [m for m, v in metrics.items() if v["i"] > 0.7]
-    
-    graph_lines = ["graph TD"]
-    # Styles
-    graph_lines.append("    classDef stable fill:#2ecc71,stroke:#27ae60,color:white;")
-    graph_lines.append("    classDef hub fill:#f1c40f,stroke:#f39c12,color:black;")
-    graph_lines.append("    classDef volatile fill:#e74c3c,stroke:#c0392b,color:white;")
-    
-    # Subgraphs
-    if volatile:
-        graph_lines.append('    subgraph "Volatile Zone (I > 0.7)"')
-        for m in volatile:
-            graph_lines.append(f"        {m.replace('.', '_')}['{m}']:::volatile")
-        graph_lines.append("    end")
-        
-    if hub:
-        graph_lines.append('    subgraph "Hub Zone (0.3 < I < 0.7)"')
-        for m in hub:
-            graph_lines.append(f"        {m.replace('.', '_')}['{m}']:::hub")
-        graph_lines.append("    end")
-        
-    if stable:
-        graph_lines.append('    subgraph "Stable Zone (I < 0.3)"')
-        for m in stable:
-            graph_lines.append(f"        {m.replace('.', '_')}['{m}']:::stable")
-        graph_lines.append("    end")
-        
-    # Edges
-    for src, targets in graph.items():
-        for dst in targets:
-            graph_lines.append(f"    {src.replace('.', '_')} --> {dst.replace('.', '_')}")
-            
-    mermaid = "\n".join(graph_lines)
-    
-    # 4. Matrix
-    # Sort modules for matrix (same as table or alphabetical?)
-    # Alphabetical might be easier to lookup
-    sorted_modules = sorted(metrics.keys())
-    matrix = generate_dependency_matrix(graph, sorted_modules)
-    
-    return f"""## 1. Instability Metrics
-{table}
-
-## 2. Layered Topology
-```mermaid
-{mermaid}
-```
-
-## 3. Dependency Matrix
-{matrix}
-"""
+# def build_dependency_report(root: Path, ignore_patterns: List[str]) -> str:
+#     # 1. Analyze
+#     # graph = analyze_dependencies(root, ignore_patterns)
+#     pass
 
 def build_dependency_mermaid(root: Path) -> str:
     # Legacy placeholder, replaced by build_dependency_report
@@ -358,6 +325,32 @@ def generate_bom_section(root: Path, ignore_patterns: List[str]) -> str:
         for dep in cs_deps:
             lines.append(f"*   `{dep}`")
         lines.append("")
+
+    # 5. Go (go.mod)
+    go_deps = []
+    for f in fs.walk_files(root, ignore_patterns):
+        if f.name == "go.mod":
+            go_deps.extend(deps.core.parse_go_mod(f))
+            
+    if go_deps:
+        lines.append("### 🐹 Go (Go Modules)")
+        go_deps = sorted(list(set(go_deps)))
+        for dep in go_deps:
+            lines.append(f"*   `{dep}`")
+        lines.append("")
+
+    # 6. Rust (Cargo.toml)
+    rust_deps = []
+    for f in fs.walk_files(root, ignore_patterns):
+        if f.name == "Cargo.toml":
+            rust_deps.extend(deps.core.parse_cargo_toml(f))
+            
+    if rust_deps:
+        lines.append("### 🦀 Rust (Cargo)")
+        rust_deps = sorted(list(set(rust_deps)))
+        for dep in rust_deps:
+            lines.append(f"*   `{dep}`")
+        lines.append("")
         
     if not lines:
         lines.append("*   *(No third-party dependencies detected)*")
@@ -386,7 +379,7 @@ def run(config: ProjectConfig) -> bool:
     """Execute Arch Flow"""
     root = config.scan.root_path
     
-    print(f"Generating Architecture Overview in {root}...")
+    logger.info(f"Generating Architecture Overview in {root}...")
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # 1. Tech Stack & BOM -> _ARCH.md
@@ -408,37 +401,16 @@ def run(config: ProjectConfig) -> bool:
 *Generated by Niki-docAI*
 """
     io.write_text(arch_file, arch_content)
-    print(f"✅ Architecture Overview updated: {arch_file.name}")
+    logger.info(f"✅ Architecture Overview updated: {arch_file.name}")
     
-    # 2. File Map -> _MAP.md
-    print(f"Generating Project Map...")
-    all_files = list(fs.walk_files(root, config.scan.ignore_patterns))
-    summary_cache = {}
-    if all_files:
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            results = list(executor.map(extract_file_summary, all_files))
-            summary_cache = dict(zip(all_files, results))
-            
-    map_lines = build_tree_lines(root, root, config.scan.ignore_patterns, summary_cache=summary_cache)
-    map_body = "\n".join(map_lines)
+    # 2. File Map -> Handled by map_flow.py separately
+    # Removed from arch_flow to avoid duplicate generation and conflicts.
+    # logger.info(f"Generating Project Map...")
+    # ... (Logic moved to map_flow)
     
-    map_content = f"""# Project Map
-> @CONTEXT: Map | File Tree
-> 最后更新 (Last Updated): {timestamp}
-
-## File Structure
-{map_body}
-
----
-*Generated by Niki-docAI*
-"""
-    map_file = root / "_MAP.md"
-    io.write_text(map_file, map_content)
-    print(f"✅ Project Map updated: {map_file.name}")
-
     # 3. Dependencies -> _DEPS.md
-    print(f"Generating Dependency Graph...")
-    report_content = build_dependency_report(root, config.scan.ignore_patterns)
+    logger.info(f"Generating Dependency Graph...")
+    report_content = build_dependency_report(root, config)
     
     deps_content = f"""# Dependency Graph
 > @CONTEXT: Dependencies | Graph
@@ -451,6 +423,6 @@ def run(config: ProjectConfig) -> bool:
 """
     deps_file = root / "_DEPS.md"
     io.write_text(deps_file, deps_content)
-    print(f"✅ Dependency Graph updated: {deps_file.name}")
+    logger.info(f"✅ Dependency Graph updated: {deps_file.name}")
 
     return True

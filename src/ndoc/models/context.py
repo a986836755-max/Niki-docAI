@@ -32,6 +32,7 @@ class FileContext:
     tags: List[Tag] = field(default_factory=list)
     sections: Dict[str, Section] = field(default_factory=dict)
     symbols: List[Symbol] = field(default_factory=list) # Extracted symbols
+    imports: List[str] = field(default_factory=list) # Extracted imports
     docstring: Optional[str] = None
     description: Optional[str] = None # Added for compatibility
     is_core: bool = False # Whether file is marked as @CORE

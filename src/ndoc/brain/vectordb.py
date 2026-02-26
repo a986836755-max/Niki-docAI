@@ -86,6 +86,12 @@ class VectorDB:
             print(f"⚠️ VectorDB query failed: {e}")
             return []
 
+    def search(self, query_text: str, n_results: int = 5) -> List[Dict[str, Any]]:
+        """
+        Alias for query to match expected interface.
+        """
+        return self.query(query_text, n_results)
+
     def delete(self, ids: List[str]):
         if not self.collection:
             return

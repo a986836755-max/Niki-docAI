@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from ndoc.atoms.scanner import scan_file_content
+from ndoc.parsing.scanner import scan_file_content
 
 SAMPLE_CONTENT = """
 # @TAG arg1 arg2

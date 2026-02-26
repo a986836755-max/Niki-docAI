@@ -19,6 +19,7 @@ import os
 import logging
 from typing import Optional, List
 from pathlib import Path
+from urllib.parse import urlparse, unquote
 from pygls.lsp.server import LanguageServer
 from lsprotocol.types import (
     TEXT_DOCUMENT_DID_OPEN,
@@ -53,6 +54,8 @@ from ndoc.interfaces.lsp import LSPService
 from ndoc.brain import checker, index
 from ndoc.parsing import scanner
 from ndoc.models.context import FileContext
+from ndoc.core import fs
+from ndoc.flows import config_flow
 
 server = LanguageServer("ndoc-lsp", "0.1.0")
 
@@ -65,6 +68,15 @@ def get_service(root_path: str) -> Optional[LSPService]:
         svc = LSPService(root_path)
         _services[root_path] = svc
     return _services[root_path]
+
+def _uri_to_path(uri: str) -> Path:
+    parsed = urlparse(uri)
+    if parsed.scheme != "file":
+        return Path(uri)
+    path = unquote(parsed.path)
+    if os.name == "nt" and path.startswith("/") and len(path) > 2 and path[2] == ":":
+        path = path[1:]
+    return Path(path)
 
 def validate_document(ls: LanguageServer, uri: str):
     """
@@ -136,27 +148,12 @@ def validate_document(ls: LanguageServer, uri: str):
         # 4. Publish Diagnostics
         diagnostics = []
         for v in violations:
-            # We need line number.
-            # Checker currently doesn't return line number in Violation object?
-            # Let's check checker.py... It returns Violation(file_path, rule_name, message, severity)
-            # We need to enhance Checker to return line numbers.
-            # For now, we put it at the top of file (Range 0,0 - 0,1)
-            
-            # Find the tag line if possible
-            line_no = 0
-            if "tag" in v.message:
-                # Naive search for tag in file content
-                # This is a hack until Checker returns line numbers
-                tag_name = v.message.split("'")[3] # Extract '@tag' from message
-                for i, line in enumerate(document.lines):
-                    if tag_name in line:
-                        line_no = i
-                        break
-            
+            line_no = max(0, (v.line - 1)) if v.line else 0
+            char_no = max(0, v.character) if v.character else 0
             diag = Diagnostic(
                 range=Range(
-                    start=Position(line=line_no, character=0),
-                    end=Position(line=line_no, character=100)
+                    start=Position(line=line_no, character=char_no),
+                    end=Position(line=line_no, character=char_no + 100)
                 ),
                 message=f"{v.message} ({v.rule_name})",
                 severity=DiagnosticSeverity.Error if v.severity == "ERROR" else DiagnosticSeverity.Warning,
@@ -197,30 +194,67 @@ def hover(ls: LanguageServer, params: HoverParams):
     root = ls.workspace.root_path
     if not root:
         root = str(Path(document.path).parent)
-    
+
+    md_sections: List[str] = [f"**Niki-docAI Hover**", f"**Symbol**: `{word}`"]
+
+    try:
+        svc = get_service(root)
+        context = svc.get_context_for_file(Path(document.path))
+        if context:
+            md_sections.append("### Rules")
+            md_sections.append(context)
+    except Exception as e:
+        logging.error(f"Hover context failed: {e}")
+
     try:
         from ndoc.brain.vectordb import VectorDB
         vdb = VectorDB(Path(root))
         results = vdb.query(f"{word} concept definition", n_results=2)
-        
         if results:
-            md_content = [f"**Niki-docAI Context for `{word}`**"]
+            md_sections.append("### Vector")
             for res in results:
                 meta = res.get('metadata', {})
                 src = meta.get('source', 'unknown')
                 doc = res.get('document', '')
-                # Truncate doc if too long
                 if len(doc) > 200:
                     doc = doc[:200] + "..."
-                md_content.append(f"---")
-                md_content.append(f"**From `{src}`**:\n{doc}")
-                
-            return Hover(contents=MarkupContent(kind=MarkupKind.Markdown, value="\n\n".join(md_content)))
+                md_sections.append(f"**{src}**")
+                md_sections.append(doc)
+        else:
+            md_sections.append("### Vector")
+            md_sections.append("_no results_")
     except Exception as e:
         logging.error(f"Hover vector search failed: {e}")
-        pass
-        
-    return None
+
+    return Hover(contents=MarkupContent(kind=MarkupKind.Markdown, value="\n\n".join(md_sections)))
+
+@server.feature(TEXT_DOCUMENT_CODE_LENS)
+def code_lens(ls: LanguageServer, params: CodeLensParams):
+    uri = params.text_document.uri
+    return [
+        CodeLens(
+            range=Range(start=Position(line=0, character=0), end=Position(line=0, character=0)),
+            command=Command(
+                title="Niki: Show Thinking Context",
+                command="ndoc.showContext",
+                arguments=[uri]
+            )
+        )
+    ]
+
+@server.feature(WORKSPACE_EXECUTE_COMMAND)
+def execute_command(ls: LanguageServer, params: ExecuteCommandParams):
+    if params.command != "ndoc.getThinkingContext":
+        return None
+    if not params.arguments:
+        return ""
+    uri = str(params.arguments[0])
+    path = _uri_to_path(uri)
+    root = ls.workspace.root_path
+    if not root:
+        root = str(path.parent)
+    svc = get_service(root)
+    return svc.get_context_for_file(path)
 
 @server.feature(TEXT_DOCUMENT_DID_OPEN)
 def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
@@ -231,6 +265,17 @@ def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
     document = ls.workspace.get_text_document(uri)
     path = Path(document.path)
     logging.info(f"File opened: {path}")
+    try:
+        root = ls.workspace.root_path
+        if not root:
+            root = str(path.parent)
+        svc = get_service(root)
+        if svc and not svc._is_indexed:
+            config = config_flow.load_project_config(Path(root))
+            files = list(fs.walk_files(Path(root), config.scan.ignore_patterns, extensions=config.scan.extensions))
+            svc.index_project(files)
+    except Exception as e:
+        logging.error(f"Indexing on open failed: {e}")
     
     validate_document(ls, uri)
 
@@ -239,6 +284,17 @@ def did_save(ls: LanguageServer, params: DidSaveTextDocumentParams):
     """
     Validate on save.
     """
+    try:
+        uri = params.text_document.uri
+        path = _uri_to_path(uri)
+        root = ls.workspace.root_path
+        if not root:
+            root = str(path.parent)
+        svc = get_service(root)
+        if path.name == "_AI.md":
+            svc.invalidate_context_cache(path)
+    except Exception as e:
+        logging.error(f"Cache invalidation failed: {e}")
     validate_document(ls, params.text_document.uri)
 
 if __name__ == '__main__':

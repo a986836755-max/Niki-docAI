@@ -4,7 +4,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ndoc.atoms import ast, io
+from ndoc.parsing import ast
+from ndoc.core import io
 
 def test_csharp_extraction():
     sample_file = Path(__file__).parent / "sample_csharp.cs"

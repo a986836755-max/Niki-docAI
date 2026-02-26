@@ -12,6 +12,7 @@ Language Definition Protocol.
 """
 import importlib
 import pkgutil
+import json
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Type
 
@@ -120,13 +121,53 @@ def register_language(lang_cls: Type[LanguageDefinition]):
     for ext in lang_cls.EXTENSIONS:
         _EXT_TO_LANG[ext] = lang_cls.ID
 
+def _load_json_languages():
+    """Load languages defined in _LANGS.json but missing Python implementation."""
+    json_path = Path(__file__).parent.parent / "_LANGS.json"
+    if not json_path.exists():
+        return
+        
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        for lang_id, spec in data.items():
+            # Skip if already registered via Python module
+            if lang_id in _LANG_REGISTRY:
+                continue
+                
+            # Create dynamic class
+            # We use type() to create a new class dynamically
+            # It inherits from LanguageDefinition
+            
+            # Extract fields
+            extensions = spec.get("extensions", [])
+            class_types = spec.get("class_nodes", [])
+            
+            # Define class attributes
+            attrs = {
+                "ID": lang_id,
+                "EXTENSIONS": extensions,
+                "CLASS_TYPES": class_types,
+                # We can map other JSON fields to attributes if needed,
+                # but currently LanguageDefinition uses SCM_QUERY etc which might not be in JSON
+                # JSON has "import_nodes" etc which are used by universal parser, not directly by LanguageDefinition
+            }
+            
+            dynamic_cls = type(f"{lang_id.capitalize()}Definition", (LanguageDefinition,), attrs)
+            register_language(dynamic_cls)
+            
+    except Exception as e:
+        # print(f"Failed to load _LANGS.json: {e}")
+        pass
+
 def load_languages():
     """Automatically discover and load language definitions from the current package."""
     # Clear existing
     _LANG_REGISTRY.clear()
     _EXT_TO_LANG.clear()
     
-    # Iterate over modules in the current package
+    # 1. Load Python Modules
     package_path = str(Path(__file__).parent)
     for _, module_name, is_pkg in pkgutil.iter_modules([package_path]):
         if is_pkg or module_name == "__init__":
@@ -134,15 +175,21 @@ def load_languages():
             
         # Import the module
         full_module_name = f"{__name__}.{module_name}"
-        module = importlib.import_module(full_module_name)
-        
-        # Look for LanguageDefinition subclasses
-        for attr_name in dir(module):
-            attr = getattr(module, attr_name)
-            if (isinstance(attr, type) and 
-                issubclass(attr, LanguageDefinition) and 
-                attr is not LanguageDefinition):
-                register_language(attr)
+        try:
+            module = importlib.import_module(full_module_name)
+            
+            # Look for LanguageDefinition subclasses
+            for attr_name in dir(module):
+                attr = getattr(module, attr_name)
+                if (isinstance(attr, type) and 
+                    issubclass(attr, LanguageDefinition) and 
+                    attr is not LanguageDefinition):
+                    register_language(attr)
+        except Exception:
+            pass
+
+    # 2. Load JSON Definitions (Fallback for missing modules like flatbuffers)
+    _load_json_languages()
 
 def get_lang_def(lang_id: str) -> Optional[Type[LanguageDefinition]]:
     """Get language definition by ID."""

@@ -16,7 +16,9 @@ import re
 from pathlib import Path
 from typing import List, Optional
 
-from ..atoms import io, scanner, fs
+from ..core import io, fs
+from ..core.logger import logger
+from ..parsing import scanner
 from ..models.config import ProjectConfig
 
 # --- Markers ---
@@ -258,21 +260,21 @@ def run(config: ProjectConfig, target: str = None):
         
         if path.is_file():
             if inject_file(path, config):
-                print(f"✅ Injected: {path.relative_to(root)}")
+                logger.info(f"Injected: {path.relative_to(root)}")
             else:
-                print(f"⚪ Skipped: {path.relative_to(root)} (No rules or not supported)")
+                logger.debug(f"Skipped: {path.relative_to(root)} (No rules or not supported)")
         else:
             # Dir
              files = fs.walk_files(path, config.scan.ignore_patterns)
              for f in files:
                  if inject_file(f, config):
-                     print(f"✅ Injected: {f.relative_to(root)}")
+                     logger.info(f"Injected: {f.relative_to(root)}")
     else:
         # All
         files = fs.walk_files(root, config.scan.ignore_patterns)
         count = 0
         for f in files:
              if inject_file(f, config):
-                 print(f"✅ Injected: {f.relative_to(root)}")
+                 logger.info(f"Injected: {f.relative_to(root)}")
                  count += 1
-        print(f"✨ Injection complete. Updated {count} files.")
+        logger.info(f"Injection complete. Updated {count} files.")

@@ -71,9 +71,28 @@ Niki-docAI provides a suite of tools to automate "Context Ops":
 git clone https://github.com/your-org/nk_doc_ai.git
 cd nk_doc_ai
 
-# Install
-pip install .
+# Install (recommended)
+python -m pip install .
 ```
+
+On first run, `ndoc` will auto-create a user-level shim under `~/.ndoc/bin` and try to persist it to PATH.
+
+If `ndoc` is not found after install, use the module entry:
+
+```bash
+python -m ndoc all
+```
+
+### Self-Contained Release
+
+```bash
+tools/packaging/build.sh
+```
+
+Output:
+
+- `dist/ndoc` (macOS/Linux)
+- `dist/ndoc.exe` (Windows)
 
 ### Quick Start
 
@@ -109,6 +128,8 @@ ndoc check
 
 # Detect circular dependencies
 ndoc deps
+# View scoped dependencies for a specific module
+ndoc deps src/core
 
 # Analyze impact of current changes
 ndoc impact

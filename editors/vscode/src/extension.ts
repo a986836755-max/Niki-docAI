@@ -132,6 +132,7 @@ export function activate(context: ExtensionContext) {
             outputChannel.clear();
             if (result) {
                 outputChannel.appendLine("🧠 Niki-docAI Context Rules:");
+                outputChannel.appendLine(`File: ${editor.document.uri.fsPath}`);
                 outputChannel.appendLine("========================================");
                 outputChannel.appendLine(result as string);
                 outputChannel.appendLine("========================================");
@@ -142,6 +143,16 @@ export function activate(context: ExtensionContext) {
         } catch (e) {
             outputChannel.appendLine(`Error fetching context: ${e}`);
         }
+    }));
+
+    context.subscriptions.push(commands.registerCommand('ndoc.restartServer', async () => {
+        if (!client) {
+            window.showErrorMessage('Niki-docAI LSP is not running');
+            return;
+        }
+        await client.stop();
+        client.start();
+        window.showInformationMessage('Niki-docAI LSP restarted');
     }));
 }
 

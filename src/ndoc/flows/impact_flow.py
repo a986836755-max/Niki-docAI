@@ -102,9 +102,11 @@ def run(config: ProjectConfig) -> bool:
     if len(changed_files) > 5:
         print(" ...")
 
+    # 1. Collect Imports
+    from .deps_flow import collect_imports
+    import_map = collect_imports(root, config)
+    
     # 2. Build Dependency Graph
-    # Reuse deps_flow logic
-    import_map = collect_imports(root)
     graph = build_dependency_graph(import_map)
     
     # 3. Map changed files to modules

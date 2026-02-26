@@ -1,6 +1,6 @@
 # Context: scripts
 > @CONTEXT: Local | scripts | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-02-25 12:15:47
+> 最后更新 (Last Updated): 2026-02-26 12:27:54
 
 ## !RULE
 
@@ -11,15 +11,11 @@
 
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
-*   **[add_context_marker.py](add_context_marker.py#L1)** @DEP: pathlib
-    *   `@API`
-        *   `PUB:` FUN **add_marker**`()` [🔗3]
+*   **[add_context_marker.py](add_context_marker.py#L1)** @DEP: pathlib @DEP: pathlib
 <!-- NIKI_AUTO_Context_END -->
 
 
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
-*   **[add_context_marker.py](add_context_marker.py#L1)** @DEP: pathlib
-    *   `@API`
-        *   `PUB:` FUN **add_marker**`()` [🔗3]
+*   **[add_context_marker.py](add_context_marker.py#L1)** @DEP: pathlib @DEP: pathlib
 <!-- NIKI_AUTO_Context_END -->

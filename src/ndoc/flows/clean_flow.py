@@ -21,7 +21,6 @@ from ndoc.models.config import ProjectConfig
 GENERATED_FILES = [
     "_AI.md",
     "_MAP.md",
-    "_TECH.md",
     "_DEPS.md",
     "_NEXT.md",
     "_SYMBOLS.md",

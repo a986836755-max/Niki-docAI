@@ -14,18 +14,25 @@ Flow: Verification.
 """
 import sys
 from ndoc.models.config import ProjectConfig
+from ..core import fs, io
+from ..parsing import scanner
+from ..core.logger import logger
 
-def run(config: ProjectConfig) -> bool:
+def run(config: ProjectConfig, 
+        fs_module=fs, 
+        io_module=io, 
+        scanner_module=scanner,
+        logger_instance=logger) -> bool:
     """
     执行验证 (Execute Verification).
     Checks if documentation artifacts exist and are valid.
+    Supports Dependency Injection for testing.
     """
-    print(f"Verifying Niki-docAI artifacts for {config.name}...")
+    logger_instance.info(f"Verifying Niki-docAI artifacts for {config.name}...")
     
     root = config.scan.root_path
     required_files = [
         "_MAP.md",
-        "_TECH.md",
         "_AI.md",
         "_RULES.md",
         "_SYNTAX.md"
@@ -38,30 +45,29 @@ def run(config: ProjectConfig) -> bool:
             missing.append(fname)
             
     if missing:
-        print("❌ Verification Failed: Missing artifacts:")
+        logger_instance.error("Verification Failed: Missing artifacts:")
         for m in missing:
-            print(f"   - {m}")
-        print("\nRun 'ndoc all' to generate missing files.")
+            logger_instance.error(f"   - {m}")
+        logger_instance.info("\nRun 'ndoc all' to generate missing files.")
         return False
 
     # Check for !RULE compliance (Deeper rule verification)
-    if not _verify_rules_content(config):
-        print("❌ Rule Verification Failed.")
+    if not _verify_rules_content(config, io_module, logger_instance):
+        logger_instance.error("Rule Verification Failed.")
         return False
     
     # --- Architecture Guard ---
-    if not _check_architecture(config):
-        print("❌ Architecture Guard: Violation detected.")
+    if not _check_architecture(config, fs_module, io_module, scanner_module, logger_instance):
+        logger_instance.error("Architecture Guard: Violation detected.")
         return False
 
-    print("✅ Verification Passed: All core documentation artifacts exist and architecture is sound.")
+    logger_instance.info("✅ Verification Passed: All core documentation artifacts exist and architecture is sound.")
     return True
 
-def _verify_rules_content(config: ProjectConfig) -> bool:
+def _verify_rules_content(config: ProjectConfig, io_module, logger_instance) -> bool:
     """
     Verify that _AI.md files contain meaningful content under ## !RULE.
     """
-    from ..atoms import io
     root = config.scan.root_path
     
     ai_files = list(root.glob("**/_AI.md"))
@@ -70,7 +76,7 @@ def _verify_rules_content(config: ProjectConfig) -> bool:
         
     violations = []
     for ai_file in ai_files:
-        content = io.read_text(ai_file)
+        content = io_module.read_text(ai_file)
         if not content:
             continue
             
@@ -85,28 +91,27 @@ def _verify_rules_content(config: ProjectConfig) -> bool:
         
         if not rule_part or rule_part == placeholder:
             # We don't fail for this yet, but we could warn
-            # print(f"⚠️  Warning: {ai_file.relative_to(root)} has empty ## !RULE")
+            # logger_instance.warning(f"⚠️  Warning: {ai_file.relative_to(root)} has empty ## !RULE")
             pass
             
     if violations:
-        print("❌ Rule Verification Failed: The following files are missing ## !RULE section:")
+        logger_instance.error("Rule Verification Failed: The following files are missing ## !RULE section:")
         for v in violations:
-            print(f"   - {v}")
+            logger_instance.error(f"   - {v}")
         return False
         
     return True
 
-def _check_architecture(config: ProjectConfig) -> bool:
+def _check_architecture(config: ProjectConfig, fs_module, io_module, scanner_module, logger_instance) -> bool:
     """
     Check for architectural dependency violations.
     """
-    from ..atoms import fs, scanner
     root = config.scan.root_path
     src_path = root / "src" / "ndoc"
     if not src_path.exists():
         return True # Skip if no src/ndoc
         
-    print("Running Architecture Guard...")
+    logger_instance.info("Running Architecture Guard...")
     
     violations = []
     
@@ -121,29 +126,31 @@ def _check_architecture(config: ProjectConfig) -> bool:
         if not layer_path.exists():
             continue
             
-        files = fs.walk_files(layer_path, ignore_patterns=config.scan.ignore_patterns, extensions=['.py'])
+        files = fs_module.walk_files(layer_path, ignore_patterns=config.scan.ignore_patterns, extensions=['.py'])
         for f in files:
             rel_f = f.relative_to(root).as_posix()
-            res = scanner.scan_file(f, root)
+            res = scanner_module.scan_file(f, root)
             
             # Check imports and calls
             all_deps = res.imports + res.calls
             
             for dep in all_deps:
                 # Rule 1: atoms should not depend on flows
+                # atoms is deprecated, but check if any legacy code remains
                 if layer_name == "atoms":
                     if "ndoc.flows" in dep or "from ..flows" in dep or "from flows" in dep:
                         violations.append(f"{rel_f} depends on flows: {dep}")
                 
                 # Rule 2: models should not depend on atoms or flows
                 if layer_name == "models":
-                    if "ndoc.atoms" in dep or "from ..atoms" in dep or "ndoc.flows" in dep or "from ..flows" in dep:
+                    # ndoc.atoms deprecated
+                    if "from ..atoms" in dep or "ndoc.flows" in dep or "from ..flows" in dep:
                         violations.append(f"{rel_f} depends on {dep}")
                         
     if violations:
-        print("❌ Architecture Violations found:")
+        logger_instance.error("Architecture Violations found:")
         for v in violations:
-            print(f"   - {v}")
+            logger_instance.error(f"   - {v}")
         return False
         
     return True

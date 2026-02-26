@@ -24,8 +24,9 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 from ndoc.models.config import ProjectConfig
-from ndoc.flows import map_flow, context_flow, todo_flow, symbols_flow, data_flow, deps_flow, archive_flow, capability_flow, arch_flow
+from ndoc.flows import map_flow, context_flow, status_flow, data_flow, deps_flow, archive_flow, capability_flow, arch_flow
 from ndoc.brain.hippocampus import Hippocampus, ActionType
+from ndoc.core.logger import logger
 
 class DocChangeHandler(FileSystemEventHandler):
     """
@@ -117,39 +118,35 @@ class DocChangeHandler(FileSystemEventHandler):
                 print("[Watch] Structure changed, updating Map...")
                 map_flow.run(self.config)
             
-            # 2. Context Flow (Incremental AI Docs)
-            dirty_dirs = set()
-            for p in current_dirty_paths:
-                if p.exists():
-                    dirty_dirs.add(p.parent)
-                else:
-                    # If deleted, parent needs update
-                    dirty_dirs.add(p.parent)
-            
-            if dirty_dirs:
-                print(f"[Watch] Updating Context for {len(dirty_dirs)} directories...")
-                for d in dirty_dirs:
+            # 2. Update Context for changed files/dirs
+            processed_dirs = set()
+            for path in current_dirty_paths:
+                # Find nearest _AI.md parent
+                d = path if path.is_dir() else path.parent
+                
+                # Walk up until root or found _AI.md (optimization: just update parent dir context)
+                if d not in processed_dirs:
+                    processed_dirs.add(d)
                     if self.config.scan.root_path in d.parents or d == self.config.scan.root_path:
-                        print(f"  -> {d.relative_to(self.config.scan.root_path)}")
+                        logger.info(f"  -> {d.relative_to(self.config.scan.root_path)}")
                         context_flow.update_directory(d, self.config)
 
-            # 3. Todo Flow & Archive Flow
-            print("[Watch] Syncing Todos and checking for Archive...")
-            todo_flow.run(self.config)
+            logger.info("[Watch] Syncing Todos and checking for Archive...")
+            status_flow.update_next_file(self.config)
             # Always run archive flow to handle [x] tasks in _NEXT.md
             archive_flow.run(self.config)
 
             # 4. Global Metadata Flows (Cached)
-            print("[Watch] Updating Tech Stack, Dependencies, Symbol Index and Data Registry...")
+            logger.info("[Watch] Updating Tech Stack, Dependencies, Symbol Index and Data Registry...")
             arch_flow.run(self.config) # Replaces tech_flow and deps_flow
-            symbols_flow.run(self.config)
+            # symbols_flow.run(self.config) # Deprecated
             data_flow.run(self.config)
             
-            print(f"[Watch] ✅ Update complete. Waiting for changes...\n")
+            logger.info(f"[Watch] ✅ Update complete. Waiting for changes...\n")
         except Exception as e:
-            print(f"[Watch] ❌ Update failed: {e}\n")
+            logger.error(f"[Watch] ❌ Update failed: {e}\n")
             import traceback
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 def start_watch_mode(config: ProjectConfig):
     """

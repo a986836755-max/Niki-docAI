@@ -17,8 +17,84 @@ import os
 import re
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Iterator, List, Set, Pattern, Callable, Optional
+from typing import Iterator, List, Set, Pattern, Callable, Optional, Tuple
 import pathspec
+
+# --- Unified File Scanning ---
+
+def scan_project_files(root: Path, ignore_patterns: List[str], allow_extensions: Optional[Set[str]] = None) -> Iterator[Tuple[Path, str]]:
+    """
+    Unified generator to scan project files.
+    Handles .gitignore, ignore_patterns, binary filtering, and extension filtering.
+    
+    Yields:
+        (file_path: Path, language: str)
+        language is inferred from extension (e.g., 'python', 'javascript', 'text', 'unknown')
+    """
+    # 1. Setup Filter
+    # Always ignore common junk
+    default_ignores = {'.git', '__pycache__', 'venv', 'env', 'node_modules', 'dist', 'build', 'site-packages', '.idea', '.vscode'}
+    final_ignores = default_ignores.union(set(ignore_patterns))
+    
+    filter_config = FileFilter(
+        ignore_patterns=final_ignores,
+        allow_extensions=allow_extensions or set()
+    )
+    filter_config.spec = load_gitignore(root)
+    
+    # 2. Walk
+    # Use walk_files (which returns list) or reimplement as generator for efficiency?
+    # Let's reimplement as generator using os.walk for true laziness
+    
+    for dirpath, dirnames, filenames in os.walk(root):
+        # In-place filter dirnames to prune traversal
+        # Need to check relative path for gitignore
+        # This is complex with pathspec for directories.
+        # Simple name check first
+        dirnames[:] = [d for d in dirnames if d not in final_ignores and not d.startswith('.')]
+        
+        # TODO: Advanced directory filtering with gitignore
+        
+        for f in filenames:
+            path = Path(dirpath) / f
+            
+            # Check ignore
+            if should_ignore(path, filter_config, root):
+                continue
+                
+            # Check extension whitelist (if provided)
+            if allow_extensions and path.suffix not in allow_extensions:
+                continue
+                
+            # Infer language / Check binary
+            lang = _infer_language(path)
+            if lang == 'binary':
+                continue
+                
+            yield path, lang
+
+def _infer_language(path: Path) -> str:
+    """Simple extension to language mapping."""
+    ext = path.suffix.lower()
+    if ext in ('.py', '.pyi'): return 'python'
+    if ext in ('.js', '.jsx', '.mjs'): return 'javascript'
+    if ext in ('.ts', '.tsx'): return 'typescript'
+    if ext in ('.md', '.txt', '.rst'): return 'text'
+    if ext in ('.json', '.yaml', '.yml', '.toml'): return 'config'
+    if ext in ('.html', '.css', '.scss'): return 'web'
+    if ext in ('.c', '.h'): return 'c'
+    if ext in ('.cpp', '.hpp', '.cc'): return 'cpp'
+    if ext == '.java': return 'java'
+    if ext == '.cs': return 'c_sharp'
+    if ext == '.go': return 'go'
+    if ext == '.rs': return 'rust'
+    if ext == '.dart': return 'dart'
+    
+    # Binary check (naive)
+    if ext in ('.pyc', '.exe', '.dll', '.so', '.dylib', '.bin', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf', '.zip', '.tar', '.gz'):
+        return 'binary'
+        
+    return 'unknown'
 
 # --- Data Structures (Logic as Data) ---
 

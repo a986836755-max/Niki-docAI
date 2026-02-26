@@ -23,6 +23,7 @@ from ..models.config import ProjectConfig
 from ..core import capabilities
 from ..core.capabilities import CapabilityManager
 from ..parsing import langs
+from ..parsing.deps import stats
 
 def run(config: ProjectConfig) -> bool:
     """
@@ -59,7 +60,12 @@ def run(config: ProjectConfig) -> bool:
             all_passed = False
 
     # 4. Check Tree-sitter Functionality
-    if not _check_tree_sitter_bindings():
+    # Scan project languages first
+    print(f"  [INFO] Scanning project for required languages...")
+    project_langs = stats.detect_languages(config.scan.root_path, config.scan.ignore_patterns)
+    required_langs = set(project_langs.keys())
+    
+    if not _check_tree_sitter_bindings(required_langs):
         all_passed = False
 
     # 5. Check CLI Tools (Optional)
@@ -75,28 +81,39 @@ def run(config: ProjectConfig) -> bool:
     print("==================================================")
     if all_passed:
         print("✅ System is ready for Niki-docAI.")
+        print("\n💡 Recommended Workflows (推荐工作流):")
+        print("   - Refresh All Docs:    ndoc all")
+        print("   - Check Architecture:  ndoc check")
+        print("   - Analyze Deps:        ndoc deps")
+        print("   - Semantic Context:    ndoc prompt <file> --focus")
         return True
     else:
         print("❌ System has issues. Please fix errors above.")
         return False
 
+from ..core.logger import logger
+
 def _pass(msg: str):
-    print(f"  [OK] {msg}")
+    logger.info(f"  [OK] {msg}")
 
 def _fail(msg: str):
-    print(f"  [FAIL] {msg}")
+    logger.error(f"  [FAIL] {msg}")
 
 def _warn(msg: str):
-    print(f"  [WARN] {msg}")
+    logger.warning(f"  [WARN] {msg}")
 
 def _check_import(module_name: str) -> bool:
+    capabilities.CapabilityManager._init_local_lib()
     try:
         importlib.import_module(module_name)
         return True
     except ImportError:
         return False
 
-def _check_tree_sitter_bindings() -> bool:
+def _check_tree_sitter_bindings(required_langs: set = None) -> bool:
+    if required_langs is None:
+        required_langs = set()
+        
     try:
         from tree_sitter import Parser
         
@@ -115,21 +132,46 @@ def _check_tree_sitter_bindings() -> bool:
         # 2. Check other registered languages
         installed = []
         missing = []
+        errors = []
         
         for lang_name in sorted(CapabilityManager.LANGUAGE_PACKAGES.keys()):
             if lang_name == 'python': continue
             
-            l = CapabilityManager.get_language(lang_name, auto_install=False)
-            if l:
-                installed.append(lang_name)
-            else:
-                missing.append(lang_name)
+            # Check if language is required by project
+            is_required = lang_name in required_langs
+            
+            # If required, allow interaction (check_only=False)
+            # If not required, silent check (check_only=True)
+            # Note: For doctor flow, we might want to check existing installation status first
+            # but here we rely on get_language to handle loading
+            
+            try:
+                # If required, force a load check
+                check_only = not is_required
+                l = CapabilityManager.get_language(lang_name, auto_install=False, check_only=check_only)
+                
+                if l:
+                    installed.append(lang_name)
+                    # Runtime Parsing Check (Smoke Test)
+                    if is_required:
+                        p = Parser()
+                        p.set_language(l)
+                        p.parse(b"") # Dummy parse
+                        _pass(f"Language '{lang_name}' verified (Load + Parse)")
+                else:
+                    if is_required:
+                        missing.append(lang_name)
+                        _warn(f"Required language '{lang_name}' is missing.")
+            except Exception as e:
+                errors.append(f"{lang_name}: {e}")
+                if is_required:
+                    _fail(f"Language '{lang_name}' failed to load: {e}")
                 
         if installed:
             print(f"  [OK] Installed languages: {', '.join(installed)}")
         
         if missing:
-            print(f"  [INFO] Available (Not Installed): {', '.join(missing)}")
+            print(f"  [WARN] Missing required languages: {', '.join(missing)}")
             
         return True
     except Exception as e:

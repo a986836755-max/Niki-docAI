@@ -31,6 +31,12 @@ def generate_skeleton(content: str, file_path: Optional[str] = None) -> str:
     if not lang_key:
         return content[:500] + "\n... (Unknown Language)"
 
+    # Ensure language capability is loaded (Important for C++/Rust which might need local install)
+    if path_obj:
+        from ndoc.core.capabilities import CapabilityManager
+        # Try to ensure the language is available (auto-install if needed)
+        CapabilityManager.ensure_languages({lang_key}, auto_install=True)
+
     tree = parse_code(content, path_obj)
     if not tree:
         return content[:500] + "\n... (Parse Failed)"
