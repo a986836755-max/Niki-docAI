@@ -36,45 +36,154 @@ In the era of AI-assisted coding, we face three major pain points:
 
 ---
 
-## 3. The Solution
+## 3. The Solution (Five Core Domains)
 
-Niki-docAI provides a suite of tools to automate "Context Ops":
+Niki-docAI categorizes its capabilities into five strategic domains to automate "Context Ops":
 
-### Core Features
+### 3.1 🗺️ Panoramic Navigation (全景导航)
+*Give AI a complete map of your project without overwhelming its context window.*
 
-*   **Automated Context Map (`_MAP.md`)**:
-    Automatically generates a navigational map of your project structure with **Precise Line References** (e.g., `file.py#L1`), helping AI find the right files instantly.
+*   **Context Map (`ndoc map`)**:
+    Generates a high-level navigational map of your project structure with **Precise Line References** (e.g., `file.py#L1`), helping AI find the right files instantly.
+*   **AI Context (`ndoc context`)**:
+    Produces a recursive, token-optimized summary of your codebase, including file descriptions, symbols, and relationships.
+*   **Skeleton Extraction (`ndoc skeleton`)**:
+    Extracts high-density code skeletons (interfaces/signatures only) from source files, reducing token usage by up to 70% while retaining structural information.
+*   **LSP Query (`ndoc lsp`)**:
+    Provides a CLI interface to query the Language Server Protocol for symbols and definitions, enabling precise code navigation.
 
-*   **Architecture Guard (`ndoc check`)**:
-    **[NEW in 2.0]** Enforce architecture rules (e.g., Layering) defined in `_RULES.md` using `!RULE`. Prevents "Architecture Drift" before it happens.
+### 3.2 🏗️ Architecture Governance (架构治理)
+*Ensure your project structure remains clean and adheres to defined rules.*
 
-*   **Circular Dependency Detection (`ndoc deps`)**:
-    **[NEW in 2.0]** Detects and reports circular dependencies in your codebase using Tarjan's algorithm. Supports scoped dependency analysis for specific modules.
-
-*   **Intelligent Retrieval (`ndoc prompt --focus`)**:
-    **[NEW in 2.0]** Uses **Vector Database (ChromaDB)** to semantic search related context, enabling AI to "recall" relevant code even if it's not open.
-
+*   **Architecture View (`ndoc arch`)**:
+    Visualizes the high-level architecture, technology stack, and module boundaries.
+*   **Dependency Analysis (`ndoc deps`)**:
+    Detects and reports circular dependencies using Tarjan's algorithm and generates Mermaid diagrams for visualization.
+*   **Constraint Checking (`ndoc check`)**:
+    Enforces architectural rules (e.g., Layering) defined in `_RULES.md` using `!RULE` syntax. Prevents "Architecture Drift".
 *   **Impact Analysis (`ndoc impact`)**:
-    **[NEW in 2.0]** Analyzes Git changes to predict which modules and tests are affected.
+    Analyzes Git changes to predict which downstream modules and tests might be affected by current modifications.
+*   **Quality Gates (`ndoc lint`)**:
+    Integrated wrapper for project-specific linting commands, ensuring code quality standards are met before commit.
 
-*   **Semantic Skeleton (`ndoc skeleton`)**:
-    **[NEW in 2.0]** Generates high-density code skeletons (interfaces only), reducing token usage by 70%.
+### 3.3 🧠 Knowledge Management (知识管理)
+*Capture and recall project knowledge, decisions, and lessons learned.*
 
-*   **Data Registry (`ndoc data`)**:
-    **[NEW in 2.0]** Auto-extracts `dataclass`, `TypedDict`, `Enum`, `struct`, and `model` definitions into `_DATA.md`, creating a centralized data dictionary.
+*   **Memory Archive (`ndoc archive`)**:
+    Stores and retrieves long-term project memories using Vector Database embeddings.
+*   **Short-term Memory (Hippocampus)**:
+    Manages active context and recent interactions to maintain continuity during a coding session.
+*   **Architecture Decision Records (`ndoc adr`)**:
+    Automatically extracts `@DECISION` tags from comments into `_ADR.md`, creating a living history of architectural choices.
+*   **Data Dictionary (`ndoc data`)**:
+    Auto-extracts data schemas (`dataclass`, `TypedDict`, `Enum`) into `_DATA.md`, creating a centralized data registry.
+*   **Project Stats (`ndoc stats`)**:
+    Tracks code metrics (lines of code, complexity) and scans for `TODO` items to monitor project health.
+*   **Smart Prompt (`ndoc prompt`)**:
+    Generates optimized prompts for AI, combining rules, context summaries, and relevant API references.
 
-*   **Quality Gates (`ndoc lint` / `ndoc typecheck`)**:
-    **[NEW in 2.0]** Integrated quality checks defined in `_RULES.md`, allowing you to run project-specific linting and type checking commands via a unified interface.
+### 3.4 ⚡ Environment & Efficiency (环境效能)
+*Keep the development environment healthy and tools ready.*
 
-*   **Memory Consolidation (`ndoc lesson`)**:
-    **[NEW in 2.0]** Extracts `@LESSON` tags from code comments into `_LESSONS.md`, serving as a project knowledge base and preventing repeat mistakes.
+*   **System Doctor (`ndoc doctor`)**:
+    Comprehensive environment check including OS, Python version, dependencies, and Tree-sitter language bindings.
+*   **Project Init (`ndoc init`)**:
+    Initializes a new Niki-docAI project with standard configuration files (`_RULES.md`, `.ndoc.toml`).
+*   **Context Injection (`ndoc inject`)**:
+    Injects context markers and headers into source files to aid AI understanding.
+*   **Capability Check (`ndoc caps`)**:
+    Verifies installed capabilities and dynamic language support (e.g., checking if Rust parser is loaded).
+*   **Cleanup (`ndoc clean`)**:
+    Removes generated temporary files and caches to keep the workspace tidy.
 
-*   **System Diagnostics (`ndoc doctor`)**:
-    **[NEW in 2.0]** Comprehensive environment check including OS, Python version, dependencies, Tree-sitter language bindings, and project configuration health.
+### 3.5 🚀 Advanced Extensions (高级扩展)
+*Extend Niki-docAI with powerful integrations and automation.*
+
+*   **Watch Mode (`ndoc watch`)**:
+    A daemon that monitors file changes and automatically updates documentation and indexes in real-time.
+*   **IDE Server (`ndoc server`)**:
+    A Language Server Protocol (LSP) implementation that powers IDE extensions with Niki-docAI capabilities.
+*   **Plugin SDK**:
+    A robust SDK (`ndoc.sdk.interfaces`) allowing developers to create custom plugins for specific languages or frameworks.
+*   **Full Pilot (`ndoc all` / `ndoc pilot`)**:
+    Runs the complete analysis pipeline to generate all documentation and reports in one go.
 
 ---
 
-## 4. Integration Guide (How to Use in Your Project)
+## 4. Usage Guide (Command Line Interface)
+
+Niki-docAI provides a rich set of commands. Here are the most common operations:
+
+### 🚀 Core Workflow
+```bash
+# Initialize a new project
+ndoc init
+
+# Run full analysis (Generate all docs)
+ndoc all
+# Alias: ndoc pilot
+
+# Start watch mode (Auto-update on file change)
+ndoc watch
+```
+
+### 🗺️ Navigation & Context
+```bash
+# Update just the structure map (_MAP.md)
+ndoc map
+
+# Update detailed AI context (_AI.md)
+ndoc context
+
+# Generate a skeleton for a specific file (to paste to AI)
+ndoc skeleton src/main.py
+
+# Query LSP for symbol definition
+ndoc lsp MyClass
+```
+
+### 🏗️ Architecture & Quality
+```bash
+# Check for architecture rule violations (!RULE)
+ndoc check
+
+# Visualize dependencies and detect cycles
+ndoc deps
+
+# Generate high-level architecture view
+ndoc arch
+
+# Analyze impact of current Git changes
+ndoc impact
+```
+
+### 🧠 Knowledge & Prompting
+```bash
+# Generate an optimized prompt for a specific file
+ndoc prompt src/core/logic.py --focus
+
+# Search codebase semantically (requires vector db)
+ndoc search "how does authentication work?"
+
+# Update project statistics and TODO tracking
+ndoc stats
+```
+
+### ⚡ Maintenance
+```bash
+# Check environment health
+ndoc doctor
+
+# Clean generated artifacts
+ndoc clean
+
+# Self-update (git pull)
+ndoc update
+```
+
+---
+
+## 5. Integration Guide (How to Use in Your Project)
 
 Niki-docAI consists of two parts: the **Core Tool (Python CLI)** and the **IDE Extension**.
 
@@ -99,70 +208,4 @@ pip install niki-doc-ai
 
 ### Step 2: Install IDE Extension (VS Code)
 
-The VS Code extension provides real-time integration (LSP) and context visualization.
-
-1.  Navigate to `editors/vscode`.
-2.  Package the extension:
-    ```bash
-    npm install
-    npx vsce package
-    ```
-3.  Install the generated `.vsix` file in VS Code:
-    *   Press `Ctrl+Shift+P` (Cmd+Shift+P on Mac).
-    *   Type `Extensions: Install from VSIX...`.
-    *   Select `nk-doc-ai-vscode-x.x.x.vsix`.
-
-*Note: The extension will automatically find the `ndoc` command if it's in your PATH or configured via `ndoc.pythonPath`.*
-
-### Step 3: Initialize Your Project
-
-1.  Open your target project in VS Code.
-2.  Open the terminal and run:
-    ```bash
-    ndoc init
-    ```
-    This creates the `.ndoc` configuration directory and essential files:
-    *   `_RULES.md`: Architecture rules and lint commands.
-    *   `_SYNTAX.md`: Documentation syntax guide.
-
-### Step 4: Generate Context
-
-Run the full generation command to index your codebase:
-
-```bash
-ndoc all
-```
-
-You will see new files generated in your project root:
-*   `_MAP.md`: Project structure map.
-*   `_ARCH.md`: Architecture overview.
-*   `_DEPS.md`: Dependency graph.
-*   `_AI.md`: Recursive context files in each directory.
-
-### Step 5: Configure Rules (Optional)
-
-Edit `_RULES.md` to define your project's specific constraints:
-
-```markdown
-## !RULE
-<!-- Example: Enforce Layering -->
-<!-- !RULE: @LAYER(core) CANNOT_IMPORT @LAYER(ui) -->
-```
-
-Then run `ndoc check` to validate your code against these rules.
-
----
-
-## 5. Development (Dogfooding)
-
-To develop Niki-docAI itself:
-
-1.  Open this repository in VS Code.
-2.  Run `ndoc init` (we eat our own dogfood!).
-3.  Use the "Launch Extension" debug configuration to test the VS Code extension.
-
----
-
-## License
-
-MIT
+(Coming Soon)

@@ -41,6 +41,13 @@ def collect_imports(root_path: Path, config: ProjectConfig = None) -> Dict[str, 
         except Exception as e:
             pass
             
+    # DEBUG
+    print(f"[DEBUG] builder.collect_imports: Found {len(import_map)} files")
+    sample_files = list(import_map.keys())[:3]
+    print(f"[DEBUG] Sample files: {sample_files}")
+    if sample_files:
+        print(f"[DEBUG] Sample imports for {sample_files[0]}: {import_map[sample_files[0]]}")
+            
     return import_map
 
 def build_dependency_graph(import_map: Dict[str, List[str]]) -> Dict[str, Set[str]]:

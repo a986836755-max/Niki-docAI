@@ -22,7 +22,6 @@ from ..core.cli import ndoc_command
 def _is_git_repo(path: Path) -> bool:
     return (path / ".git").exists()
 
-@ndoc_command(name="update", help="Self-update the tool (git pull)", group="Core")
 def run() -> bool:
     """
     Execute self-update via git pull.

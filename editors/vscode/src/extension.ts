@@ -1,3 +1,4 @@
+
 import * as path from 'path';
 import { workspace, ExtensionContext, window, commands, Uri } from 'vscode';
 import {
@@ -15,84 +16,39 @@ export function activate(context: ExtensionContext) {
     const defaultPython = process.platform === 'win32' ? 'py' : 'python3';
     const pythonPath = config.get<string>('pythonPath') || defaultPython;
     
-    // Server implementation (using ndoc CLI 'server' command)
-    // We assume the user has 'ndoc' installed or available in the project.
-    
-    let serverExecutable = pythonPath;
-    let serverArgs = ['-m', 'ndoc', 'server'];
+    // Server implementation
+    let command = pythonPath;
+    let args = ['-m', 'ndoc', 'server'];
     let env = { ...process.env };
 
-    // Check for 'ndoc.server.localPath' override (Dogfooding Mode)
+    // 1. Check for 'ndoc.server.localPath' override (Dogfooding/Dev Mode)
     const localPath = config.get<string>('server.localPath');
     if (localPath && localPath.trim() !== '') {
         const devRoot = path.resolve(localPath);
         const devEntry = path.join(devRoot, 'src', 'ndoc', 'entry.py');
         
-        // Simple synchronous check
         const fs = require('fs');
         if (fs.existsSync(devEntry)) {
-            serverArgs = [devEntry, 'server'];
+            // Run from source: python src/ndoc/entry.py server
+            command = pythonPath;
+            args = [devEntry, 'server'];
             // Set PYTHONPATH so it finds the 'ndoc' package
             env['PYTHONPATH'] = path.join(devRoot, 'src');
             window.showInformationMessage(`🐶 Niki-docAI Dogfooding: Using local source at ${devRoot}`);
         } else {
             window.showWarningMessage(`⚠️ Niki-docAI: Local path configured but entry.py not found at ${devEntry}. Falling back to installed package.`);
         }
-    } else if (context.extensionMode === 2) { // ExtensionMode.Development fallback
-        // ... (existing dev logic, but now superseded by explicit config)
-        const devRoot = "e:\\work\\appcodes\\nk_doc_ai";
-        const devEntry = path.join(devRoot, 'src', 'ndoc', 'entry.py');
-        serverArgs = [devEntry, 'server'];
-        env['PYTHONPATH'] = path.join(devRoot, 'src');
-        window.showInformationMessage(`🔧 Niki-docAI Dev Mode: Using local server at ${devEntry}`);
-    } else {
-        // Production mode: try to find if workspace has local ndoc source
-        const workspaceRoot = workspace.workspaceFolders?.[0].uri.fsPath;
-        if (workspaceRoot) {
-            const localEntry = path.join(workspaceRoot, 'src', 'ndoc', 'entry.py');
-            // Check if file exists (sync check for simplicity)
-            const fs = require('fs');
-            if (fs.existsSync(localEntry)) {
-                 serverArgs = [localEntry, 'server'];
-                 // If we found local source, we likely need PYTHONPATH too if not installed
-                 // But let's assume if it's in workspace, user configured environment.
-            } else {
-                 // Try to check if 'ndoc' is installed
-                 // We rely on the LanguageClient startup failure to detect missing ndoc.
-                 // However, we can proactively check here to offer a better UX.
-                 const cp = require('child_process');
-                 try {
-                     // Try to run 'python -m ndoc --help' to see if it's installed
-                     cp.execSync(`${serverExecutable} -m ndoc --help`, { env: env });
-                 } catch (e) {
-                     // Not installed! Prompt user to install.
-                     window.showWarningMessage("Niki-docAI Core (ndoc) is not installed. Install now?", "Install").then(selection => {
-                        if (selection === "Install") {
-                            const term = window.createTerminal("Niki-docAI Installer");
-                            term.show();
-                            // Install from PyPI (future) or Git
-                            term.sendText(`${serverExecutable} -m pip install git+https://github.com/niki/nk_doc_ai.git`); 
-                            // After install, we should restart client? 
-                            // Or just tell user to reload window.
-                            window.showInformationMessage("Installing Niki-docAI... Please reload window after completion.", "Reload").then(s => {
-                                if (s === "Reload") {
-                                    commands.executeCommand('workbench.action.reloadWindow');
-                                }
-                            });
-                        }
-                     });
-                 }
-            }
-        }
-    }
+    } 
 
+    // 2. Configure Server Options
     const serverOptions: ServerOptions = {
-        command: serverExecutable,
-        args: [...serverArgs, '--stdio'], // Explicitly add --stdio for clarity
-        options: { env: env }, // Pass the environment with PYTHONPATH
+        command: command,
+        args: args,
+        options: { env: env },
         transport: TransportKind.stdio,
     };
 
+    // 3. Configure Client Options
     const clientOptions: LanguageClientOptions = {
         documentSelector: [
             { scheme: 'file', language: 'python' },
@@ -100,32 +56,17 @@ export function activate(context: ExtensionContext) {
             { scheme: 'file', language: 'javascript' },
             { scheme: 'file', language: 'typescript' },
             { scheme: 'file', language: 'cpp' },
-            { scheme: 'file', language: 'c' }
+            { scheme: 'file', language: 'c' },
+            { scheme: 'file', language: 'go' },
+            { scheme: 'file', language: 'rust' },
+            { scheme: 'file', language: 'java' }
         ],
         synchronize: {
             fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
         },
-        // Handle server start failure
-        errorHandler: {
-            error: (error, message, count) => {
-                return { action: 2 }; // Shutdown
-            },
-            closed: () => {
-                // If server crashes or fails to start
-                 window.showErrorMessage("Niki-docAI Core (ndoc) not found or crashed.", "Install ndoc").then(selection => {
-                    if (selection === "Install ndoc") {
-                        const term = window.createTerminal("Niki-docAI Installer");
-                        term.show();
-                        term.sendText(`${serverExecutable} -m pip install niki-doc-ai`); // Future: pip install niki-doc-ai
-                        // For now, guide them to repo? Or use local install if we are in the repo?
-                        // Assuming pip install . if in repo, but extension doesn't know context.
-                    }
-                });
-                return { action: 1 }; // Do not restart
-            }
-        }
     };
 
+    // 4. Create and Start Client
     client = new LanguageClient(
         'ndocLSP',
         'Niki-docAI LSP',
@@ -134,78 +75,70 @@ export function activate(context: ExtensionContext) {
     );
 
     client.start().catch(e => {
-         window.showErrorMessage(`Niki-docAI Failed to Start: ${e}. Is 'ndoc' installed?`, "Install Guide").then(s => {
+         window.showErrorMessage(`Niki-docAI Failed to Start: ${e}. Is 'ndoc' installed? Try 'pip install niki-doc-ai'`, "Install Guide").then(s => {
              if (s === "Install Guide") {
-                 // Open URL
-                 commands.executeCommand('vscode.open', Uri.parse('https://github.com/niki/nk_doc_ai#installation'));
+                 commands.executeCommand('vscode.open', Uri.parse('https://github.com/a986836755-max/Niki-docAI#installation'));
              }
          });
     });
     
-    window.showInformationMessage('🧠 Niki-docAI Thinking Interface Active');
-
-    // Register custom commands
-    context.subscriptions.push(commands.registerCommand('ndoc.showContext', async (uri?: string) => {
-        let editor = window.activeTextEditor;
-        
-        // If URI is passed (e.g. from CodeLens), try to find that document
-        if (uri) {
-            const doc = workspace.textDocuments.find(d => d.uri.toString() === uri);
-            if (doc) {
-                // If the document is not active, we might need to show it, 
-                // but usually CodeLens is clicked on an active editor.
-            }
-        }
-
-        if (!editor) {
-            window.showErrorMessage('No active editor');
-            return;
-        }
-
-        // We can reuse the hover logic or fetch context via a new request
-        // For simplicity, let's just trigger the Hover manually or show a QuickPick with info
-        // BUT, since we want to show the full context, let's execute a command on the server
-        
-        // Actually, we can't easily "trigger hover" programmatically at a specific position from here without more work.
-        // Let's just show an Information Message for now, or an Output Channel
-        
-        const outputChannel = window.createOutputChannel("Niki-docAI Context");
-        outputChannel.show(true);
-        outputChannel.appendLine("Fetching context...");
-        
-        try {
-            // Call the custom command on the server
-            // Note: client.sendRequest('workspace/executeCommand', ...) is the standard way
-            const result = await client.sendRequest('workspace/executeCommand', {
-                command: 'ndoc.getThinkingContext',
-                arguments: [editor.document.uri.toString()]
-            });
-            
-            outputChannel.clear();
-            if (result) {
-                outputChannel.appendLine("🧠 Niki-docAI Context Rules:");
-                outputChannel.appendLine(`File: ${editor.document.uri.fsPath}`);
-                outputChannel.appendLine("========================================");
-                outputChannel.appendLine(result as string);
-                outputChannel.appendLine("========================================");
-                outputChannel.appendLine("(You can copy this context to your AI Assistant)");
+    // 5. Register Commands
+    const registerCmd = (cmd: string, cliArg: string) => {
+        context.subscriptions.push(commands.registerCommand(cmd, () => {
+            const term = window.createTerminal(`Niki-docAI: ${cliArg}`);
+            term.show();
+            // Construct command string based on current mode
+            let cmdStr = '';
+            if (args[0] && args[0].endsWith('entry.py')) {
+                 // Source mode
+                 const envPath = env['PYTHONPATH'] || '';
+                 if (process.platform === 'win32') {
+                    cmdStr = `$env:PYTHONPATH="${envPath}"; & "${command}" "${args[0]}" ${cliArg}`;
+                 } else {
+                    cmdStr = `PYTHONPATH="${envPath}" "${command}" "${args[0]}" ${cliArg}`;
+                 }
             } else {
-                outputChannel.appendLine("No context found or error occurred.");
+                // Installed mode: python -m ndoc <cmd>
+                cmdStr = `"${command}" -m ndoc ${cliArg}`;
             }
-        } catch (e) {
-            outputChannel.appendLine(`Error fetching context: ${e}`);
+            term.sendText(cmdStr);
+        }));
+    };
+
+    registerCmd('ndoc.init', 'init');
+    registerCmd('ndoc.generate', 'all');
+    registerCmd('ndoc.check', 'check');
+    registerCmd('ndoc.doctor', 'doctor');
+    registerCmd('ndoc.watch', 'watch');
+    
+    // Special command: Show Context
+    context.subscriptions.push(commands.registerCommand('ndoc.showContext', (uri: Uri) => {
+        if (!uri) {
+            if (window.activeTextEditor) {
+                uri = window.activeTextEditor.document.uri;
+            } else {
+                window.showErrorMessage("No active file to show context for.");
+                return;
+            }
         }
+        const term = window.createTerminal("Niki-docAI: Context");
+        term.show();
+        // Use 'ndoc prompt <file> --focus'
+        let cmdStr = '';
+        if (args[0] && args[0].endsWith('entry.py')) {
+             const envPath = env['PYTHONPATH'] || '';
+             if (process.platform === 'win32') {
+                cmdStr = `$env:PYTHONPATH="${envPath}"; & "${command}" "${args[0]}" prompt "${uri.fsPath}" --focus`;
+             } else {
+                cmdStr = `PYTHONPATH="${envPath}" "${command}" "${args[0]}" prompt "${uri.fsPath}" --focus`;
+             }
+        } else {
+            cmdStr = `"${command}" -m ndoc prompt "${uri.fsPath}" --focus`;
+        }
+        term.sendText(cmdStr);
     }));
 
-    context.subscriptions.push(commands.registerCommand('ndoc.restartServer', async () => {
-        if (!client) {
-            window.showErrorMessage('Niki-docAI LSP is not running');
-            return;
-        }
-        await client.stop();
-        client.start();
-        window.showInformationMessage('Niki-docAI LSP restarted');
-    }));
+    window.showInformationMessage('🧠 Niki-docAI Active');
 }
 
 export function deactivate(): Thenable<void> | undefined {

@@ -55,7 +55,6 @@ def run_lint(config: ProjectConfig) -> bool:
     """Run lint commands."""
     return _run_commands("lint", config.lint_commands, config.scan.root_path)
 
-@ndoc_command(name="typecheck", help="Run typecheck commands defined in _RULES.md", group="Diagnostics")
 def run_typecheck(config: ProjectConfig) -> bool:
     """Run typecheck commands."""
     return _run_commands("typecheck", config.typecheck_commands, config.scan.root_path)

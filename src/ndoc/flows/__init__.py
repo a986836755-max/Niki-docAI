@@ -10,15 +10,9 @@
 """
 Flows: Business Logic Pipelines.
 """
-from . import map_flow
-from . import context_flow
-# from . import tech_flow # Deleted or renamed?
-from . import status_flow
-from . import deps_flow
 from . import config_flow
-from . import syntax_flow
-from . import doctor_flow
-from . import init_flow
 from . import verify_flow
 from . import quality_flow
-from . import search_flow
+from . import inject_flow
+from . import update_flow
+from . import clean_flow

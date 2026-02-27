@@ -1,11 +1,8 @@
-# Project Rules
-> @CONTEXT: Configuration | @TAGS: @CONFIG @RULES
-
 ## Scanning Rules (扫描规则)
 > 定义哪些文件应该被忽略或包含。
 
-- `!IGNORE`: .git, .vscode, .idea, __pycache__, node_modules, dist, build, .venv, venv
-- `!INCLUDE`: .py, .md, .json, .js, .ts, .html, .css, .yml, .yaml, .toml
+- `!IGNORE`: .git, .vscode, .idea, __pycache__, node_modules, dist, build, .venv, venv, vendors, editors/vscode/node_modules,.ndoc
+- `!INCLUDE`: .py, .cs, .md, .json, .js, .ts, .html, .css, .yml, .yaml, .toml
 
 ## Documentation Style (文档风格)
 > 定义生成的文档样式。

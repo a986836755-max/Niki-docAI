@@ -36,115 +36,176 @@
 
 ---
 
-## 3. 解决方案
+## 3. 解决方案 (五大核心领域)
 
-Niki-docAI 提供了一套工具来自动化“上下文运维”：
+Niki-docAI 将其能力划分为五个战略领域，以实现自动化的“上下文运维”：
 
-### 核心特性
+### 3.1 🗺️ 全景导航 (Panoramic Navigation)
+*在不挤爆上下文窗口的前提下，给 AI 一张项目的完整地图。*
 
-*   **自动化上下文地图 (`_MAP.md`)**:
-    自动生成项目结构的导航地图，并包含**精确的行号引用**（如 `file.py#L1`），帮助 AI 瞬间定位文件。
+*   **上下文地图 (`ndoc map`)**:
+    生成项目结构的高层导航地图，包含**精确的行号引用**（如 `file.py#L1`），帮助 AI 瞬间定位文件。
+*   **AI 上下文 (`ndoc context`)**:
+    生成代码库的递归式、Token 优化的摘要，包含文件描述、符号定义和关系。
+*   **骨架提取 (`ndoc skeleton`)**:
+    从源文件中提取高密度的代码骨架（仅接口/签名），在保留结构信息的同时减少高达 70% 的 Token 消耗。
+*   **LSP 查询 (`ndoc lsp`)**:
+    提供命令行接口查询语言服务器协议（LSP）的符号和定义，实现精确的代码导航。
 
-*   **架构守护 (`ndoc check`)**:
-    **[2.0 新功能]** 基于 `_RULES.md` 中的 `!RULE` 强制执行架构规则（如分层约束）。防止“架构漂移”。
+### 3.2 🏗️ 架构治理 (Architecture Governance)
+*确保项目结构保持整洁并遵守既定规则。*
 
-*   **循环依赖检测 (`ndoc deps`)**:
-    **[2.0 新功能]** 利用 Tarjan 算法自动检测并报告代码库中的循环依赖。
+*   **架构视图 (`ndoc arch`)**:
+    可视化高层架构、技术栈和模块边界。
+*   **依赖分析 (`ndoc deps`)**:
+    使用 Tarjan 算法检测并报告循环依赖，并生成 Mermaid 图表进行可视化。
+*   **约束检查 (`ndoc check`)**:
+    基于 `_RULES.md` 中的 `!RULE` 语法强制执行架构规则（如分层约束），防止“架构漂移”。
+*   **影响分析 (`ndoc impact`)**:
+    分析 Git 变更，智能预测当前修改可能影响的下游模块和测试用例。
+*   **质量门禁 (`ndoc lint`)**:
+    集成项目特定的 Lint 命令封装，确保在提交前符合代码质量标准。
 
-*   **智能检索 (`ndoc prompt --focus`)**:
-    **[2.0 新功能]** 利用 **向量数据库 (ChromaDB)** 进行语义检索，让 AI 能“回忆”起未打开的相关代码。
+### 3.3 🧠 知识管理 (Knowledge Management)
+*捕获并召回项目知识、决策和经验教训。*
 
-*   **全链路影响分析 (`ndoc impact`)**:
-    **[2.0 新功能]** 分析 Git 变更，智能预测受影响的模块和测试用例。
+*   **记忆归档 (`ndoc archive`)**:
+    使用向量数据库 Embedding 存储和检索长期的项目记忆。
+*   **短期记忆 (Hippocampus)**:
+    管理活跃的上下文和最近的交互，以在编码会话期间保持连续性。
+*   **架构决策记录 (`ndoc adr`)**:
+    自动从注释中提取 `@DECISION` 标签到 `_ADR.md`，创建架构选择的活历史。
+*   **数据字典 (`ndoc data`)**:
+    自动提取数据模式（`dataclass`, `TypedDict`, `Enum`）到 `_DATA.md`，建立集中的数据注册表。
+*   **项目统计 (`ndoc stats`)**:
+    追踪代码指标（行数、复杂度）并扫描 `TODO` 项以监控项目健康状况。
+*   **智能提示 (`ndoc prompt`)**:
+    为 AI 生成优化后的 Prompt，结合了规则、上下文摘要和相关的 API 参考。
 
-*   **语义骨架 (`ndoc skeleton`)**:
-    **[2.0 新功能]** 生成高密度的代码骨架（仅接口），降低 70% 的 Token 消耗。
-
-*   **数据注册表 (`ndoc data`)**:
-    **[2.0 新功能]** 自动提取 `dataclass`, `TypedDict`, `Enum`, `struct`, 和 `model` 定义到 `_DATA.md`，建立统一数据字典。
-
-*   **质量门禁 (`ndoc lint` / `ndoc typecheck`)**:
-    **[2.0 新功能]** 集成 `_RULES.md` 中定义的质量检查命令，提供统一的调用接口。
-
-*   **经验固化 (`ndoc lesson`)**:
-    **[2.0 新功能]** 从代码注释中提取 `@LESSON` 标签到 `_LESSONS.md`，形成项目知识库，避免重复犯错。
+### 3.4 ⚡ 环境效能 (Environment & Efficiency)
+*保持开发环境健康，工具随时待命。*
 
 *   **系统诊断 (`ndoc doctor`)**:
-    **[2.0 新功能]** 全面的环境检查，包括 OS、Python 版本、依赖项、Tree-sitter 语言绑定和项目配置健康状况。
+    全面的环境检查，包括操作系统、Python 版本、依赖项和 Tree-sitter 语言绑定。
+*   **项目初始化 (`ndoc init`)**:
+    使用标准配置文件（`_RULES.md`, `.ndoc.toml`）初始化新的 Niki-docAI 项目。
+*   **上下文注入 (`ndoc inject`)**:
+    向源文件注入上下文标记和头部信息，辅助 AI 理解。
+*   **能力检查 (`ndoc caps`)**:
+    验证已安装的能力和动态语言支持（例如，检查 Rust 解析器是否已加载）。
+*   **清理维护 (`ndoc clean`)**:
+    移除生成的临时文件和缓存，保持工作区整洁。
+
+### 3.5 🚀 高级扩展 (Advanced Extensions)
+*通过强大的集成和自动化扩展 Niki-docAI。*
+
+*   **监听模式 (`ndoc watch`)**:
+    一个守护进程，监控文件变更并实时自动更新文档和索引。
+*   **IDE 服务 (`ndoc server`)**:
+    语言服务器协议 (LSP) 实现，为 IDE 扩展提供 Niki-docAI 能力支持。
+*   **插件 SDK**:
+    健壮的 SDK (`ndoc.sdk.interfaces`)，允许开发者为特定语言或框架创建自定义插件。
+*   **全量领航 (`ndoc all` / `ndoc pilot`)**:
+    运行完整的分析流水线，一次性生成所有文档和报告。
 
 ---
 
-## 4. 🚀 一键安装指南
+## 4. 使用指南 (命令行接口)
 
-### Windows (PowerShell)
-```powershell
-.\install.ps1
-```
+Niki-docAI 提供了丰富的命令集。以下是最常用的操作：
 
-### Linux / macOS
+### 🚀 核心工作流
 ```bash
-chmod +x install.sh
-./install.sh
-```
+# 初始化新项目
+ndoc init
 
-此脚本会自动执行以下操作：
-1.  检测并使用合适的 Python 版本。
-2.  安装 `ndoc` 核心工具。
-3.  检测 VS Code 并自动安装 Niki-docAI 插件。
-
----
-
-## 5. 快速开始
-
-### 初始化项目
-
-1.  在 VS Code 中打开你的目标项目。
-2.  打开终端运行：
-    ```bash
-    ndoc init
-    ```
-    这将创建 `.ndoc` 配置目录和必要文件：
-    *   `_RULES.md`: 架构规则与 Lint 命令。
-    *   `_SYNTAX.md`: 文档语法指南。
-
-### 生成上下文
-
-运行全量生成命令来索引你的代码库：
-
-```bash
+# 运行全量分析 (生成所有文档)
 ndoc all
+# 别名: ndoc pilot
+
+# 启动监听模式 (文件变更自动更新)
+ndoc watch
 ```
 
-你将在项目根目录看到生成的文件：
-*   `_MAP.md`: 项目结构地图。
-*   `_ARCH.md`: 架构概览。
-*   `_DEPS.md`: 依赖关系图。
-*   `_AI.md`: 各目录的递归上下文文件。
+### 🗺️ 导航与上下文
+```bash
+# 仅更新结构地图 (_MAP.md)
+ndoc map
 
-### 配置规则 (可选)
+# 更新详细的 AI 上下文 (_AI.md)
+ndoc context
 
-编辑 `_RULES.md` 定义你的项目特定约束：
+# 为特定文件生成骨架 (用于粘贴给 AI)
+ndoc skeleton src/main.py
 
-```markdown
-## !RULE
-<!-- 示例：强制分层 -->
-<!-- !RULE: @LAYER(core) CANNOT_IMPORT @LAYER(ui) -->
+# 查询 LSP 符号定义
+ndoc lsp MyClass
 ```
 
-然后运行 `ndoc check` 来验证代码是否符合规则。
+### 🏗️ 架构与质量
+```bash
+# 检查架构规则违规 (!RULE)
+ndoc check
+
+# 可视化依赖并检测循环
+ndoc deps
+
+# 生成高层架构视图
+ndoc arch
+
+# 分析当前 Git 变更的影响
+ndoc impact
+```
+
+### 🧠 知识与提示
+```bash
+# 为特定文件生成优化后的 Prompt
+ndoc prompt src/core/logic.py --focus
+
+# 语义搜索代码库 (需要向量数据库)
+ndoc search "how does authentication work?"
+
+# 更新项目统计和 TODO 追踪
+ndoc stats
+```
+
+### ⚡ 维护
+```bash
+# 检查环境健康状况
+ndoc doctor
+
+# 清理生成的制品
+ndoc clean
+
+# 自我更新 (git pull)
+ndoc update
+```
 
 ---
 
-## 6. 开发 (吃狗粮)
+## 5. 集成指南 (如何接入你的项目)
 
-要开发 Niki-docAI 本身：
+Niki-docAI 由两部分组成：**核心工具 (Python CLI)** 和 **IDE 扩展**。
 
-1.  在 VS Code 中打开本仓库。
-2.  运行 `ndoc init` (我们吃自己的狗粮！)。
-3.  使用 "Launch Extension" 调试配置来测试 VS Code 插件。
+### 步骤 1: 安装核心工具 (Python CLI)
 
----
+`ndoc` CLI 是整个系统的核心，必须安装在你的环境中。
 
-## License
+**选项 A: 源码安装 (Beta 版推荐)**
+```bash
+# 克隆仓库
+git clone https://github.com/niki/nk_doc_ai.git
+cd nk_doc_ai
 
-MIT
+# 安装包
+pip install .
+```
+
+**选项 B: 通过 Pip 安装 (未来支持)**
+```bash
+pip install niki-doc-ai
+```
+
+### 步骤 2: 安装 IDE 扩展 (VS Code)
+
+(即将推出)

@@ -12,6 +12,7 @@ setup(
     version="2.0.0",
     description="Niki-docAI: AI-Centric Documentation Automation Tool",
     author="Niki-docAI Team",
+    url="https://github.com/a986836755-max/Niki-docAI",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[
@@ -20,6 +21,9 @@ setup(
         "tree-sitter-dart>=0.0.1; platform_system != \"Windows\"",
         "colorama>=0.4.6",
         "pathspec>=0.12.1",
+        "chromadb>=0.4.18",
+        "lsprotocol>=2023.0.0",
+        "pygls>=1.3.0",
     ],
     entry_points={
         "console_scripts": [

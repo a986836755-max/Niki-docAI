@@ -195,10 +195,8 @@ def update_section(path: Path, start_marker: str, end_marker: str, new_content: 
     # We must ensure new_content doesn't contain backslashes that re.sub interprets as escapes
     
     # Using lambda for replacement avoids backslash hell
-    def replacer(m):
-        return f"{m.group(1)}\n{new_content}\n{m.group(3)}"
-        
-    updated_content = pattern.sub(replacer, content)
+    # Note: We must return valid string, not None
+    updated_content = pattern.sub(lambda m: f"{m.group(1)}\n{new_content}\n{m.group(3)}", content)
     
     # Only write if changed
     if updated_content != content:

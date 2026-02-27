@@ -1,0 +1,54 @@
+name: Release Niki-docAI
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Build Python Package
+        run: python -m build
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install VS Code Extension dependencies
+        working-directory: ./editors/vscode
+        run: npm install
+
+      - name: Package VS Code Extension
+        working-directory: ./editors/vscode
+        run: npx vsce package --out ../../dist/nk-doc-ai-vscode.vsix
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+            dist/*.vsix
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -37,7 +37,6 @@ def process_file(file_path: Path, root: Path) -> bool:
     # 3. Inject (Transform)
     return transforms.inject_header_to_file(file_path, header_content)
 
-@ndoc_command(name="inject", help="Inject context headers into source files", group="Granular")
 def run(config: ProjectConfig, target: str = None):
     """
     Execute injection flow.
@@ -69,3 +68,4 @@ def run(config: ProjectConfig, target: str = None):
                  logger.info(f"Injected: {f.relative_to(root)}")
                  count += 1
         logger.info(f"Injection complete. Updated {count} files.")
+    return True

@@ -30,7 +30,6 @@ GENERATED_FILES = [
     # _ARCH.md is typically manual or hybrid, avoiding delete for safety unless confirmed
 ]
 
-@ndoc_command(name="clean", help="Clean/Reset generated documentation artifacts", group="Core")
 def run(config: ProjectConfig, target: str = None, force: bool = False) -> bool:
     """
     Execute Clean Flow.

@@ -1,20 +1,20 @@
 # Context: core
-> @CONTEXT: Local | core | @TAGS: @LOCAL
-> 最后更新 (Last Updated): 2026-02-26 20:34:58
+> @CONTEXT: Recursive Context | core | @TAGS: @AI
+> 最后更新 (Last Updated): 2026-02-27 18:00:27
 
 ## !RULE
 <!-- Add local rules here. Examples: -->
 <!-- !RULE: @LAYER(core) CANNOT_IMPORT @LAYER(ui) -->
 <!-- !RULE: @FORBID(hardcoded_paths) -->
 
-<!-- NIKI_AUTO_MEMORIES_START -->
 
-<!-- NIKI_AUTO_MEMORIES_END -->
 
+## @FILES
 <!-- NIKI_AUTO_Context_START -->
 ## @STRUCTURE
+*   **[_AI.md](_AI.md#L1)**: Context: core
 *   **[__init__.py](__init__.py#L1)**: Core: Infrastructure Utilities.
-*   **[bootstrap.py](bootstrap.py#L1)** @DEP: .capabilities, .logger, os, pathlib, shutil, ...
+*   **[bootstrap.py](bootstrap.py#L1)** @DEP: src/ndoc/core/capabilities.py, src/ndoc/core/logger.py
     *   `@API`
         *   `PUB:` FUN **ensure_cli_environment**`() -> None`
         *   `PRV:` FUN _ensure_cli_shim`() -> None`
@@ -38,27 +38,27 @@
             *   `PUB:` MET **is_changed**`(self, file_path: Path) -> bool`
             *   `PUB:` MET **update**`(self, file_path: Path, result: Any)`
             *   `PUB:` MET **get**`(self, file_path: Path) -> Optional[Any]`
-*   **[capabilities.py](capabilities.py#L1)**: Atoms: Capability Manager. @DEP: ctypes, importlib, ndoc, os, pathlib, ...
+*   **[capabilities.py](capabilities.py#L1)**: Atoms: Capability Manager. @DEP: src/ndoc/__init__.py, src/ndoc/core/logger.py
     *   `@API`
         *   `PUB:` CLS **CapabilityManager**
-            *   `VAL->` VAR **LANGUAGE_PACKAGES**` = {
+            *   `VAL->` VAR **LANGUAGE_PACKAGES**`: Dict[str, str] = {
         "python": "tree-sitter-python",
         "javascrip...`
-            *   `VAL->` VAR **OPTIONAL_PACKAGES**` = {
+            *   `VAL->` VAR **OPTIONAL_PACKAGES**`: Dict[str, str] = {
         "chromadb": "chromadb",
     }`
             *   `VAL->` VAR _CACHE`: Dict[str, Optional[Language]] = {}`
-            *   `VAL->` VAR _FAILED_INSTALLS`: set[str] = set()`
+            *   `VAL->` VAR _FAILED_INSTALLS`: Set[str] = set()`
             *   `VAL->` VAR _LOCAL_LIB_DIR`: Optional[Path] = None`
             *   `VAL->` VAR _TREE_SITTER_BOOTSTRAPPED`: bool = False`
             *   `PRV:` CLM _get_lib_dir`(cls) -> Path`
-            *   `PRV:` CLM _init_local_lib`(cls)`
-            *   `VAL->` VAR _LOCK_FILE_DIR` = Path(os.environ.get("TEMP", ".")) / "ndoc_locks"`
-            *   `VAL->` VAR _LOCK_TTL_SECONDS` = 3600`
+            *   `PRV:` CLM _init_local_lib`(cls) -> None`
+            *   `VAL->` VAR _LOCK_FILE_DIR`: Path = Path(tempfile.gettempdir()) / "ndoc_locks"`
+            *   `VAL->` VAR _LOCK_TTL_SECONDS`: int = 3600`
             *   `PRV:` CLM _is_locked`(cls, package_name: str) -> bool`
-            *   `PRV:` CLM _set_lock`(cls, package_name: str)`
+            *   `PRV:` CLM _set_lock`(cls, package_name: str) -> None`
             *   `PUB:` CLM **ensure_package**`(cls, package_name: str, auto_install: bool = True) -> bool`
-            *   `PUB:` CLM **ensure_languages**`(cls, lang_names: set[str], auto_install: bool = True)`
+            *   `PUB:` CLM **ensure_languages**`(cls, lang_names: Set[str], auto_install: bool = True) -> None`
             *   `PUB:` CLM **get_language**`(cls, lang_name: str, auto_install: bool = False, check_only: bool = False) -> Optional[Language]`
             *   `PRV:` STA _try_import`(lang_name: str) -> Optional[Language]`
             *   `PUB:` MET **make_language**`(ptr)`
@@ -118,7 +118,6 @@
         *   `PUB:` FUN **append_text**`(path: Path, content: str) -> bool`
         *   `PRV:` FUN _append`()`
         *   `PUB:` FUN **update_section**`(path: Path, start_marker: str, end_marker: str, new_content: str) -> bool`
-        *   `PUB:` FUN **replacer**`(m)`
         *   `PUB:` FUN **update_header_timestamp**`(path: Path) -> bool`
         *   `PUB:` FUN **delete_file**`(path: Path) -> bool`
         *   `PRV:` FUN _delete`()`
@@ -129,38 +128,39 @@
         *   `PUB:` FUN **setup_logger**`(name: str = "ndoc", level: int = logging.INFO) -> logging.Logger`
         *   `VAL->` VAR **logger**` = setup_logger()`
         *   `PUB:` FUN **set_log_level**`(level: int)`
-*   **[map_builder.py](map_builder.py#L1)**: Core: Map Builder. @DEP: ..core, ..models.config, ..models.map, ..parsing, ..views, ...
-    *   `@API`
-        *   `PUB:` FUN **extract_file_summary**`(path: Path) -> str`
-        *   `PUB:` FUN **build_tree_lines**`(current_path: Path, context: MapContext, level: int = 0, summary_cache: Dict[Path, str] = None) -> List[str]`
-        *   `PUB:` FUN **generate_tree_content**`(config: ProjectConfig) -> str`
-*   **[native_builder.py](native_builder.py#L1)**: Native Builder: Handles local compilation of language bindings on Windows. @DEP: .logger, os, pathlib, shutil, subprocess, ...
+*   **[native_builder.py](native_builder.py#L1)**: Native Builder: Handles local compilation of language bindings on Windows. @DEP: src/ndoc/core/logger.py
     *   `@API`
         *   `PUB:` FUN **find_vcvars64**`() -> Optional[str]`
         *   `PUB:` FUN **ensure_dart_source**`(work_dir: Path) -> bool`
         *   `PUB:` FUN **build_dart_dll**`(output_path: Path) -> bool`
-*   **[stats.py](stats.py#L1)**: Core: Project Statistics. @DEP: ..core, ..models.config, os, pathlib, re, ...
+*   **[stats.py](stats.py#L1)**: Core: Project Statistics. @DEP: src/ndoc/core/__init__.py, src/ndoc/models/config.py
     *   `@API`
         *   `PUB:` FUN **should_update_stats**`(root_path: Path, force: bool) -> bool`
         *   `PUB:` FUN **collect_full_stats**`(config: ProjectConfig) -> Dict`
-*   **[task_manager.py](task_manager.py#L1)**: Core: Task Management. @DEP: ..core, ..core.logger, ..models.status, ..parsing, pathlib, ...
+*   **[task_manager.py](task_manager.py#L1)**: Core: Task Management. @DEP: src/ndoc/core/__init__.py, src/ndoc/core/logger.py, src/ndoc/models/status.py, src/ndoc/parsing/__init__.py
     *   `@API`
         *   `PUB:` FUN **collect_todos**`(root: Path, ignore_patterns: List[str]) -> List[TodoItem]`
         *   `PUB:` FUN **sync_task_checkboxes**`(target_file: Path, todos: List[TodoItem], log_prefix: Optional[str] = None) -> bool`
         *   `PUB:` FUN **remove_stats_section**`(status_file: Path) -> bool`
-*   **[templates.py](templates.py#L1)** @DEP: ., pathlib, typing
+*   **[templates.py](templates.py#L1)** @DEP: src/ndoc/core/__init__.py, src/ndoc/models/config.py
     *   `@API`
+        *   `VAL->` VAR _CONFIG`: Optional[TemplateConfig] = None`
+        *   `VAL->` VAR _ENV`: Optional[Environment] = None`
+        *   `PUB:` FUN **configure**`(config: TemplateConfig) -> None`
         *   `PUB:` FUN **get_template**`(name: str) -> str`
         *   `PUB:` FUN **render_document**`(body_template_name: str, title: str, context: str, tags: str, timestamp: str, **body_kwargs) -> str`
-*   **[text_utils.py](text_utils.py#L1)**: Atoms: Text Processing Utilities. @DEP: ..models.context, re, typing
+*   **[text_utils.py](text_utils.py#L1)**: Atoms: Text Processing Utilities. @DEP: src/ndoc/models/context.py
     *   `@API`
         *   `VAL->` VAR **TAG_REGEX**` = re.compile(
     r"(?m)^\s*(?:#+|//|<!--|>|\*)\s*([@!][a-zA-Z...`
         *   `PUB:` FUN **clean_docstring**`(raw: str) -> str`
         *   `PUB:` FUN **extract_attributes**`(attr_str: str) -> dict`
         *   `PUB:` FUN **extract_tags_from_text**`(text: str, line_offset: int = 0) -> List[Tag]`
-*   **[transforms.py](transforms.py#L1)**: Core: Data Transforms. @DEP: ..core, ..models.config, ..models.context, ..parsing.deps.test_mapper, pathlib, ...
+*   **[transforms.py](transforms.py#L1)**: Core: Data Transforms. @DEP: src/ndoc/core/__init__.py, src/ndoc/models/config.py, src/ndoc/models/context.py, src/ndoc/parsing/deps/test_mapper.py
     *   `@API`
         *   `PUB:` FUN **inject_test_usages**`(f_ctx: FileContext, test_mapper: TestUsageMapper, config: ProjectConfig)`
         *   `PUB:` FUN **inject_header_to_file**`(file_path: Path, header_content: str) -> bool`
 <!-- NIKI_AUTO_Context_END -->
+
+---
+*Generated by Niki-docAI*

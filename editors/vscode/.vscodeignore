@@ -1,0 +1,15 @@
+
+.vscode/**
+.vscode-test/**
+src/**
+.gitignore
+vsc-extension-quickstart.md
+webpack.config.js
+**/*.map
+.ndoc/**
+editors/**
+**/*.pyc
+__pycache__/**
+*.egg-info/**
+dist/**
+build/**

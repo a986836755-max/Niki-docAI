@@ -14,10 +14,11 @@ Flow: Configuration Loading.
 import re
 from pathlib import Path
 from typing import List
+from datetime import datetime
 
 from ..models.config import ProjectConfig, ScanConfig
 from ..core import io
-from ..core.templates import get_template
+from ..core.templates import get_template, render_document
 
 def load_project_config(root_path: Path) -> ProjectConfig:
     """
@@ -60,7 +61,15 @@ def ensure_rules_file(root_path: Path, force: bool = False) -> bool:
              print(f"Restoring default Rules Configuration at {rules_file.name}...")
         else:
              print(f"Creating default Rules Configuration at {rules_file.name}...")
-        content = get_template("rules.md.tpl")
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        content = render_document(
+            "rules.md.tpl",
+            title="Project Rules",
+            context="Configuration | @TAGS: @CONFIG @RULES",
+            tags="",
+            timestamp=timestamp
+        )
         return io.write_text(rules_file, content)
     return False
 
@@ -75,7 +84,15 @@ def ensure_guide_file(root_path: Path, force: bool = False) -> bool:
              print(f"Updating AI Guide at {guide_file.name}...")
         else:
              print(f"Creating AI Guide at {guide_file.name}...")
-        content = get_template("guide.md.tpl")
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        content = render_document(
+            "guide.md.tpl",
+            title="AI Context Guide (Niki-docAI)",
+            context="Guide | Instructions",
+            tags="",
+            timestamp=timestamp
+        )
         return io.write_text(guide_file, content)
     return False
 
@@ -149,6 +166,40 @@ def _parse_rules(file_path: Path, config: ProjectConfig) -> None:
         elif tag == "!TYPECHECK":
             typecheck_cmds = _parse_command_list(args_str)
             found_typecheck = True
+        
+        # Template Configuration
+        elif tag == "!TEMPLATE_DIR":
+            # !TEMPLATE_DIR: .ndoc/templates
+            if args:
+                path_str = args[0]
+                # Resolve relative to project root
+                resolved = (config.scan.root_path / path_str).resolve()
+                if resolved.exists() and resolved.is_dir():
+                    config.template.base_dir = resolved
+                else:
+                    print(f"Warning: Template directory {path_str} not found.")
+
+        elif tag == "!TEMPLATE_HEADER":
+            if args:
+                config.template.header = args[0]
+
+        elif tag == "!TEMPLATE_FOOTER":
+            if args:
+                config.template.footer = args[0]
+
+        elif tag == "!TEMPLATE_OVERRIDE":
+            # !TEMPLATE_OVERRIDE: ai.md.tpl=custom_ai.tpl, header.py.tpl=custom_header.tpl
+            for arg in args:
+                if "=" in arg:
+                    key, val = arg.split("=", 1)
+                    key = key.strip()
+                    val = val.strip()
+                    # Resolve val relative to root or template dir? 
+                    # Let's assume relative to root if it looks like a path, or just a name?
+                    # If base_dir is set, maybe relative to that?
+                    # For flexibility, let's treat it as a path relative to root.
+                    resolved_val = (config.scan.root_path / val).resolve()
+                    config.template.overrides[key] = resolved_val
             
     # Update Config
     if found_ignore:

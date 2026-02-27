@@ -18,7 +18,6 @@ from ..parsing import scanner
 from ..core.logger import logger
 from ..core.cli import ndoc_command
 
-@ndoc_command(name="verify", help="Verify documentation artifacts", group="Diagnostics")
 def run(config: ProjectConfig, 
         fs_module=fs, 
         io_module=io, 

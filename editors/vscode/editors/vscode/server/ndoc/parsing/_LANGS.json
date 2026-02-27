@@ -1,0 +1,92 @@
+{
+    "python": {
+        "extensions": [".py"],
+        "import_nodes": ["import_statement", "import_from_statement"],
+        "import_module_field": "module_name",
+        "class_nodes": ["class_definition"],
+        "function_nodes": ["function_definition", "async_function_definition"],
+        "name_field": "name",
+        "docstring_field": "body"
+    },
+    "javascript": {
+        "extensions": [".js", ".jsx", ".mjs", ".cjs"],
+        "import_nodes": ["import_statement", "require_call"],
+        "import_module_field": "source",
+        "class_nodes": ["class_declaration"],
+        "function_nodes": ["function_declaration", "arrow_function"],
+        "name_field": "name",
+        "docstring_comment_prefix": ["/**", "*"]
+    },
+    "typescript": {
+        "extensions": [".ts", ".tsx"],
+        "import_nodes": ["import_statement"],
+        "import_module_field": "source",
+        "class_nodes": ["class_declaration", "interface_declaration"],
+        "function_nodes": ["function_declaration", "method_definition"],
+        "name_field": "name",
+        "docstring_comment_prefix": ["/**", "*"]
+    },
+    "java": {
+        "extensions": [".java"],
+        "import_nodes": ["import_declaration"],
+        "import_module_field": "name",
+        "class_nodes": ["class_declaration", "interface_declaration"],
+        "function_nodes": ["method_declaration"],
+        "name_field": "name",
+        "docstring_comment_prefix": ["/**"]
+    },
+    "c_sharp": {
+        "extensions": [".cs"],
+        "import_nodes": ["using_directive"],
+        "import_module_field": "name",
+        "class_nodes": ["class_declaration", "interface_declaration", "struct_declaration"],
+        "function_nodes": ["method_declaration"],
+        "name_field": "name",
+        "docstring_comment_prefix": ["///"]
+    },
+    "cpp": {
+        "extensions": [".cpp", ".cc", ".cxx", ".h", ".hpp"],
+        "import_nodes": ["preproc_include"],
+        "import_module_field": "path",
+        "class_nodes": ["class_specifier", "struct_specifier"],
+        "function_nodes": ["function_definition"],
+        "name_field": "declarator",
+        "docstring_comment_prefix": ["///", "/**"]
+    },
+    "dart": {
+        "extensions": [".dart"],
+        "import_nodes": ["import_directive"],
+        "import_module_field": "path",
+        "class_nodes": ["class_definition"],
+        "function_nodes": ["function_definition"],
+        "name_field": "name",
+        "docstring_comment_prefix": ["///"]
+    },
+    "go": {
+        "extensions": [".go"],
+        "import_nodes": ["import_spec"],
+        "import_module_field": "path",
+        "class_nodes": ["type_spec"],
+        "function_nodes": ["function_declaration", "method_declaration"],
+        "name_field": "name",
+        "docstring_comment_prefix": ["//"]
+    },
+    "rust": {
+        "extensions": [".rs"],
+        "import_nodes": ["use_declaration"],
+        "import_module_field": "argument",
+        "class_nodes": ["struct_item", "enum_item", "trait_item"],
+        "function_nodes": ["function_item"],
+        "name_field": "name",
+        "docstring_comment_prefix": ["///", "//!", "/**"]
+    },
+    "flatbuffers": {
+        "extensions": [".fbs"],
+        "import_nodes": ["include_statement"],
+        "import_module_field": "path",
+        "class_nodes": ["table_definition", "struct_definition", "enum_definition"],
+        "function_nodes": [],
+        "name_field": "name",
+        "docstring_comment_prefix": ["///", "//"]
+    }
+}

@@ -7,9 +7,12 @@ import subprocess
 import sys
 import os
 import time
+import tempfile
+import logging
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Set, List
 from tree_sitter import Language
+from ndoc.core.logger import logger
 
 class CapabilityManager:
     """
@@ -18,40 +21,29 @@ class CapabilityManager:
     
     # Mapping: language_name -> pypi_package_name
     # Note: Keys should match what is used in import tree_sitter_{key}
-    LANGUAGE_PACKAGES = {
+    LANGUAGE_PACKAGES: Dict[str, str] = {
         "python": "tree-sitter-python",
         "javascript": "tree-sitter-javascript",
         "typescript": "tree-sitter-typescript",
         "go": "tree-sitter-go",
-        "rust": "tree-sitter-rust",
+        "rust": "tree-sitter-rust==0.21.2",  # Pin version for ABI compatibility (0.22+ requires ABI 15)
         "cpp": "tree-sitter-cpp",
         "c_sharp": "tree-sitter-c-sharp",
         "java": "tree-sitter-java",
         "dart": "tree-sitter-dart",
         "json": "tree-sitter-json",
-        "flatbuffers": "tree-sitter-flatbuffers",
+        # "flatbuffers": "tree-sitter-flatbuffers", # Removed: Not available on PyPI or incompatible
     }
     
     # Mapping: capability_name -> pypi_package_name
-    OPTIONAL_PACKAGES = {
+    OPTIONAL_PACKAGES: Dict[str, str] = {
         "chromadb": "chromadb",
     }
 
     _CACHE: Dict[str, Optional[Language]] = {}
-    _FAILED_INSTALLS: set[str] = set() # Circuit breaker for failed installs
+    _FAILED_INSTALLS: Set[str] = set() # Circuit breaker for failed installs
     
     # Local Lib Settings (Project Level)
-    # We will determine this dynamically based on project root if possible, 
-    # but for now we can try to infer it or use a user-local path if not in project.
-    # Actually, best is to use .ndoc/lib in the current working directory or capabilities file location?
-    # Let's use ~/.ndoc/lib for now as a safe user-writable location that is shared across projects,
-    # OR use ./ndoc/lib if we want per-project isolation.
-    # Given the user request "downloaded in the project local", we should use CWD/.ndoc/lib.
-    
-    # However, CWD changes. We should rely on where the code is running or pass root.
-    # Since this is a class method, we don't have config instance easily.
-    # Let's try to find project root or fallback to ~/.ndoc
-    
     _LOCAL_LIB_DIR: Optional[Path] = None
     _TREE_SITTER_BOOTSTRAPPED: bool = False
 
@@ -68,15 +60,16 @@ class CapabilityManager:
              cls._LOCAL_LIB_DIR = target_dir
              return target_dir
 
-        # [Priority 2] User-global .ndoc/lib (Fallback)
-        # Use user home directory for stable, project-agnostic dependency storage
-        # This avoids issues with CWD changes and "not found" errors.
-        target_dir = Path.home() / ".ndoc" / "lib"
+        # [Priority 2] Always prefer CWD/.ndoc/lib if running ndoc init
+        # If .ndoc doesn't exist yet, we create it.
+        # This forces project-local installation by default.
+        cwd_ndoc.mkdir(exist_ok=True)
+        target_dir = cwd_ndoc / "lib"
         cls._LOCAL_LIB_DIR = target_dir
         return target_dir
 
     @classmethod
-    def _init_local_lib(cls):
+    def _init_local_lib(cls) -> None:
         """Ensure local lib dir exists and is in sys.path"""
         lib_dir = cls._get_lib_dir()
         if str(lib_dir) not in sys.path:
@@ -95,7 +88,7 @@ class CapabilityManager:
             if 'tree_sitter' in sys.modules:
                 ts_mod = sys.modules['tree_sitter']
                 if not hasattr(ts_mod, '__file__') or str(lib_dir) not in str(ts_mod.__file__):
-                    # print(f"--> [Capability] Detected global tree-sitter ({ts_mod.__file__}). Forcing reload from local lib.")
+                    logger.debug(f"Detected global tree-sitter ({ts_mod.__file__}). Forcing reload from local lib.")
                     del sys.modules['tree_sitter']
                     # Also clear submodules
                     to_remove = [m for m in sys.modules if m.startswith('tree_sitter.')]
@@ -106,15 +99,13 @@ class CapabilityManager:
             try:
                 import tree_sitter
                 tree_sitter_loaded = True
-            except Exception:
+            except ImportError:
                 tree_sitter_loaded = False
-            # Simple version check heuristic: if Language doesn't accept 1 arg, it's old.
-            # But importing might pick up the global one first if we haven't installed local yet.
             
             # We blindly check if tree-sitter exists in local lib.
             local_ts = lib_dir / "tree_sitter"
             if not local_ts.exists():
-                # print("--> [Capability] Installing local tree-sitter runtime (isolation mode)...")
+                logger.info("Installing local tree-sitter runtime (isolation mode)...")
                 cls.ensure_package("tree-sitter", auto_install=True)
                 
                 # Reload after install
@@ -124,12 +115,12 @@ class CapabilityManager:
                     import tree_sitter
             elif not tree_sitter_loaded:
                 import tree_sitter
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to bootstrap tree-sitter: {e}")
 
-    # Persistent lock file settings (Use TEMP for reliability)
-    _LOCK_FILE_DIR = Path(os.environ.get("TEMP", ".")) / "ndoc_locks"
-    _LOCK_TTL_SECONDS = 3600 # 1 hour cooldown
+    # Persistent lock file settings (Use tempfile for reliability)
+    _LOCK_FILE_DIR: Path = Path(tempfile.gettempdir()) / "ndoc_locks"
+    _LOCK_TTL_SECONDS: int = 3600 # 1 hour cooldown
 
     @classmethod
     def _is_locked(cls, package_name: str) -> bool:
@@ -144,19 +135,19 @@ class CapabilityManager:
                 else:
                     # Expired, remove it
                     lock_file.unlink()
-            except Exception:
+            except OSError:
                 pass
         return False
 
     @classmethod
-    def _set_lock(cls, package_name: str):
+    def _set_lock(cls, package_name: str) -> None:
         """Set a persistent lock for package installation failure."""
         try:
             cls._LOCK_FILE_DIR.mkdir(parents=True, exist_ok=True)
             lock_file = cls._LOCK_FILE_DIR / f"{package_name}.lock"
             lock_file.touch()
         except Exception as e:
-            print(f"--> Warning: Failed to set install lock: {e}")
+            logger.warning(f"Failed to set install lock: {e}")
 
     @classmethod
     def ensure_package(cls, package_name: str, auto_install: bool = True) -> bool:
@@ -170,7 +161,7 @@ class CapabilityManager:
             return False
             
         if cls._is_locked(package_name):
-            # print(f"--> Skipping {package_name} (Recent failure locked).")
+            logger.debug(f"Skipping {package_name} (Recent failure locked).")
             cls._FAILED_INSTALLS.add(package_name)
             return False
 
@@ -184,12 +175,11 @@ class CapabilityManager:
         
         # Check non-interactive
         if not auto_install:
-            # Silent fail in non-interactive to prevent spam
-            # print(f"--> Missing optional package '{pypi_name}'. Install manually.")
+            logger.info(f"Missing optional package '{pypi_name}'. Install manually.")
             cls._FAILED_INSTALLS.add(package_name)
             return False
 
-        print(f"--> Installing {pypi_name} to {cls._get_lib_dir()}...")
+        logger.info(f"Installing {pypi_name} to {cls._get_lib_dir()}...")
         try:
             lib_dir = cls._get_lib_dir()
             lib_dir.mkdir(parents=True, exist_ok=True)
@@ -202,17 +192,23 @@ class CapabilityManager:
                 "--quiet",
                 "--no-user" # Ensure we don't try user install
             ])
-            print(f"--> {pypi_name} installed successfully.")
+            logger.info(f"{pypi_name} installed successfully.")
             
             # Invalidate caches to ensure new package is found
             importlib.invalidate_caches()
             
             return True
-        except Exception as e:
-            print(f"--> Failed to install {pypi_name}: {e}")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to install {pypi_name}: {e}")
             cls._FAILED_INSTALLS.add(package_name)
             cls._set_lock(package_name)
             return False
+        except Exception as e:
+            logger.error(f"Unexpected error installing {pypi_name}: {e}")
+            cls._FAILED_INSTALLS.add(package_name)
+            cls._set_lock(package_name)
+            return False
+
 
         try:
             importlib.import_module(package_name)
@@ -246,7 +242,7 @@ class CapabilityManager:
             return False
 
     @classmethod
-    def ensure_languages(cls, lang_names: set[str], auto_install: bool = True):
+    def ensure_languages(cls, lang_names: Set[str], auto_install: bool = True) -> None:
         """
         Batch ensure languages are installed.
         """
@@ -271,11 +267,7 @@ class CapabilityManager:
         if not missing:
             return
 
-        # Trigger installation
-        for lang in missing:
-            cls.get_language(lang, auto_install=auto_install)
-
-        print(f"--> [Capability] Auto-detected missing languages: {', '.join(missing)}")
+        logger.info(f"Auto-detected missing languages: {', '.join(missing)}")
         
         # Install logic
         packages = []
@@ -290,29 +282,37 @@ class CapabilityManager:
             return
 
         if auto_install:
-             print(f"--> Auto-installing missing components: {', '.join(packages)}...")
+             logger.info(f"Auto-installing missing components: {', '.join(packages)}...")
              try:
                  lib_dir = cls._get_lib_dir()
                  lib_dir.mkdir(parents=True, exist_ok=True)
                  
                  subprocess.check_call([
-                     sys.executable, "-m", "pip", "install"
-                 ] + packages + [
-                     "--target", str(lib_dir),
-                     "--quiet",
-                     "--no-user",
-                     "--upgrade",
-                     "--ignore-installed" # Critical: Ignore global site-packages to avoid permission errors
+                    sys.executable, "-m", "pip", "install", 
+                    *packages, 
+                    "--target", str(lib_dir),
+                    "--quiet",
+                    "--no-user",
+                    "--upgrade", # Ensure we get the latest compatible versions
+                    "--ignore-installed" # Force overwrite if broken
                  ])
-                 print("--> Components installed successfully.")
-                 
-                 # Invalidate caches
+                 logger.info("Installation complete.")
                  importlib.invalidate_caches()
                  
-                 # Clear cache to force reload attempt on next access
-                 cls._CACHE.clear() 
+                 # Populate cache for newly installed languages
+                 for lang in missing:
+                     cls.get_language(lang, auto_install=False)
+                     
+             except subprocess.CalledProcessError as e:
+                 logger.error(f"Failed to install languages: {e}")
+                 # Lock failed languages individually? Or all?
+                 # Let's lock all to prevent loop
+                 for lang in missing:
+                     cls._set_lock(lang)
              except Exception as e:
-                 print(f"--> Failed to batch install components: {e}")
+                 logger.error(f"Unexpected error installing languages: {e}")
+                 for lang in missing:
+                     cls._set_lock(lang)
 
     @classmethod
     def get_language(cls, lang_name: str, auto_install: bool = False, check_only: bool = False) -> Optional[Language]:
@@ -323,9 +323,6 @@ class CapabilityManager:
         # Ensure local lib is in path before trying import
         cls._init_local_lib()
         
-        # EMERGENCY FIX: Disable auto-install override (Revert to argument value)
-        # auto_install = False # Removed to restore functionality
-        
         if lang_name in cls._CACHE:
             return cls._CACHE[lang_name]
 
@@ -335,7 +332,7 @@ class CapabilityManager:
             
         # Check persistent lock
         if cls._is_locked(lang_name):
-            # print(f"--> Skipping language {lang_name} (Recent failure locked).")
+            logger.debug(f"Skipping language {lang_name} (Recent failure locked).")
             cls._FAILED_INSTALLS.add(lang_name)
             return None
 
@@ -364,50 +361,27 @@ class CapabilityManager:
             return None
 
         # 2. Install if missing
-        # TODO: Use a proper logger
-        # print(f"--> [Capability] Detected need for '{lang_name}' support.")
-        
         if not auto_install:
             # Silent fail
             cls._FAILED_INSTALLS.add(lang_name)
             return None
 
-        if auto_install:
-            print(f"--> Installing {package_name}...")
-            try:
-                lib_dir = cls._get_lib_dir()
-                lib_dir.mkdir(parents=True, exist_ok=True)
-                subprocess.check_call([
-                    sys.executable, "-m", "pip", "install", package_name,
-                    "--target", str(lib_dir),
-                    "--quiet",
-                    "--no-user",
-                    "--upgrade",
-                    "--ignore-installed"
-                ])
-                print(f"--> {package_name} installed successfully.")
-                importlib.invalidate_caches()
-                
-                # Retry import
-                lang = cls._try_import(lang_name)
-                if lang:
-                    cls._CACHE[lang_name] = lang
-                    return lang
-                else:
-                    print(f"--> Failed to load {lang_name} even after installation.")
-                    cls._FAILED_INSTALLS.add(lang_name)
-                    cls._set_lock(lang_name)
-            except subprocess.CalledProcessError as e:
-                print(f"--> Failed to install {package_name}: {e}")
+        # Delegate to ensure_package to avoid code duplication
+        if cls.ensure_package(package_name, auto_install=True):
+            # Retry import
+            lang = cls._try_import(lang_name)
+            if lang:
+                cls._CACHE[lang_name] = lang
+                return lang
+            else:
+                logger.warning(f"Failed to load {lang_name} even after installation.")
                 cls._FAILED_INSTALLS.add(lang_name)
                 cls._set_lock(lang_name)
-            except Exception as e:
-                print(f"--> Error during installation/loading of {lang_name}: {e}")
-                cls._FAILED_INSTALLS.add(lang_name)
-                cls._set_lock(lang_name)
-
-        cls._CACHE[lang_name] = None
-        return None
+                return None
+        else:
+            cls._FAILED_INSTALLS.add(lang_name)
+            cls._set_lock(lang_name)
+            return None
 
     @staticmethod
     def _try_import(lang_name: str) -> Optional[Language]:
@@ -417,7 +391,6 @@ class CapabilityManager:
         if lang_name == 'dart':
             try:
                 import ctypes
-                from pathlib import Path
                 # Assuming dll is in ../parsing/langs/bin/ relative to this file?
                 # This file is src/ndoc/core/capabilities.py
                 # Bin is src/ndoc/parsing/langs/bin/
@@ -436,9 +409,9 @@ class CapabilityManager:
                         if ptr:
                             return TS_Language(ptr)
                     except Exception as e:
-                        print(f"--> Warning: Failed to load custom {lang_name} DLL via ctypes: {e}")
+                        logger.warning(f"Failed to load custom {lang_name} DLL via ctypes: {e}")
             except Exception as e:
-                print(f"--> Warning: Failed to load custom {lang_name} DLL: {e}")
+                logger.warning(f"Failed to load custom {lang_name} DLL: {e}")
 
         try:
             # Dynamic import: import tree_sitter_{lang_name}
@@ -471,13 +444,13 @@ class CapabilityManager:
                 return make_language(module.language())
             else:
                 # Debug info only if import succeeded but function missing
-                print(f"--> Module {module_name} does not have 'language()' function.")
+                logger.debug(f"Module {module_name} does not have 'language()' function.")
                 return None
         except ImportError:
             return None
         except Exception as e:
             # Print error to help diagnosis
-            print(f"--> Error loading {lang_name}: {e}")
+            logger.warning(f"Error loading {lang_name}: {e}")
             return None
 
     @staticmethod

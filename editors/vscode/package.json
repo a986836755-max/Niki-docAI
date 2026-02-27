@@ -6,7 +6,10 @@
   "publisher": "niki",
   "repository": {
     "type": "git",
-    "url": "https://github.com/niki/nk-doc-ai"
+    "url": "https://github.com/a986836755-max/Niki-docAI"
+  },
+  "bugs": {
+    "url": "https://github.com/a986836755-max/Niki-docAI/issues"
   },
   "engines": {
     "vscode": "^1.80.0"
@@ -28,18 +31,55 @@
   "contributes": {
     "commands": [
       {
+        "command": "ndoc.init",
+        "title": "Niki: Initialize Project (ndoc init)",
+        "category": "Niki-docAI"
+      },
+      {
+        "command": "ndoc.generate",
+        "title": "Niki: Generate All Docs (ndoc all)",
+        "category": "Niki-docAI"
+      },
+      {
+        "command": "ndoc.check",
+        "title": "Niki: Check Architecture (ndoc check)",
+        "category": "Niki-docAI"
+      },
+      {
+        "command": "ndoc.doctor",
+        "title": "Niki: System Doctor (ndoc doctor)",
+        "category": "Niki-docAI"
+      },
+      {
         "command": "ndoc.showContext",
-        "title": "Niki: Show Thinking Context"
+        "title": "Niki: Show Thinking Context",
+        "category": "Niki-docAI"
       },
       {
         "command": "ndoc.restartServer",
-        "title": "Niki: Restart LSP Server"
+        "title": "Niki: Restart LSP Server",
+        "category": "Niki-docAI"
+      },
+      {
+        "command": "ndoc.installDependencies",
+        "title": "Niki: Install Core Dependencies",
+        "category": "Niki-docAI"
+      },
+      {
+        "command": "ndoc.watch",
+        "title": "Niki: Start Watch Mode (Auto-Update)",
+        "category": "Niki-docAI"
       }
     ],
     "configuration": {
       "type": "object",
       "title": "Niki-docAI",
       "properties": {
+        "ndoc.terminal.injectPath": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically inject 'ndoc' CLI path into terminal environment."
+        },
         "ndoc.pythonPath": {
           "type": "string",
           "default": "python",

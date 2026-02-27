@@ -219,6 +219,10 @@ def hover(ls: LanguageServer, params: HoverParams):
 @server.feature(TEXT_DOCUMENT_CODE_LENS)
 def code_lens(ls: LanguageServer, params: CodeLensParams):
     uri = params.text_document.uri
+    # Create CodeLens for showing context
+    # Command arguments must be JSON serializable
+    # VS Code commands expect URI as string or Uri object
+    
     return [
         CodeLens(
             range=Range(start=Position(line=0, character=0), end=Position(line=0, character=0)),
@@ -230,19 +234,21 @@ def code_lens(ls: LanguageServer, params: CodeLensParams):
         )
     ]
 
-@server.feature(WORKSPACE_EXECUTE_COMMAND)
-def execute_command(ls: LanguageServer, params: ExecuteCommandParams):
-    if params.command != "ndoc.getThinkingContext":
-        return None
-    if not params.arguments:
-        return ""
-    uri = str(params.arguments[0])
-    path = _uri_to_path(uri)
-    root = ls.workspace.root_path
-    if not root:
-        root = str(path.parent)
-    svc = get_service(root)
-    return svc.get_context_for_file(path)
+def main():
+    # Use standard IO (stdin/stdout) for LSP communication
+    # Ensure stdout is binary to avoid encoding issues on Windows?
+    # pygls handles this internally, but we must ensure no print() calls corrupt stdout.
+    # We already configured logging to stderr.
+    
+    # Force stdin/stdout to binary mode on Windows if needed
+    if sys.platform == "win32":
+        import msvcrt
+        msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+        
+    server.start_io()
+
+run = main
 
 @server.feature(TEXT_DOCUMENT_DID_OPEN)
 def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
@@ -250,46 +256,17 @@ def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
     When a file is opened, ensure service is initialized and validate.
     """
     uri = params.text_document.uri
-    document = ls.workspace.get_text_document(uri)
-    path = Path(document.path)
-    logging.info(f"File opened: {path}")
-    try:
-        root = ls.workspace.root_path
-        if not root:
-            root = str(path.parent)
-        svc = get_service(root)
-        if svc and not svc._is_indexed:
-            config = config_flow.load_project_config(Path(root))
-            files = list(fs.walk_files(Path(root), config.scan.ignore_patterns, extensions=config.scan.extensions))
-            svc.index_project(files)
-    except Exception as e:
-        logging.error(f"Indexing on open failed: {e}")
-    
+    logging.info(f"File opened: {uri}")
     validate_document(ls, uri)
 
 @server.feature(TEXT_DOCUMENT_DID_SAVE)
 def did_save(ls: LanguageServer, params: DidSaveTextDocumentParams):
     """
-    Validate on save.
+    When file is saved, re-validate.
     """
-    try:
-        uri = params.text_document.uri
-        path = _uri_to_path(uri)
-        root = ls.workspace.root_path
-        if not root:
-            root = str(path.parent)
-        svc = get_service(root)
-        if path.name == "_AI.md":
-            svc.invalidate_context_cache(path)
-    except Exception as e:
-        logging.error(f"Cache invalidation failed: {e}")
-    validate_document(ls, params.text_document.uri)
-
-if __name__ == '__main__':
-    server.start_io()
-
-def run():
-    server.start_io()
+    uri = params.text_document.uri
+    logging.info(f"File saved: {uri}")
+    validate_document(ls, uri)
 
 if __name__ == "__main__":
-    run()
+    main()

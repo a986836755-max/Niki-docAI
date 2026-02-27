@@ -1,0 +1,32 @@
+"""
+CLI Commands Package.
+"""
+from . import (
+    doctor,
+    init,
+    search,
+    impact,
+    check,
+    prompt,
+    all,
+    watch,
+    server,
+    skeleton,
+    lsp,
+    stats,
+    pilot,
+    archive,
+    clean,
+    inject,
+    lint,
+    typecheck,
+    update,
+    verify,
+    map,
+    context,
+    arch,
+    deps,
+    caps,
+    adr,
+    data
+)

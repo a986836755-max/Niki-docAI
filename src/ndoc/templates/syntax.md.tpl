@@ -1,6 +1,3 @@
-# PROJECT SYNTAX
-> @CONTEXT: DSL 定义 | @TAGS: @SYNTAX @OP
-
 <!-- NIKI_VERSION: 2.0.0 -->
 
 ## @MOD

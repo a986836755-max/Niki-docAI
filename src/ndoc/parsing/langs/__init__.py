@@ -147,7 +147,12 @@ def _load_json_languages():
             }
             
             dynamic_cls = type(f"{lang_id.capitalize()}Definition", (LanguageDefinition,), attrs)
-            register_language(dynamic_cls)
+            
+            # Explicitly register extension mapping for JSON-only languages
+            if lang_id not in _LANG_REGISTRY:
+                _LANG_REGISTRY[lang_id] = dynamic_cls
+                for ext in extensions:
+                    _EXT_TO_LANG[ext] = lang_id
             
     except Exception as e:
         # print(f"Failed to load _LANGS.json: {e}")
